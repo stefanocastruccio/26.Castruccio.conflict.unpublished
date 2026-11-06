@@ -102,13 +102,43 @@ def residual_acf(df: pd.DataFrame, resid, max_lag=8):
                       for k in range(max_lag + 1)], name="acf")
 
 
-def border_contrast(cell_resid, adjacency: sp.spmatrix, country):
+def border_contrast(cell_resid, adjacency: sp.spmatrix, country, fold=None):
     """Correlation of residuals between rook neighbours in the same country vs.
     neighbours across a border. A big gap points at country-level effects
-    (national covariates mis-specified / missing country random effect)."""
+    (national covariates mis-specified / missing country random effect).
+
+    `fold` (per cell, optional): the cross-fitting fold of the model that predicted the
+    cell. With country folds every within-country pair shares a fold model, while an
+    across-border pair may not; the across-border pairs are then also split into
+    same-fold and different-fold pairs, so that differences between fold models can be
+    told apart from country-level effects."""
     A = sp.triu(sp.csr_matrix(adjacency), 1).tocoo()
     r = np.asarray(cell_resid, float); c = np.asarray(country)
     same = c[A.row] == c[A.col]
-    corr = lambda m: float(np.corrcoef(r[A.row[m]], r[A.col[m]])[0, 1])
-    return {"within_country": corr(same), "across_border": corr(~same),
-            "n_within": int(same.sum()), "n_across": int((~same).sum())}
+
+    def corr(m):
+        return float(np.corrcoef(r[A.row[m]], r[A.col[m]])[0, 1]) if m.sum() > 2 else float("nan")
+
+    out = {"within_country": corr(same), "across_border": corr(~same),
+           "n_within": int(same.sum()), "n_across": int((~same).sum())}
+    if fold is not None:
+        f = np.asarray(fold)
+        sf = f[A.row] == f[A.col]
+        out.update(across_border_same_fold=corr(~same & sf), across_border_diff_fold=corr(~same & ~sf),
+                   n_across_same_fold=int((~same & sf).sum()), n_across_diff_fold=int((~same & ~sf).sum()))
+    return out
+
+
+def clustered_diff(loss_a, loss_b, *clusters):
+    """Mean of loss_a - loss_b with a cluster-robust standard error for each clustering
+    in `clusters` (e.g. cell, country). Returns (mean, [se_1, ...], [n_clusters_1, ...])."""
+    d = pd.Series(np.asarray(loss_a, float) - np.asarray(loss_b, float))
+    mean = float(d.mean())
+    ses, ns = [], []
+    for cl in clusters:
+        g = d.groupby(np.asarray(cl))
+        s, n = g.sum(), g.size()
+        G = len(s)
+        se = np.sqrt(((s - mean * n) ** 2).sum()) / n.sum()
+        ses.append(float(se * np.sqrt(G / (G - 1)) if G > 1 else np.nan)); ns.append(int(G))
+    return mean, ses, ns

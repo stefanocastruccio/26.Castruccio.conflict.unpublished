@@ -13,15 +13,20 @@ Estimators of the Z0 effect:
   field+country       + both
   spatial+            field+country with Z0 residualised on the 10 smoothest
                       eigenvectors of the lattice Laplacian (Dupont et al. 2022)
-  xgb_shap            slope of XGBoost SHAP(Z0) on Z0, with the paper's 5-deg
-                      block bootstrap (B = 20) giving an IQR and a 95% interval
+  xgb_shap            slope of XGBoost SHAP(Z0) on Z0. As in the original procedure,
+                      the model is fitted to a fixed 30% subsample of the training
+                      rows and the reported value (est) is the median over B_BOOT
+                      spatial block-bootstrap refits (2.5-deg blocks), which also give
+                      a 95% percentile interval and an IQR. Also stored:
+                        est_sub   the same model fitted once to the 30% subsample
+                        est_full  the same procedure fitted once to ALL training rows
 """
 from common import *  # noqa: F401,F403
 
 from sc import boosting as bo
 from sc.simulate import SimConfig, simulate
 
-CKPT = "s2_ckpt.jsonl"
+CKPT = "s2v2_ckpt.jsonl"   # v2: adds est_full (all training rows); old est_full is est_sub
 N_REPS = int(os.environ.get("N_REPS", 30))
 B_BOOT = int(os.environ.get("B_BOOT", 40))
 BLOCK_DEG = float(os.environ.get("BLOCK_DEG", 2.5))   # 48 blocks on the 20 x 15 degree domain
@@ -77,6 +82,12 @@ def one(arg):
     m0, spw = bo.fit_xgb_like_original(X, y, val, seed=seed)
     rounds = m0.num_boosted_rounds()
     point = slope(m0)
+    # the same procedure on all training rows (no subsample, no bootstrap); uses no
+    # random numbers from rng, so the bootstrap draws below are unchanged
+    val_all = (d["week"] >= sim.cfg.T_train - 26).to_numpy()
+    m_all, _ = bo.fit_xgb_like_original(d[XGB_FEATURES].to_numpy(float), d["y"].to_numpy(),
+                                        val_all, seed=seed)
+    point_all = slope(m_all)
     blk = bo.spatial_blocks(dsub["lon"], dsub["lat"], BLOCK_DEG)
     ub = np.unique(blk)
     boots = []
@@ -90,7 +101,7 @@ def one(arg):
     boots = np.array(boots)
     # as in the paper, the reported value is the median over bootstrap replicates
     rows.append(dict(scenario=scen, seed=seed, model="xgb_shap", est=float(np.median(boots)),
-                     est_full=point,
+                     est_sub=point, est_full=point_all,
                      se=boots.std(), lo=np.quantile(boots, 0.025), hi=np.quantile(boots, 0.975),
                      iqr_lo=np.quantile(boots, 0.25), iqr_hi=np.quantile(boots, 0.75),
                      n_blocks=int(len(ub)), n_boot=int(B_BOOT)))
@@ -111,8 +122,15 @@ if __name__ == "__main__":
     tab = (res.groupby(["scenario", "model"])
            .agg(mean_est=("est", "mean"), emp_sd=("est", "std"), mean_se=("se", "mean"),
                 coverage95=("covers", "mean"), reject_zero=("rejects_zero", "mean"),
-                iqr_excl_zero=("iqr_excludes_zero", "mean"))
+                iqr_excl_zero=("iqr_excludes_zero", "mean"),
+                mean_est_sub=("est_sub", "mean"), mean_est_full=("est_full", "mean"),
+                emp_sd_full=("est_full", "std"), n_reps=("est", "size"))
            .reset_index())
+    # Monte Carlo standard errors (binomial for proportions, emp. SD / sqrt(R) for means)
+    R = tab["n_reps"]
+    tab["mc_se_mean"] = tab["emp_sd"] / np.sqrt(R)
+    for c in ["coverage95", "reject_zero", "iqr_excl_zero"]:
+        tab[f"mc_se_{c}"] = np.sqrt(tab[c] * (1 - tab[c]) / R)
     tab["model"] = pd.Categorical(tab["model"], order)
     tab = tab.sort_values(["scenario", "model"])
     tab.to_csv(os.path.join(RESULTS, "s2_summary.csv"), index=False)

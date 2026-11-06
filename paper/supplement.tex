@@ -1,0 +1,209 @@
+% Annals of Applied Statistics submission (IMS imsart class).
+% imsart.cls / imsart.sty / spr-ims-nameyear.bst are included (VTeX texsupport.ims-aoas,
+% MIT licence, see LICENSE-imsart);
+% the IMS class is used. Otherwise the document falls back to the article class
+% with minimal stand-ins for the imsart front-matter macros, so it always compiles.
+\IfFileExists{imsart.cls}{%
+  \documentclass[aoas,preprint]{imsart}\def\IMSfallback{0}%
+}{%
+  \documentclass[11pt]{article}\def\IMSfallback{1}%
+}
+
+\makeatletter
+\ifnum\IMSfallback=1
+  \usepackage[margin=1in]{geometry}
+  \newcommand{\startlocaldefs}{}
+  %\newcommand{\endlocaldefs}{}
+  \newenvironment{frontmatter}{}{}
+  \newcommand{\runtitle}[1]{}
+  \def\IMS@authors{}
+  \renewcommand{\author}[2][]{%
+    \ifx\IMS@authors\@empty\g@addto@macro\IMS@authors{#2}%
+    \else\g@addto@macro\IMS@authors{\and #2}\fi
+    \gdef\@author{\IMS@authors}}
+  \newcommand{\fnms}[1]{#1}
+  \newcommand{\snm}[1]{#1}
+  \newcommand{\ead}[2][]{}
+  \newcommand{\printead}[2][]{}
+  \newcommand{\address}[2][]{}
+  % the aug block ends the title block: typeset the title after it
+  \newenvironment{aug}{\let\and\relax}{\aftergroup\maketitle}
+  \newenvironment{keyword}{\par\noindent\textbf{Keywords:} \ignorespaces}{\par}
+  \newcommand{\kwd}[1]{#1;\ }
+  \newenvironment{funding}{\section*{Funding}}{}
+  \newenvironment{acks}[1][Acknowledgments]{\section*{#1}}{}
+  \newenvironment{supplement}{\section*{Supplementary material}}{}
+  \newcommand{\stitle}[1]{\textbf{#1.}\ }
+  \newcommand{\sdescription}[1]{#1}
+\fi
+\makeatother
+
+\RequirePackage{amsthm,amsmath,amsfonts,amssymb}
+\RequirePackage[authoryear]{natbib}
+\RequirePackage{xr-hyper}
+\RequirePackage[colorlinks,citecolor=blue,urlcolor=blue]{hyperref}
+\externaldocument[M-]{main}% labels of the main paper (needs main.aux)
+\RequirePackage{graphicx}
+\RequirePackage{booktabs}
+\RequirePackage{multirow}
+\RequirePackage{bm}
+\RequirePackage{xcolor}
+
+\startlocaldefs
+\numberwithin{equation}{section}
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+\theoremstyle{definition}
+\newtheorem{remark}{Remark}
+% notation
+\newcommand{\bx}{\bm{x}}
+\newcommand{\bz}{\bm{z}}
+\newcommand{\bw}{\bm{w}}
+\newcommand{\bv}{\bm{v}}
+\newcommand{\bu}{\bm{u}}
+\newcommand{\bA}{\bm{A}}
+\newcommand{\bQ}{\bm{Q}}
+\newcommand{\bH}{\bm{H}}
+\newcommand{\bC}{\bm{C}}
+\newcommand{\bG}{\bm{G}}
+\newcommand{\bK}{\bm{K}}
+\newcommand{\btheta}{\bm{\theta}}
+\newcommand{\bbeta}{\bm{\beta}}
+\newcommand{\bgamma}{\bm{\gamma}}
+\newcommand{\bmeta}{\bm{\eta}}
+\newcommand{\logit}{\operatorname{logit}}
+\newcommand{\expit}{\operatorname{expit}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Normal}{\mathcal{N}}
+\newcommand{\sphere}{\mathbb{S}^2}
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\providecommand{\bseriesno}[1]{#1}% used by spr-ims-nameyear.bst for series volumes
+%\endlocaldefs
+
+\setcounter{secnumdepth}{2}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\thesection}{S\arabic{section}}
+\begin{document}
+
+\begin{frontmatter}
+\title{Supplementary Material for ``Where violence persists: latent spatial fields for
+the residual risk of armed conflict and social unrest''}
+\runtitle{Supplementary Material}
+\begin{aug}
+\author[A]{\fnms{Stefano}~\snm{Castruccio}\ead[label=e1]{scastruc@nd.edu}}
+\author[B]{\fnms{Richard}~\snm{Marcantonio}}
+\address[A]{Department of Applied and Computational Mathematics and Statistics,
+University of Notre Dame\printead[presep={,\ }]{e1}}
+\address[B]{Kroc Institute for International Peace Studies, Keough School of
+Global Affairs, University of Notre Dame}
+\end{aug}
+\end{frontmatter}
+
+This supplement contains the detailed tables and figures referred to in the main paper.
+Equation, section and table numbers without the prefix S refer to the main paper.
+
+\section{Methods}\label{supp:methods}
+\begin{table}
+\caption{Latent blocks of model~(\ref{M-eq:model}), their precision matrices and
+hyperparameters.}\label{tab:blocks}
+\centering\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+Block & Dimension & Precision & Hyperparameters \\
+\midrule
+fixed effects $\bbeta, \delta, \bgamma, \bm{\alpha}$ & $p$ & $10^{-4} \bm{I}$ & -- \\
+country effects $\bu$ & $n_c$ & $\sigma_u^{-2} \bm{I}$ & $\sigma_u$ \\
+spatial field $\bw$ & $n$ & $\bQ_s(\rho_w, \sigma_w)$, eq.~(\ref{M-eq:Qs}) & $\rho_w, \sigma_w$ \\
+cell effects $\bm{e}$ & $n$ & $\sigma_e^{-2} \bm{I}$ & $\sigma_e$ \\
+SVC fields $\bmeta_k$ & $n$ each & $\bQ_s(\rho_k, \sigma_k)$ & $\rho_k, \sigma_k$ \\
+space-time field $\bv$ & $n\,T_v$ & $\bQ_{\mathrm{AR}}(\phi) \otimes \bQ_s(\rho_v, \sigma_v)$ & $\rho_v, \sigma_v, \phi$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}
+\caption{Boundary treatments on a $60 \times 30$ lattice of $0.5^\circ$ cells with
+a sea strait of 2, 4 or 6 cells (about 110, 220, 330\,km): marginal variance of a
+coastal and of an inland land cell (nominal 1) and correlation between the two
+coastal cells facing each other across the strait, from 4{,}000 exact draws with
+$\rho = 400$\,km. ``Land only'' removes the strait from the lattice; ``sea = land''
+keeps it as ordinary cells without data.}\label{tab:barrier}
+\centering\small
+\input{tables/barrier}
+\end{table}
+
+\section{Simulation studies}\label{supp:sim}
+\begin{table}
+\caption{S1: residual diagnostics and recovery of the field (mean and SD over 20
+replicates).}\label{tab:s1-field}
+\centering\small
+\input{tables/s1_field}
+\end{table}
+
+\begin{table}
+\caption{S2: estimation of the effect $\alpha$ of a national indicator (30 replicates
+per scenario). Coverage of nominal 95\% intervals, and the proportion of replicates in
+which the interval excludes zero. $^\dagger$Least-squares slope of SHAP values on
+$Z_0$, with the 95\% block-bootstrap percentile interval and interquartile
+range.}\label{tab:s2}
+\centering\small
+\input{tables/s2}
+\end{table}
+
+\begin{table}
+\caption{S4: estimation of biome-specific temperature effects (30 replicates).
+``Detects sign'': proportion of replicates in which the interval excludes zero on the
+correct side. $^\ddagger$Median SHAP value of raw temperature within the biome, with
+the interquartile range of the bootstrap replicates, as in the original analysis; it
+estimates neither $\gamma_b$ nor $\bar\beta_b$.}\label{tab:s4}
+\centering\small
+\input{tables/s4}
+\end{table}
+
+\begin{table}
+\caption{S4: recovery of the spatially varying coefficient $\beta(s)$ (mean and SD
+over 30 replicates).}\label{tab:s4-extra}
+\centering\small
+\input{tables/s4_extra}
+\end{table}
+
+\section{Application}\label{supp:app}
+\begin{table}
+\caption{Test-period (2023--2024) residual diagnostics, Africa and the Middle East,
+for every model on identical test rows: Moran's $I$ of the standardised cell
+residuals (permutation $p$-value from 999 permutations, bounded below by 0.001) and
+the residual correlation between neighbouring cells in the same country and across a
+border.}\label{tab:app-diag}
+\centering\small
+\input{tables/real_diag}
+\end{table}
+
+\begin{table}
+\caption{Fitted hyperparameters of the hybrid models, Africa and the Middle East:
+range $\rho_w$ and standard deviation $\sigma_w$ of the field, standard deviation of
+the independent cell effects, and standard deviation $\sigma_u$ of the country
+effects.}\label{tab:app-field}
+\centering\small
+\input{tables/real_field}
+\end{table}
+
+\begin{table}
+\caption{Posterior summaries of the field $w$ of the hybrid model averaged over
+regions: mean, standard deviation and posterior probability that the regional average
+is positive. The regions were chosen before the fit, as known conflict zones and
+regions expected to be quiet. The last two rows give the share of all cells whose
+posterior probability of $w(s) > 0$ is above 0.95 or below 0.05.}\label{tab:app-boxes}
+\centering\small
+\input{tables/real_boxes}
+\end{table}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.6\textwidth]{figures/real_variogram.png}
+\caption{Empirical semivariograms of the standardised test-period cell residuals,
+against great-circle distance.}\label{fig:app-variogram}
+\end{figure}
+
+\end{document}

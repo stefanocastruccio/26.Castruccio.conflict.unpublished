@@ -8,7 +8,10 @@
    cell-week). Reported: the share of rows whose original count differs from the true
    one, the share of event weeks whose original count includes the current week's
    events while the true past count is zero, and the AUC-PR of each count as a
-   predictor of the outcome (a model-free view of the leakage).
+   predictor of the outcome (a model-free view of the leakage). These are per row of
+   the duplicated table (copies counted separately); the same quantities are also
+   reported per distinct cell-week (any copy / first copy). All years, no coverage
+   filter.
 
 Usage: python check_duplicates.py PARTS_DIR OUT.json
 """
@@ -73,6 +76,18 @@ def main(parts, out):
             "auc_pr_original_count": float(average_precision_score(yy, o)),
             "auc_pr_true_count": float(average_precision_score(yy, tr)),
             "rows": int(ok.sum())}
+        # the same per DISTINCT cell-week (the shares above count every copy)
+        leak = pd.Series((o > 0) & (tr == 0) & (yy == 1))
+        keys = df.loc[ok, KEY].reset_index(drop=True)
+        ev_cw = pd.Series(yy == 1).groupby([keys["grid_id"], keys["week_start"]]).max()
+        lk_cw = leak.groupby([keys["grid_id"], keys["week_start"]]).max()
+        fm = ~keys.duplicated().to_numpy()
+        res[out_name].update({
+            "cell_weeks": int(len(ev_cw)),
+            "share_event_cell_weeks_with_leak_in_any_copy": float(lk_cw[ev_cw].mean()),
+            "share_event_cell_weeks_with_leak_in_first_copy": float(leak[fm][yy[fm] == 1].mean()),
+            "auc_pr_original_count_first_copy": float(average_precision_score(yy[fm], o[fm])),
+            "auc_pr_true_count_first_copy": float(average_precision_score(yy[fm], tr[fm]))})
     json.dump(res, open(out, "w"), indent=1)
     print(json.dumps(res, indent=1))
 

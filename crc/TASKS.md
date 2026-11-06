@@ -197,3 +197,81 @@ python realdata/make_data_figure.py /groups/scastruc/conflict_spatial_work/clean
 ```
 (Update: borders now come from the committed Natural Earth file, so no `$COUNTRIES` is needed.) Commit `paper/figures/data_events.png` and `paper/figures/data_events.json`,
 which holds aggregate numbers only, and paste the JSON into STATUS.
+
+## Round 3 (after review round 2): READY
+
+The code changed after review round 2 (loader, XGBoost modes, hybrid, comparison and
+parametric models). Every real-data result is rerun once, on a new table `clean_r3.parquet`
+(`$CLEAN`, set in `env.sh`). The old `clean.parquet` / `clean_v2.parquet` are left alone.
+
+What changed, so you know what to check in the logs:
+- **Loader** (`02_load.sh`): each cell-week keeps the whole first row (no mixing of copies); IPC
+  phases are averaged over copies and stay missing when no copy has them; the national-indicator
+  fallback for country-years without interior cells now works (`nat_source` is `interior`,
+  `first_copy` or `missing`); new column `gdp_pc` = World Bank GDP / national population (sum of
+  GHSL population of the country's cells), one value per country-year (the loader asserts this).
+- **XGBoost** (`03_xgb.sh`, now an array of 8): `original` (orig.parquet, also scored on one row per
+  cell-week and on the cell-weeks of the repaired test set), `dedup` (published procedure on the
+  repaired table), `corrected` (no class weight, early stopping on 2022 after fitting 2018-2021,
+  no current-week climate, log national GDP per capita, IPC missing kept as missing),
+  `corrected_te` (location-aware feature computed from 2018-2021 for the early-stopping fit and
+  leave-one-year-out over 2018-2022 for the refit). Metrics now include onset rows and scores by test year.
+- **Hybrid** (`04_spatial.sh`, `06_global.sh`): offset features as in `corrected`; `diagnostics` in
+  `summary.json` and `variogram.csv` are now TEST-period (2023-2024); the training-period ones are in
+  `diagnostics_train` and `variogram_train.csv`. The border contrast also splits across-border pairs
+  by same/different cross-fitting fold. `summary.json` records `offset_training_region` and the share of
+  cells with P(w > 0) above 0.95 / below 0.05. `--land` is now required.
+- **Compare** (`05_compare.sh`): adds `xgb_dedup`; corrected models use the raw `logit`; SEs clustered by
+  cell and by country; onset / continuation rows; by test year; test-period variograms for every model
+  (`compare_<outcome>_variogram.csv`).
+- **Parametric models** (`07_glmm.sh`): iid cell effect (nugget) added to every model with a field;
+  missingness indicators for national indicators and IPC; climate anomalies with a floored SD
+  (precipitation on log1p); national GDP per capita; the central-Sahel space-time comparison now
+  fits w on the buffered lattice with the sea barrier (v stays on the observed cells). It also writes
+  `test_pred_<outcome>.parquet` (keep on the cluster).
+
+**Before submitting:** if 1693751 (`cs_global`) or 1693752 (`cs_glmm`) from Round 2 are still running,
+`qdel` them. They use the old code, their outputs are superseded, and they write to the same
+directories as the new jobs.
+
+Submit, from the repo after `git pull`:
+```
+cd /users/scastruc/projects/26.Castruccio.conflict.unpublished && git pull
+L=$(qsub -terse -v ONLY_CLEAN=1 crc/jobs/02_load.sh)                       # 1. loader -> $WORK/clean_r3.parquet
+X=$(qsub -terse -hold_jid $L crc/jobs/03_xgb.sh | cut -d. -f1)             # 2. xgb, array 1-8
+P=$(qsub -terse -hold_jid $L crc/jobs/04_spatial.sh | cut -d. -f1)         # 3. hybrid, Africa+ME
+C=$(qsub -terse -hold_jid $X,$P crc/jobs/05_compare.sh | cut -d. -f1)      # 4. compare
+G=$(qsub -terse -hold_jid $L crc/jobs/06_global.sh | cut -d. -f1)          # 5. hybrid, world
+M=$(qsub -terse -hold_jid $L crc/jobs/07_glmm.sh | cut -d. -f1)            # 6. parametric models
+D=$(qsub -terse crc/jobs/10_check_duplicates.sh)                           # independent
+echo "load $L xgb $X spatial $P compare $C global $G glmm $M check $D"
+```
+`ONLY_CLEAN=1` skips rebuilding `orig.parquet`: the `--keep-duplicates` path did not change, so the
+existing `$WORK/orig.parquet` is used by the `original` tasks. Log the job ids in STATUS.
+
+After the loader finishes (login or short node; it only reads parquet):
+`python realdata/check_missing.py $WORK/clean_r3.parquet results_real/data/missing_r3.json`
+
+Commit (aggregate files only; no parquet):
+- `$WORK/clean_r3.parquet.report.json` -> `results_real/data/clean_r3_report.json`; `missing_r3.json`;
+  `$WORK/data/check_duplicates.json` -> `results_real/data/check_duplicates.json` (now also per distinct cell-week).
+- `$WORK/xgb/metrics_{original,dedup,corrected,corrected_te}_{Conflict,Unrest}.json` (8 files) -> `results_real/xgb/`.
+- `$WORK/spatial/<outcome>/{summary.json,variogram.csv,variogram_train.csv,field.csv}` -> `results_real/spatial/<outcome>/`.
+- `$WORK/compare/compare_<outcome>.json` and `compare_<outcome>_variogram.csv` -> `results_real/compare/`.
+- `$WORK/spatial_global/<outcome>/{summary.json,variogram.csv,variogram_train.csv,field.csv}` -> `results_real/spatial_global/<outcome>/`.
+- `$WORK/glmm/{models_<outcome>.json,coefficients_<outcome>.csv,svc_tmax_<outcome>.csv}` -> `results_real/glmm/`.
+
+In STATUS, per job: rc, run time, maxvmem, and any Traceback. For the loader, also give rows/cells against
+clean_v2 and `share_rows_nat_from_first_copy`, `share_rows_gdp_pc_missing`. For xgb, the `rounds` of each task.
+For glmm, `prep.climate.*.cell_months_sd_zero` and `prep.missing_indicators`. If the `st` part of 07 runs
+out of time or memory, rerun it alone with `--models st --st-step 16 --out $WORK/glmm_st` (a separate
+directory, so that `models_<outcome>.json` of the other models is not overwritten) and record that.
+
+### Round 3 addendum: figures (run after the spatial jobs and the loader)
+```
+python paper/make_data_figure.py $CLEAN paper/figures/data_events.png
+python paper/make_fitted_figure.py $WORK/spatial/conflict/test_pred.parquet $WORK/spatial/unrest/test_pred.parquet paper/figures/real_fitted.png
+python paper/make_real_figures.py
+python paper/make_tables.py && python paper/make_sim_figures.py   # after the simulation merge
+```
+Commit the PNG, JSON and TeX outputs.

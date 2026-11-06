@@ -95,9 +95,10 @@ def s1():
         (r"$\hat\rho_w$ (km) [truth 400]", "range"),
         (r"$\hat\sigma_w$ [truth 1]", "sd"),
     ]
+    dg = lambda k: 0 if k == "range" else 3   # ranges in km as integers
     body = (r"\begin{tabular}{@{}lcc@{}}" "\n" r"\toprule" "\n"
             r"Quantity & Mean & SD \\" "\n" r"\midrule" "\n"
-            + "\n".join(f"{a} & {raw[k].mean():.3f} & {raw[k].std():.3f} \\\\" for a, k in lines if k in raw)
+            + "\n".join(f"{a} & {raw[k].mean():.{dg(k)}f} & {raw[k].std():.{dg(k)}f} \\\\" for a, k in lines if k in raw)
             + "\n" r"\bottomrule" "\n" r"\end{tabular}" "\n")
     write("s1_field.tex", body)
 
@@ -190,8 +191,9 @@ def s4():
              (r"RMSE of $\hat\beta(s)$, biome slopes only", e.biome_only_rmse_beta_s),
              (r"$\hat\sigma_\eta$ [truth 0.15]", e.svc_sd_hat),
              (r"$\hat\rho_\eta$ (km) [truth 600]", e.svc_range_hat)]
+    dg = lambda a: 0 if "(km)" in a else 3   # ranges in km as integers
     body = (r"\begin{tabular}{@{}lcc@{}}" "\n" r"\toprule" "\n" r"Quantity & Mean & SD \\" "\n"
-            r"\midrule" "\n" + "\n".join(f"{a} & {b.mean():.3f} & {b.std():.3f} \\\\" for a, b in lines)
+            r"\midrule" "\n" + "\n".join(f"{a} & {b.mean():.{dg(a)}f} & {b.std():.{dg(a)}f} \\\\" for a, b in lines)
             + "\n" r"\bottomrule" "\n" r"\end{tabular}" "\n")
     write("s4_extra.tex", body)
 

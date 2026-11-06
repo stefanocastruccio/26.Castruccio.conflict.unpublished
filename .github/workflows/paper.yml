@@ -14,16 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Compile paper/main.tex
+      - name: Compile paper/main.tex and paper/supplement.tex
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: main.tex
+          root_file: |
+            main.tex
+            supplement.tex
           working_directory: paper
       - name: Commit the PDF
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f paper/main.pdf
+          git add -f paper/main.pdf paper/supplement.pdf
           if git diff --cached --quiet; then echo "PDF unchanged"; exit 0; fi
           git commit -m "Build paper PDF [skip ci]"
           git pull --rebase origin main

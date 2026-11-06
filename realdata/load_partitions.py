@@ -14,11 +14,15 @@ across countries. Here:
   * national indicators (EPI, GHG, MF, ECO, V-Dem) are re-attached per country-year
     from the cells that were *not* duplicated (interior cells, which have the
     correct values);
-  * IPC phase populations are averaged over the copies;
-  * GDP is re-apportioned by population within the centroid country when the
-    original GDP table is given (--gdp-csv); otherwise the first copy is kept
-    and flagged;
-  * all other columns are identical across copies and the first copy is kept.
+  * IPC phase populations are averaged over the copies (missing stays missing);
+  * national GDP per capita gdp_pc = World Bank GDP / national population (the sum of
+    the GHSL population of the country's cells) is attached per country-year when the
+    GDP table is given (--gdp-csv); per-cell GDP (gdp, national GDP x population
+    share) is also re-apportioned, for the reproduction of the original features only;
+  * for all other columns the whole first row (copy) of the cell-week is kept, so an
+    output row never combines columns from different copies.
+Countries cut by --region get a truncated national population; do not use --region
+with --gdp-csv for analysis tables.
 --keep-duplicates skips the repair (to reproduce the original analysis).
 
 Outcomes Conflict / Unrest and the 4-week features are computed as in the
@@ -75,13 +79,16 @@ def read_one(path, region):
 
 
 def collapse(df):
-    """One row per (grid_id, week_start): first copy, IPC phases averaged."""
+    """One row per (grid_id, week_start): the whole FIRST row (copy) of each cell-week is
+    kept, so that no output row mixes columns from different copies; only the IPC phase
+    populations are averaged over the copies (NaN when every copy is NaN)."""
     n = df.groupby(KEY)["grid_id"].transform("size")
     df["n_copies"] = n.astype("int16")
     phases = [c for c in PHASES if c in df.columns]
-    first = df.groupby(KEY, sort=False).first()
+    first = df.drop_duplicates(KEY, keep="first").set_index(KEY)
     if phases:
-        first[phases] = df.groupby(KEY, sort=False)[phases].mean()
+        mean = df.groupby(KEY, sort=False)[phases].mean()
+        first[phases] = mean.reindex(first.index).to_numpy(dtype="float32", na_value=np.nan)
     return first.reset_index()
 
 
@@ -166,9 +173,21 @@ def main():
         report["share_rows_nat_missing_by_year"] = {
             c: {int(y): float(v) for y, v in df[c].isna().groupby(df["year"]).mean().items()} for c in nat}
         report["cells_nat_from_first_copy_any_year"] = int(df.loc[no_interior, "grid_id"].nunique())
-        for c in nat:   # countries with no interior cell keep their first copy
-            df[c] = fill[c].to_numpy(dtype="float32", na_value=np.nan)
-            df[c] = df[c].fillna(df.groupby(["ISO_A3", "year"])[c].transform("first"))
+        # country-years with no interior value fall back to the most common value of the
+        # kept (first) copies in that country-year. The fallback is computed from the
+        # ORIGINAL column, before it is overwritten.
+        fb_used = np.zeros(len(df), bool)
+        for c in nat:
+            fb = df.groupby(["ISO_A3", "year"])[c].transform(
+                lambda s: s.mode().iat[0] if s.notna().any() else np.nan).to_numpy(dtype="float32")
+            v = fill[c].to_numpy(dtype="float32", na_value=np.nan)
+            use_fb = np.isnan(v) & ~np.isnan(fb)
+            fb_used |= use_fb
+            df[c] = np.where(use_fb, fb, v).astype("float32")
+        all_missing = df[nat].isna().all(axis=1).to_numpy()
+        df["nat_source"] = np.where(~no_interior, "interior",
+                                    np.where(all_missing, "missing", "first_copy"))
+        report["share_rows_nat_from_first_copy"] = float(fb_used.mean())
         if a.gdp_csv and "gdp" in df.columns:
             with open(a.gdp_csv, encoding="utf-8-sig") as fh:   # World Bank files start with metadata lines
                 skip = next(i for i, line in enumerate(fh) if line.lstrip('"').startswith("Country Name"))
@@ -180,12 +199,24 @@ def main():
             g["year"] = g["year"].astype(int)
             pop_c = df.drop_duplicates(["grid_id", "year"]).groupby(["ISO_A3", "year"])["population"].sum()
             df = df.merge(g[["ISO_A3", "year", "gdp_nat"]], on=["ISO_A3", "year"], how="left")
-            df["gdp"] = (df["gdp_nat"] * df["population"]
-                         / df.set_index(["ISO_A3", "year"]).index.map(pop_c).to_numpy()).astype("float32")
+            pc = df.set_index(["ISO_A3", "year"]).index.map(pop_c).to_numpy(dtype=float)
+            pc = np.where(pc > 0, pc, np.nan)
+            # per-cell GDP (national GDP x the cell's population share): kept only for the
+            # reproduction of the original features (reproduce_xgb --mode dedup)
+            df["gdp"] = (df["gdp_nat"] * df["population"] / pc).astype("float32")
+            # GDP per capita, a national quantity: national GDP / national population
+            # (sum of the GHSL population of the country's cells); the models use log(gdp_pc)
+            df["gdp_pc"] = (df["gdp_nat"] / pc).astype("float32")
+            chk = df.groupby(["ISO_A3", "year"])["gdp_pc"].nunique(dropna=True)
+            assert (chk <= 1).all(), "gdp_pc is not constant within country-year"
             df = df.drop(columns="gdp_nat")
             df["gdp_flag"] = "reapportioned"
+            report["gdp_pc"] = "national GDP (World Bank) / sum of GHSL population of the country's cells"
+            report["share_rows_gdp_pc_missing"] = float(df["gdp_pc"].isna().mean())
         else:
             df["gdp_flag"] = "first_copy"
+            df["gdp_pc"] = np.float32(np.nan)
+            print("WARNING: no --gdp-csv; gdp_pc (national GDP per capita) is missing")
 
     df = df.sort_values(["grid_id", "week_start"]).reset_index(drop=True)
     g = df.groupby("grid_id", sort=False)

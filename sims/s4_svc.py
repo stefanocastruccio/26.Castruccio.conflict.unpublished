@@ -9,9 +9,23 @@ Estimators:
   biome_nofield   fixed biome-specific slopes, no latent effects
   biome_field     fixed biome-specific slopes + field + country
   svc             biome_field + SVC field eta(s) on temp_anom
-  xgb             per-biome slope of SHAP(temp) on temp (point estimate from the
-                  full model, interval from the paper's 5-deg block bootstrap)
-  xgb_median      the paper's Fig. 3 statistic: median SHAP(temp) within biome
+  xgb_slope       per-biome slope of SHAP(temp_anom) on temp_anom
+  xgb_slope_full  the same with the interaction values credited to temp_anom
+  xgb_median_raw  the original Fig. 3 statistic: median SHAP(temp_raw) within biome
+For the three XGBoost statistics, as in the original procedure, `est` is the median
+over B_BOOT spatial block-bootstrap refits (2.5-deg blocks) on a fixed 30% subsample
+of the training rows, with 95% percentile bands (IQR bands for xgb_median_raw).
+`est_full` is the same statistic from one fit to ALL training rows (the models used
+to choose the number of trees), with no subsample and no bootstrap.
+
+For f = g(b) z with b and z independent, the interventional SHAP value of z is
+(1/2) (E g(B) + g(b)) (z - E z), so the ordinary SHAP slope in biome b targets
+(gbar + gamma_b) / 2 (column shap_target), which equals gamma_b / 2 only when the
+cell-weighted mean gbar of gamma is zero. The interaction-credited slope targets
+gamma_b in either case.
+
+S4_GAMMA=asym uses gamma = (0, 0.1, 0.2, 0.4) (gbar about 0.175), to show the
+difference; its outputs carry the suffix _asym.
 """
 from common import *  # noqa: F401,F403
 
@@ -20,7 +34,9 @@ from sc.simulate import SimConfig, simulate
 
 N_REPS = int(os.environ.get("N_REPS", 30))
 B_BOOT = int(os.environ.get("B_BOOT", 20))
-GAMMA = (-0.3, -0.1, 0.1, 0.3)
+S4_GAMMA = os.environ.get("S4_GAMMA", "default")
+GAMMA = {"default": (-0.3, -0.1, 0.1, 0.3), "asym": (0.0, 0.1, 0.2, 0.4)}[S4_GAMMA]
+SUFFIX = "" if S4_GAMMA == "default" else f"_{S4_GAMMA}"
 BASE = ["pop", "log_lag4", "prec_anom"]
 FACT = [("biome", None), ("biome", "temp_anom")]
 
@@ -35,11 +51,14 @@ def one(seed):
     # the estimand of fixed biome slopes; gamma_b is the estimand of the SVC hyper-mean
     realized = sim.cells.groupby("biome")["beta_temp"].mean().to_dict()
 
-    def rec(model, b, est, se=None, lo=None, hi=None):
+    gbar = float(np.mean(np.asarray(GAMMA)[sim.cells["biome"].to_numpy()]))
+
+    def rec(model, b, est, se=None, lo=None, hi=None, est_full=np.nan):
         if se is not None:
             lo, hi = est - 1.96 * se, est + 1.96 * se
         rows.append(dict(seed=seed, model=model, biome=b, truth=GAMMA[b],
-                         truth_realized=realized[b], est=est, lo=lo, hi=hi))
+                         truth_realized=realized[b], est=est, lo=lo, hi=hi,
+                         est_full=est_full, shap_target=(gbar + GAMMA[b]) / 2))
 
     for model, kw in [("biome_nofield", {}), ("biome_field", dict(field=True, country=True)),
                       ("svc", dict(field=True, country=True, svc_col="temp_anom"))]:
@@ -63,8 +82,8 @@ def one(seed):
     # XGBoost, two feature sets (both with the original's sqrt class weight and early
     # stopping on the last 26 training weeks):
     #   anomaly features: per-biome slope of the ordinary SHAP value of temp_anom (for a
-    #     pure biome x temperature interaction it targets gamma_b / 2, the other half
-    #     going to biome) and of the interaction-credited contribution (targets gamma_b);
+    #     pure biome x temperature interaction it targets (gbar + gamma_b) / 2, see the
+    #     docstring) and of the interaction-credited contribution (targets gamma_b);
     #   raw temperature (as in the original analysis): median SHAP value of temp_raw
     #     within biome, the original's Fig. 3 statistic.
     rng = np.random.default_rng(seed)
@@ -88,6 +107,7 @@ def one(seed):
         med = {b: float(np.median(SR[be == b])) for b in range(4)}
         return [sl[k] for k in range(4)], [fl[k] for k in range(4)], [med[k] for k in range(4)]
 
+    full = stats(mA, mR)   # one fit to all training rows; draws nothing from rng
     sub = rng.random(len(d)) < 0.3
     blk = bo.spatial_blocks(d["lon"], d["lat"], 2.5)
     ub = np.unique(blk)
@@ -107,20 +127,22 @@ def one(seed):
     for b in range(4):
         for k, name in enumerate(["xgb_slope", "xgb_slope_full"]):
             v = boots[:, k, b]
-            rec(name, b, float(np.median(v)), lo=np.quantile(v, .025), hi=np.quantile(v, .975))
+            rec(name, b, float(np.median(v)), lo=np.quantile(v, .025), hi=np.quantile(v, .975),
+                est_full=float(full[k][b]))
         v = boots[:, 2, b]
-        rec("xgb_median_raw", b, float(np.median(v)), lo=np.quantile(v, .25), hi=np.quantile(v, .75))
+        rec("xgb_median_raw", b, float(np.median(v)), lo=np.quantile(v, .25), hi=np.quantile(v, .75),
+            est_full=float(full[2][b]))
     return rows, extra
 
 
 if __name__ == "__main__":
-    out = run_parallel(one, range(1, N_REPS + 1), checkpoint=os.path.join(RESULTS, "s4_ckpt.jsonl"))
+    out = run_parallel(one, range(1, N_REPS + 1), checkpoint=os.path.join(RESULTS, f"s4v2{SUFFIX}_ckpt.jsonl"))
     if os.environ.get("SHARD"):
         sys.exit(0)
     res = pd.DataFrame([r for rows, _ in out for r in rows])
     extra = pd.DataFrame([e for _, e in out])
-    res.to_csv(os.path.join(RESULTS, "s4_raw.csv"), index=False)
-    extra.to_csv(os.path.join(RESULTS, "s4_extra.csv"), index=False)
+    res.to_csv(os.path.join(RESULTS, f"s4_raw{SUFFIX}.csv"), index=False)
+    extra.to_csv(os.path.join(RESULTS, f"s4_extra{SUFFIX}.csv"), index=False)
     res["covers"] = (res["lo"] <= res["truth"]) & (res["truth"] <= res["hi"])
     res["covers_realized"] = ((res["lo"] <= res["truth_realized"])
                               & (res["truth_realized"] <= res["hi"]))
@@ -130,7 +152,14 @@ if __name__ == "__main__":
            .agg(truth=("truth", "first"), mean_realized=("truth_realized", "mean"),
                 mean_est=("est", "mean"), emp_sd=("est", "std"),
                 coverage95=("covers", "mean"), coverage95_realized=("covers_realized", "mean"), sign_correct=("sign_ok", "mean"),
-                detects=("excl_zero_right_sign", "mean")).reset_index())
-    tab.to_csv(os.path.join(RESULTS, "s4_summary.csv"), index=False)
+                detects=("excl_zero_right_sign", "mean"),
+                shap_target=("shap_target", "mean"), mean_est_full=("est_full", "mean"),
+                n_reps=("est", "size")).reset_index())
+    # Monte Carlo standard errors (binomial for proportions, emp. SD / sqrt(R) for means)
+    R = tab["n_reps"]
+    tab["mc_se_mean"] = tab["emp_sd"] / np.sqrt(R)
+    for c in ["coverage95", "coverage95_realized", "detects"]:
+        tab[f"mc_se_{c}"] = np.sqrt(tab[c] * (1 - tab[c]) / R)
+    tab.to_csv(os.path.join(RESULTS, f"s4_summary{SUFFIX}.csv"), index=False)
     print(tab.round(3).to_string(index=False))
     print(extra.describe().loc[["mean", "std"]].T.round(3).to_string())

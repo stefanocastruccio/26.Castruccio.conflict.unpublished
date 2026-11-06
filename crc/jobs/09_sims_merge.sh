@@ -9,10 +9,14 @@
 #$ -o /groups/scastruc/conflict_spatial_work/logs/
 # Merge the shards of 08_sims.sh (each script reads all shard checkpoints, computes
 # anything missing, and writes the summaries), then rebuild the paper tables.
+# Outputs: s0_*, s1_* (default) and s1_*_calibrated, s2_*, s3_* (five truths, with the
+# 8-week fit), s4_* (symmetric gamma) and s4_*_asym, barrier_check.csv.
 source /users/scastruc/projects/26.Castruccio.conflict.unpublished/crc/jobs/env.sh
 cd "$REPO/sims"
-export N_JOBS=${NSLOTS:-4} ST_WEEKLY=1
+export N_JOBS=${NSLOTS:-4} ST_WEEKLY=1 S3_PART=all
 for S in s0_engine.py s1_residual_field.py s2_confounding.py s3_persistence.py s4_svc.py barrier_check.py; do
     python "$S" || echo "FAILED $S"
 done
+S1_CONFIG=calibrated python s1_residual_field.py || echo "FAILED s1_residual_field.py calibrated"
+S4_GAMMA=asym python s4_svc.py || echo "FAILED s4_svc.py asym"
 cd "$REPO" && python paper/make_tables.py

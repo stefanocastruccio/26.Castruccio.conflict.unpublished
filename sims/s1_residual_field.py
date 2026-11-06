@@ -15,6 +15,15 @@ Predictors compared on the test period:
   hybrid_field        xgb_crossfit offset + country effects + Matern field
   glmm                parametric model with country effects + field
   persistence         ranking by the past 4-week event count
+
+The parametric model (glmm) has a single temperature slope, so it omits the
+biome-specific slopes of the default truth: it is not correctly specified.
+
+S1_CONFIG selects the truth:
+  default     SimConfig defaults (field sd 1, range 400 km, country sd 0.3)
+  calibrated  parameters closer to the real-data fit (field sd 1.5, range 260 km,
+              country sd 0.8); outputs carry the suffix _calibrated and no figure
+              is drawn
 """
 from common import *  # noqa: F401,F403
 
@@ -28,8 +37,12 @@ from sc import boosting as bo, diagnostics as dg
 from sc.laplace import prob_from_eta
 from sc.simulate import SimConfig, simulate
 
-CKPT = "s1_ckpt.jsonl"
 N_REPS = int(os.environ.get("N_REPS", 20))
+S1_CONFIG = os.environ.get("S1_CONFIG", "default")
+CONFIGS = {"default": {},
+           "calibrated": dict(field_sd=1.5, field_range=260.0, country_sd=0.8)}
+SUFFIX = "" if S1_CONFIG == "default" else f"_{S1_CONFIG}"
+CKPT = f"s1{SUFFIX}_ckpt.jsonl"
 
 
 def latent_fit(d_tr, d_te, sim, off_tr, off_te, kind):
@@ -48,7 +61,7 @@ def latent_fit(d_tr, d_te, sim, off_tr, off_te, kind):
 
 
 def one(seed, return_objects=False):
-    sim = simulate(SimConfig(seed=seed))
+    sim = simulate(SimConfig(seed=seed, **CONFIGS[S1_CONFIG]))
     df, n = sim.df, sim.lattice.n
     tr = df["train"].to_numpy(); te = ~tr
     val = (df["week"] >= sim.cfg.T_train - 26).to_numpy() & tr
@@ -110,7 +123,8 @@ def figure(seed=1):
     def grid(v):
         g = np.full(L.mask.shape, np.nan); g[L.row, L.col] = v; return g
 
-    fig, ax = plt.subplots(1, 4, figsize=(17, 3.8))
+    fig, axs = plt.subplots(2, 2, figsize=(11, 8.6))
+    ax = axs.ravel()
     ext = [L.lon_c[0] - 0.25, L.lon_c[-1] + 0.25, L.lat_c[0] - 0.25, L.lat_c[-1] + 0.25]
     cg = grid(sim.cells["country"].to_numpy().astype(float))
     # country borders: segments between horizontally / vertically adjacent cells of different countries
@@ -123,31 +137,47 @@ def figure(seed=1):
             if i + 1 < cg.shape[0] and cg[i, j] != cg[i + 1, j]:
                 segs.append([(x - 0.25, y + 0.25), (x + 0.25, y + 0.25)])
     from matplotlib.collections import LineCollection
-    for a, v, t in [(ax[0], sim.cells["w"].to_numpy(), "true field $w(s)$"),
-                    (ax[1], r, "cross-fitted XGBoost: cell residual"),
-                    (ax[2], m.block_mean(2), "posterior mean of $w(s)$, hybrid model")]:
-        lim = np.nanquantile(np.abs(v), 0.98)
+    w_true, w_hat = sim.cells["w"].to_numpy(), m.block_mean(block_index(m, "field"))
+    lim_w = np.nanquantile(np.abs(np.r_[w_true, w_hat]), 0.98)
+    for a, v, t, lim in [(ax[0], w_true, "(a) true field $w(s)$", lim_w),
+                         (ax[1], r, "(b) cross-fitted XGBoost: standardised cell residual",
+                          np.nanquantile(np.abs(r), 0.98)),
+                         (ax[2], w_hat, "(c) posterior mean of $w(s)$, hybrid model", lim_w)]:
         im = a.imshow(grid(v), origin="lower", extent=ext, cmap="RdBu_r", vmin=-lim, vmax=lim)
-        a.set_title(t, fontsize=10); plt.colorbar(im, ax=a, shrink=0.8)
+        a.set_title(t, fontsize=10, loc="left"); plt.colorbar(im, ax=a, shrink=0.85)
         a.add_collection(LineCollection(segs, colors="k", linewidths=0.6))
         a.set_xlabel("longitude"); a.set_ylabel("latitude")
     vg = dg.variogram(r, L.lon, L.lat, np.arange(0, 1600, 100))
-    ax[3].plot(vg.dist_km, vg.gamma, "o-")
+    ax[3].plot(vg.dist_km, vg.gamma, "o-", color="#1f5fae")
     ax[3].set_xlabel("great-circle distance (km)"); ax[3].set_ylabel("semivariance")
-    ax[3].set_title("variogram of XGBoost cell residuals", fontsize=10)
+    ax[3].set_title("(d) semivariogram of the residuals in (b)", fontsize=10, loc="left")
+    ax[3].spines[["top", "right"]].set_visible(False); ax[3].grid(color="#e4e3df", lw=0.6)
     fig.tight_layout()
-    fig.savefig(os.path.join(RESULTS, "s1_maps.png"), dpi=130)
+    fig.savefig(os.path.join(RESULTS, "s1_maps.png"), dpi=200)
 
 
 if __name__ == "__main__":
     res = pd.DataFrame(run_parallel(one, range(1, N_REPS + 1), checkpoint=os.path.join(RESULTS, CKPT)))
     if os.environ.get("SHARD"):
         sys.exit(0)
-    res.to_csv(os.path.join(RESULTS, "s1_raw.csv"), index=False)
+    res.to_csv(os.path.join(RESULTS, f"s1_raw{SUFFIX}.csv"), index=False)
     models = ["oracle", "xgb_original", "xgb_te", "xgb_crossfit", "hybrid_iid", "hybrid_field", "glmm"]
     tab = pd.DataFrame({m: {k: f"{res[f'{m}.{k}'].mean():.4f} ({res[f'{m}.{k}'].std():.4f})"
                             for k in ["log_score", "brier", "auc_pr", "auc_roc"]} for m in models}).T
     tab.loc["persistence", "auc_pr"] = f"{res['persistence.auc_pr'].mean():.4f}"
-    tab.to_csv(os.path.join(RESULTS, "s1_scores.csv"))
+    tab.to_csv(os.path.join(RESULTS, f"s1_scores{SUFFIX}.csv"))
     print(tab.to_string())
-    figure()
+    # paired differences against the location-aware baseline (xgb_te), with the
+    # standard error over replicates and the number of replicates in which the
+    # model is better
+    pair = []
+    for m in ["hybrid_iid", "hybrid_field", "glmm", "xgb_original", "oracle"]:
+        for k, lower_better in [("log_score", True), ("brier", True), ("auc_pr", False), ("auc_roc", False)]:
+            dlt = res[f"{m}.{k}"] - res[f"xgb_te.{k}"]
+            pair.append(dict(model=m, score=k, mean_diff=dlt.mean(),
+                             se=dlt.std() / np.sqrt(len(dlt)),
+                             n_better=int(((dlt < 0) if lower_better else (dlt > 0)).sum()),
+                             n_reps=len(dlt)))
+    pd.DataFrame(pair).to_csv(os.path.join(RESULTS, f"s1_paired{SUFFIX}.csv"), index=False)
+    if S1_CONFIG == "default":
+        figure()

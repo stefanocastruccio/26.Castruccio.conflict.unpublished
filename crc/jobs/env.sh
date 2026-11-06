@@ -3,6 +3,9 @@ export DATA=/groups/scastruc/lmenical/drew/data
 export WORK=/groups/scastruc/conflict_spatial_work
 export REPO=${REPO:-/users/scastruc/projects/26.Castruccio.conflict.unpublished}
 mkdir -p "$WORK/xgb" "$WORK/spatial"
+# Repaired table used by every downstream job (Round 3: clean_r3.parquet, built by
+# 02_load.sh with the Round 3 loader; earlier rounds used clean.parquet / clean_v2.parquet)
+export CLEAN=${CLEAN:-$WORK/clean_r3.parquet}
 # conda environment with pandas, xgboost, pyarrow, pymetis, geopandas
 # CRC: dedicated env (the geostatistics env "geo" is left untouched)
 module load conda >/dev/null 2>&1 || true

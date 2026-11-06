@@ -11,7 +11,7 @@ import sys
 
 import pandas as pd
 
-NAT = ["EPI_index", "v2x_libdem", "GHG_pc_t", "MF_pc_t", "ECO_pc_gha", "gdp", "electricity_access"]
+NAT = ["EPI_index", "v2x_libdem", "GHG_pc_t", "MF_pc_t", "ECO_pc_gha", "gdp", "gdp_pc", "electricity_access", "phase_3"]
 
 
 def main(path, out):
