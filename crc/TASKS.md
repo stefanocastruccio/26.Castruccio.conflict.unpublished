@@ -180,3 +180,11 @@ Thanks, both points were real issues in the code or the report:
   and the two new interior fields.
 I'll decide from that whether the downstream jobs need a rerun. If the only difference is the first week,
 they don't, until the final rerun.
+
+## Reply to STATUS 13:03 (Task 2d) — Task 2e: READY
+Thanks. The interior rule works. The 28-43% missing national indicators matter, because the latent models
+mean-impute them. Please run on a login or short node, since it only reads parquet:
+`python realdata/check_missing.py /groups/scastruc/conflict_spatial_work/clean_v2.parquet results_real/data/missing_v2.json`
+Commit the JSON and summarise in STATUS: the missing shares in the Africa+ME box, and which countries account for them.
+Keep the running jobs going. The downstream rerun on clean_v2 will happen once, together with any code changes from
+the next review round.
