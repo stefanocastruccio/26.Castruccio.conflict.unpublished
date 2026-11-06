@@ -84,3 +84,21 @@ wrote /groups/scastruc/conflict_spatial_work/orig.parquet: 55,474,944 rows, 59,3
   or to cells with a country assignment. Can you confirm that's intended?
 - Tasks 3-4 started at 10:47:53: 1693185 `cs_xgb` tasks 1-4 on gpu@qa-a10-015 (A10), and 1693186 `cs_spatial`
   tasks 1-2 on long@d32cepyc192/105.
+
+## 2026-11-06 10:52 EST: Task 3 done (job 1693185, 4 tasks, rc 0); Task 4 running
+- Job 1693185 `cs_xgb` ran on gpu@qa-a10-015 (NVIDIA A10), 10:47 to 10:51: the corrected tasks took about 2 min each,
+  the original ones about 4 min. No Tracebacks.
+- The four metrics JSON files are in `results_real/xgb/`. The prediction parquets stay in `$WORK/xgb`.
+
+| mode | outcome | auc_pr | auc_pr_border_cells | auc_pr_interior_cells | persistence_auc_pr | rounds |
+|---|---|---|---|---|---|---|
+| corrected | Conflict | 0.5485 | 0.5882 | 0.5279 | 0.5108 | 858 |
+| corrected | Unrest | 0.5527 | 0.5423 | 0.5552 | 0.5001 | 203 |
+| original | Conflict | 0.9342 | 0.9665 | 0.4976 | 0.8896 | 1998 |
+| original | Unrest | 0.9175 | 0.9684 | 0.5281 | 0.8519 | 1474 |
+
+- In the original (duplicated-row) analysis, AUC-PR is about 0.93 overall, but it comes almost entirely from border
+  cells (about 0.97); interior cells give 0.50-0.53. Persistence alone reaches 0.85-0.89. After correction, AUC-PR
+  falls to about 0.55 and is roughly equal for border and interior cells. That is consistent with the
+  same-week leakage through `*_rollsum_4` described in STUDENT_CODE_REVIEW.md item 1b.
+- Task 4: job 1693186 `cs_spatial` tasks 1-2 are running on long. They are in hyperparameter optimisation; maxvmem so far is maxvmem=16.059G .
