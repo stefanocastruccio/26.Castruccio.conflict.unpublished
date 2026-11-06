@@ -608,3 +608,19 @@ two files.
 - 11_dynamic: **1694603** (array 1-8). 12_dynamic_compare: **1694604** (array 1-2), held on it.
 - I'll report the wall time and maxvmem of each task, and flag any space-time task that looks set to exceed 24 h.
 - Round 3 glmm (1694071) is still running.
+
+## 2026-11-06 16:13 EST: Round 4 oracle done (1694603.1-2, rc 0, about 3 min each, maxvmem about 21 GB)
+- Files in `results_real/dynamic/<outcome>/`: `summary_oracle.json`, `variogram_{offset,iid,field}.csv` and `field_test.csv`.
+  These are from the oracle run. `field_test.csv` will be overwritten if later tasks write the same name, so I'll
+  recopy it at the end.
+- In-sample fit on the test period (2023-24), Africa + ME, 4,976,634 rows and 13,719 cells:
+
+| outcome | offset alone | + iid (AUC-PR / log) | + field (AUC-PR / log) | Δlog-ML field − iid | field range | Moran's I: offset / iid / field |
+|---|---|---|---|---|---|---|
+| conflict | 0.461 / 0.0700 | 0.555 / 0.0570 | 0.554 / 0.0567 | **+1045** | 374 km | 0.539 / 0.346 / **-0.119** |
+| unrest | 0.493 / 0.0707 | 0.579 / 0.0605 | 0.578 / 0.0604 | **+69** | 66 km | 0.258 / 0.154 / **0.003** (p = 0.33) |
+
+- Even fitted on the test period itself, field and iid give the same scores. The marginal likelihood still strongly
+  prefers the field: +1045 for conflict, +69 for unrest.
+- The field removes the residual autocorrelation. For conflict it slightly over-corrects, to a negative Moran's I.
+- Rolling (tasks 3-4) and space-time (tasks 5-8) have been running since 16:06. Glmm 1694071 is still running, at maxvmem about 33.6 GB.
