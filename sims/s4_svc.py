@@ -19,7 +19,7 @@ from sc import boosting as bo
 from sc.simulate import SimConfig, simulate
 
 N_REPS = int(os.environ.get("N_REPS", 30))
-B_BOOT = int(os.environ.get("B_BOOT", 10))
+B_BOOT = int(os.environ.get("B_BOOT", 20))
 GAMMA = (-0.3, -0.1, 0.1, 0.3)
 BASE = ["pop", "log_lag4", "prec_anom"]
 FACT = [("biome", None), ("biome", "temp_anom")]
@@ -60,42 +60,63 @@ def one(seed):
             gam = np.array([fs[names[b]][0] for b in biome])
             extra["biome_only_rmse_beta_s"] = float(np.sqrt(np.mean((gam - truth) ** 2)))
 
-    # XGBoost: SHAP slope per biome + block bootstrap; and the paper's median-SHAP statistic
+    # XGBoost, two feature sets (both with the original's sqrt class weight and early
+    # stopping on the last 26 training weeks):
+    #   anomaly features: per-biome slope of the ordinary SHAP value of temp_anom (for a
+    #     pure biome x temperature interaction it targets gamma_b / 2, the other half
+    #     going to biome) and of the interaction-credited contribution (targets gamma_b);
+    #   raw temperature (as in the original analysis): median SHAP value of temp_raw
+    #     within biome, the original's Fig. 3 statistic.
     rng = np.random.default_rng(seed)
-    X = d[XGB_FEATURES].to_numpy(float); y = d["y"].to_numpy()
+    y = d["y"].to_numpy()
+    feats_raw = [("temp_raw" if f == "temp_anom" else f) for f in XGB_FEATURES]
+    XA, XR = d[XGB_FEATURES].to_numpy(float), d[feats_raw].to_numpy(float)
     j = XGB_FEATURES.index("temp_anom")
-    ev = rng.choice(len(d), 40000, replace=False)
-    Xe, be = X[ev], d["biome"].to_numpy()[ev]
+    val = (d["week"] >= sim.cfg.T_train - 26).to_numpy()
+    ev = rng.choice(len(d), 20000, replace=False)
+    be = d["biome"].to_numpy()[ev]
+    mA, spwA = bo.fit_xgb_like_original(XA, y, val, seed=seed)
+    mR, spwR = bo.fit_xgb_like_original(XR, y, val, seed=seed)
+    rA, rR = mA.num_boosted_rounds(), mR.num_boosted_rounds()
 
-    def stats(mod):
-        S = bo.shap_values(mod, Xe)[:, j]
-        sl = bo.shap_slope_by_group(S, Xe[:, j], be)
-        med = {b: float(np.median(S[be == b])) for b in range(4)}
-        return sl, med
+    def stats(modA, modR):
+        S = bo.shap_values(modA, XA[ev])[:, j]
+        F = bo.shap_full_credit(modA, XA[ev], j)
+        SR = bo.shap_values(modR, XR[ev])[:, j]
+        sl = bo.shap_slope_by_group(S, XA[ev, j], be)
+        fl = bo.shap_slope_by_group(F, XA[ev, j], be)
+        med = {b: float(np.median(SR[be == b])) for b in range(4)}
+        return [sl[k] for k in range(4)], [fl[k] for k in range(4)], [med[k] for k in range(4)]
 
     sub = rng.random(len(d)) < 0.3
-    blk = bo.spatial_blocks(d["lon"], d["lat"], 5.0)
+    blk = bo.spatial_blocks(d["lon"], d["lat"], 2.5)
     ub = np.unique(blk)
-    boots_sl, boots_med = [], []
+    boots = []
     for b in range(B_BOOT):
         cnt = np.bincount(rng.choice(len(ub), len(ub)), minlength=len(ub))
         wts = cnt[np.searchsorted(ub, blk)].astype(float) * sub
         keep = wts > 0
-        s_, m_ = stats(bo.fit_xgb(X[keep], y[keep], weight=wts[keep], seed=seed + b))
-        boots_sl.append([s_[k] for k in range(4)]); boots_med.append([m_[k] for k in range(4)])
-    boots_sl, boots_med = np.array(boots_sl), np.array(boots_med)
-    # as in the paper: median over bootstrap replicates; 95% band for slopes,
-    # interquartile band (the paper's Fig. 3 bars) for the median-SHAP statistic
+        bA = bo.fit_xgb(XA[keep], y[keep], weight=wts[keep], seed=seed + b, n_rounds=rA,
+                        params={"scale_pos_weight": spwA})
+        bR = bo.fit_xgb(XR[keep], y[keep], weight=wts[keep], seed=seed + b, n_rounds=rR,
+                        params={"scale_pos_weight": spwR})
+        boots.append(stats(bA, bR))
+    boots = np.array(boots)            # (B, 3 statistics, 4 biomes)
+    # medians over bootstrap replicates as in the original; 95% bands for slopes,
+    # interquartile bands (the original's Fig. 3 bars) for the median-SHAP statistic
     for b in range(4):
-        rec("xgb_slope", b, float(np.median(boots_sl[:, b])), lo=np.quantile(boots_sl[:, b], .025),
-            hi=np.quantile(boots_sl[:, b], .975))
-        rec("xgb_median", b, float(np.median(boots_med[:, b])), lo=np.quantile(boots_med[:, b], .25),
-            hi=np.quantile(boots_med[:, b], .75))
+        for k, name in enumerate(["xgb_slope", "xgb_slope_full"]):
+            v = boots[:, k, b]
+            rec(name, b, float(np.median(v)), lo=np.quantile(v, .025), hi=np.quantile(v, .975))
+        v = boots[:, 2, b]
+        rec("xgb_median_raw", b, float(np.median(v)), lo=np.quantile(v, .25), hi=np.quantile(v, .75))
     return rows, extra
 
 
 if __name__ == "__main__":
     out = run_parallel(one, range(1, N_REPS + 1), checkpoint=os.path.join(RESULTS, "s4_ckpt.jsonl"))
+    if os.environ.get("SHARD"):
+        sys.exit(0)
     res = pd.DataFrame([r for rows, _ in out for r in rows])
     extra = pd.DataFrame([e for _, e in out])
     res.to_csv(os.path.join(RESULTS, "s4_raw.csv"), index=False)

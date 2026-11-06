@@ -26,56 +26,72 @@ def write(name, body):
 
 
 def s0():
-    t = pd.read_csv(os.path.join(RES, "s0_summary.csv"), index_col=0)
+    raw = pd.read_csv(os.path.join(RES, "s0_raw.csv"))
     v = pd.read_csv(os.path.join(RES, "s0_variance.csv"), index_col=0).iloc[:, 0]
-    lines = [(r"$\hat\rho_w$ (km) [truth 400]", "range_hat", 1),
+    if "config" not in raw:
+        raw["config"] = "common"
+    cfgs = [c for c in ["common", "rare"] if c in set(raw.config)]
+    g = raw.groupby("config")
+    lines = [(r"Prevalence of event weeks", "prevalence", 3),
+             (r"$\hat\rho_w$ (km) [truth 400]", "range_hat", 0),
              (r"$\hat\sigma_w$ [truth 1]", "sd_hat", 3),
              (r"$\hat b_1$ [truth 0.5]", "b1_hat", 3),
-             (r"Coverage of 95\% interval for $b_1$", "b1_cover", 3),
+             (r"Coverage of 95\% interval for $b_1$", "b1_cover", 2),
              (r"Coverage of 95\% intervals for $b_0 + w(s)$ (share of cells)", "field_cover", 3),
              (r"$\mathrm{cor}(\hat w, w)$", "field_corr", 3),
              (r"Fit time (s)", "seconds", 1)]
-    rows = [f"{a} & {t.loc[k, 'mean']:.{d}f} & {t.loc[k, 'std']:.{d}f} \\\\" for a, k, d in lines]
-    rows.append(f"Marginal variance of $w$, interior cells [nominal 1] & {v.iloc[0]:.2f} & -- \\\\")
-    rows.append(f"Marginal variance of $w$, edge cells & {v.iloc[1]:.2f} & -- \\\\")
-    body = (r"\begin{tabular}{@{}lcc@{}}" "\n" r"\toprule" "\n" r"Quantity & Mean & SD \\" "\n"
-            r"\midrule" "\n" + "\n".join(rows) + "\n" r"\bottomrule" "\n" r"\end{tabular}" "\n")
+    rows = []
+    for lab, k, d in lines:
+        if k not in raw:
+            continue
+        cells = [f"{g[k].mean()[c]:.{d}f} ({g[k].std()[c]:.{d}f})" for c in cfgs]
+        rows.append(lab + " & " + " & ".join(cells) + r" \\")
+    rows.append(f"Marginal variance of $w$, interior cells [nominal 1] & " + " & ".join([f"{v.iloc[0]:.2f}"] + ["--"] * (len(cfgs) - 1)) + r" \\")
+    rows.append(f"Marginal variance of $w$, edge cells & " + " & ".join([f"{v.iloc[1]:.2f}"] + ["--"] * (len(cfgs) - 1)) + r" \\")
+    n = g.size()
+    head = " & ".join([f"{c} ($b_0={-2 if c == 'common' else -4.5}$, {n[c]} reps)" for c in cfgs])
+    body = ("\\begin{tabular}{@{}l" + "c" * len(cfgs) + "@{}}\n\\toprule\nQuantity & " + head + " \\\\\n\\midrule\n"
+            + "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n")
     write("s0.tex", body)
 
 
 def s1():
     raw = pd.read_csv(os.path.join(RES, "s1_raw.csv"))
     models = [("oracle", "True probabilities"),
-              ("xgb_full", "XGBoost (as in original analysis)"),
-              ("xgb_crossfit", "XGBoost, spatially cross-fitted"),
-              ("xgb+field", "Cross-fitted XGBoost + $w$"),
-              ("xgb+field+country", "Cross-fitted XGBoost + $u + w$"),
-              ("glmm_field+country", "Parametric model with $u + w$")]
+              ("xgb_original", "XGBoost as in the original analysis"),
+              ("xgb_te", "XGBoost + cell training rate"),
+              ("xgb_crossfit", "XGBoost, cross-fitted by country"),
+              ("hybrid_iid", "Cross-fitted XGBoost + $u$ + iid cell effects"),
+              ("hybrid_field", "Cross-fitted XGBoost + $u + w$"),
+              ("glmm", "Parametric model with $u + w$")]
     rows = []
     for key, lab in models:
+        if f"{key}.log_score" not in raw:
+            continue
         cells = []
         for m, d in [("log_score", 4), ("brier", 4), ("auc_pr", 3), ("auc_roc", 3)]:
             v = raw[f"{key}.{m}"]
             cells.append(f"{v.mean():.{d}f} ({v.std() / np.sqrt(len(v)):.{d}f})")
+        dl = raw.get(f"{key}.logscore_minus_xgb_original")
+        cells.append("--" if dl is None or key == "xgb_original" else
+                     f"{(dl < 0).sum()}/{len(dl)}")
         rows.append(lab + " & " + " & ".join(cells) + r" \\")
     v = raw["persistence.auc_pr"]
-    rows.append(f"Persistence baseline & -- & -- & {v.mean():.3f} ({v.std() / np.sqrt(len(v)):.3f}) & -- \\\\")
-    body = (r"\begin{tabular}{@{}lcccc@{}}" "\n" r"\toprule" "\n"
-            r"Model & Log score & Brier & AUC-PR & AUC-ROC \\" "\n" r"\midrule" "\n"
+    rows.append(f"Persistence baseline & -- & -- & {v.mean():.3f} ({v.std() / np.sqrt(len(v)):.3f}) & -- & -- \\\\")
+    body = (r"\begin{tabular}{@{}lccccc@{}}" "\n" r"\toprule" "\n"
+            r"Model & Log score & Brier & AUC-PR & AUC-ROC & Better log score \\" "\n" r"\midrule" "\n"
             + "\n".join(rows) + "\n" r"\bottomrule" "\n" r"\end{tabular}" "\n")
     write("s1_scores.tex", body)
-    fs = raw
     lines = [
-        ("Moran's $I$ of cell residuals, XGBoost (original)", fs["moran_xgb_full"]),
-        ("Moran's $I$ of cell residuals, XGBoost cross-fitted", fs["moran_xgb_crossfit"]),
-        (r"$\mathrm{cor}(\hat w, w)$, XGBoost + $w$", fs["corr_w_xgb+field"]),
-        (r"$\mathrm{cor}(\hat w, w)$, XGBoost + $u + w$", fs["corr_w_xgb+field+country"]),
-        (r"$\hat\rho_w$ (km), XGBoost + $u + w$ [truth 400]", fs["range_xgb+field+country"]),
-        (r"$\hat\sigma_w$, XGBoost + $u + w$ [truth 1]", fs["sd_xgb+field+country"]),
+        ("Moran's $I$ of cell residuals, XGBoost as in the original", "moran_xgb_original"),
+        ("Moran's $I$ of cell residuals, cross-fitted XGBoost", "moran_xgb_crossfit"),
+        (r"$\mathrm{cor}(\hat w, w)$, hybrid with $u + w$", "corr_w"),
+        (r"$\hat\rho_w$ (km) [truth 400]", "range"),
+        (r"$\hat\sigma_w$ [truth 1]", "sd"),
     ]
     body = (r"\begin{tabular}{@{}lcc@{}}" "\n" r"\toprule" "\n"
             r"Quantity & Mean & SD \\" "\n" r"\midrule" "\n"
-            + "\n".join(f"{a} & {b.mean():.3f} & {b.std():.3f} \\\\" for a, b in lines)
+            + "\n".join(f"{a} & {raw[k].mean():.3f} & {raw[k].std():.3f} \\\\" for a, k in lines if k in raw)
             + "\n" r"\bottomrule" "\n" r"\end{tabular}" "\n")
     write("s1_field.tex", body)
 
@@ -114,14 +130,20 @@ def s3():
         return placeholder("s3.tex")
     t = pd.read_csv(p)
     lab = {"lag_only": "Lags only", "lag+field": "Lags + $w$",
-           "lag+field+st": "Lags + $w$ + $v$"}
+           "lag+field+st": "Lags + $w$ + $v$ (4-week steps)",
+           "lag+field+st1": "Lags + $w$ + $v$ (weekly steps)"}
     tr = {"state_dep": r"State dependence ($\delta = 1$)",
-          "heterogeneity": r"Heterogeneity ($\delta = 0$)"}
+          "heterogeneity": r"Heterogeneity ($\delta = 0$)",
+          "mixed": r"Mixed ($\delta = 0.5$)"}
     rows = []
     for k, tl in tr.items():
         sub = t[t.truth == k]
         rows.append(r"\multicolumn{5}{@{}l}{\emph{" + tl + r"}} \\")
+        if len(sub) == 0:
+            continue
         for m, ml in lab.items():
+            if (sub.model == m).sum() == 0:
+                continue
             r = sub[sub.model == m].iloc[0]
             rows.append(f"\\quad {ml} & {f(r.mean_est)} & {f(r.emp_sd)} & {f(r.mean_se)} & {f(r.coverage95, 2)} \\\\")
         r = sub[sub.model == "xgb_lag_shap_share"].iloc[0]
@@ -140,11 +162,14 @@ def s4():
     lab = {"biome_nofield": "Biome slopes, no latent effects",
            "biome_field": "Biome slopes + $u$ + $w$",
            "svc": "SVC: biome means + $\\eta$ + $u$ + $w$",
-           "xgb_slope": "XGBoost SHAP slope",
-           "xgb_median": "XGBoost median SHAP$^\\ddagger$"}
+           "xgb_slope": "XGBoost SHAP slope (targets $\\gamma_b/2$)",
+           "xgb_slope_full": "XGBoost SHAP slope, interactions credited",
+           "xgb_median_raw": "XGBoost median SHAP, raw temperature$^\\ddagger$"}
     rows = []
     for m, ml in lab.items():
         sub = t[t.model == m].sort_values("biome")
+        if len(sub) == 0:
+            continue
         rows.append(r"\multicolumn{5}{@{}l}{\emph{" + ml + r"}} \\")
         for _, r in sub.iterrows():
             rows.append(f"\\quad biome {int(r.biome) + 1} ($\\gamma = {r.truth:+.1f}$) & {f(r.mean_est)} & "

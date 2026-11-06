@@ -93,7 +93,7 @@ are received. The next tasks will be added below.
 
 ---
 
-## Round 2, revised after the internal review: ON HOLD, do not start until this line says READY
+## Round 2, revised after the internal review: READY (start now)
 
 Run `git pull` first. The pipeline changed after an internal review: ACLED coverage,
 country-grouped cross-fitting with the corrected model's features, a sea mask for the
@@ -144,4 +144,16 @@ Copy `models_<outcome>.json`, `coefficients_<outcome>.csv` and `svc_tmax_<outcom
 `results_real/glmm/`. If the `st` part goes past 48 h or runs out of memory, rerun it alone
 with `--models st --st-step 16` and record that in STATUS.
 
-Submit order: 2r, then (3r, 4r, 7, 8) held on 2r, then 6 held on 3r and 4r. Log the job ids.
+### Task 9: simulation studies (`08_sims.sh` array 1-40, then `09_sims_merge.sh`)
+
+The simulations were revised too. Fields are now drawn from the exact Matern process,
+S0 has a rare-event setting, S1 has location-aware baselines, S2 uses 48 blocks with
+B = 40, S3 has a mixed scenario and weekly space-time fits, and S4 has raw temperature
+and interaction-credited SHAP slopes. They need no data and can start immediately.
+
+- `qsub crc/jobs/08_sims.sh`, then `qsub -hold_jid <id> crc/jobs/09_sims_merge.sh`.
+- Commit and push the updated `results/*.csv`, `results/s1_maps.png` and
+  `paper/tables/*.tex`. Leave out `results/*_ckpt*.jsonl`, which are gitignored.
+
+Submit order: 2r and 9 now; then (3r, 4r, 7, 8) held on 2r; then 6 held on 3r and 4r.
+Log the job ids.

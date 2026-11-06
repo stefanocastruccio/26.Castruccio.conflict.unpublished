@@ -50,30 +50,48 @@ def block_index(m, name):
     return [b.name for b in m.blocks].index(name)
 
 
-def run_parallel(fn, args, n_jobs=4, checkpoint=None):
+def run_parallel(fn, args, n_jobs=None, checkpoint=None):
     """Map fn over args in parallel. With `checkpoint` (a .jsonl path) every result
     is appended as soon as it finishes and already-finished args are skipped, so
     an interrupted study resumes where it stopped. Results come back in the order
-    of `args`."""
+    of `args`.
+
+    Cluster arrays: with SHARD="i/N" in the environment only args i, i+N, i+2N, ...
+    are run, into <checkpoint>.shard<i>.jsonl, and only those results are returned.
+    Without SHARD, results from every shard file are read first, so a final run
+    merges the shards (and computes anything still missing). N_JOBS sets n_jobs."""
+    import glob
     import json
     from joblib import Parallel, delayed
     args = list(args)
+    n_jobs = n_jobs or int(os.environ.get("N_JOBS", 4))
     if checkpoint is None:
         return Parallel(n_jobs=n_jobs)(delayed(fn)(a) for a in args)
     key = lambda a: json.dumps(a)
+    shard = os.environ.get("SHARD")
+    base = checkpoint[:-len(".jsonl")] if checkpoint.endswith(".jsonl") else checkpoint
+    if shard:
+        i, N = map(int, shard.split("/"))
+        args = args[i::N]
+        files = [f"{base}.shard{i}.jsonl"]
+        target = files[0]
+    else:
+        files = [checkpoint] + sorted(glob.glob(f"{base}.shard*.jsonl"))
+        target = checkpoint
     done = {}
-    if os.path.exists(checkpoint):
-        with open(checkpoint) as fh:
-            for line in fh:
-                rec = json.loads(line)
-                done[rec["key"]] = rec["result"]
+    for f in files:
+        if os.path.exists(f):
+            with open(f) as fh:
+                for line in fh:
+                    rec = json.loads(line)
+                    done[rec["key"]] = rec["result"]
     todo = [a for a in args if key(a) not in done]
 
     def wrapped(a):
         return key(a), fn(a)
 
     gen = Parallel(n_jobs=n_jobs, return_as="generator_unordered")(delayed(wrapped)(a) for a in todo)
-    with open(checkpoint, "a") as fh:
+    with open(target, "a") as fh:
         for k, r in gen:
             fh.write(json.dumps({"key": k, "result": r}, default=float) + "\n"); fh.flush()
             done[k] = r

@@ -23,7 +23,8 @@ from sc.simulate import SimConfig, simulate
 
 CKPT = "s2_ckpt.jsonl"
 N_REPS = int(os.environ.get("N_REPS", 30))
-B_BOOT = int(os.environ.get("B_BOOT", 20))
+B_BOOT = int(os.environ.get("B_BOOT", 40))
+BLOCK_DEG = float(os.environ.get("BLOCK_DEG", 2.5))   # 48 blocks on the 20 x 15 degree domain
 SCENARIOS = {"A_conf_null": dict(nat_conf=0.8, beta_nat=0.0),
              "B_noconf_null": dict(nat_conf=0.0, beta_nat=0.0),
              "C_conf_effect": dict(nat_conf=0.8, beta_nat=-0.3)}
@@ -69,28 +70,38 @@ def one(arg):
     Xe = d[XGB_FEATURES].to_numpy(float)[eval_idx]
     slope = lambda mod: bo.shap_slope_by_group(bo.shap_values(mod, Xe)[:, j], Xe[:, j],
                                                np.zeros(len(Xe)))[0.0]
-    point = slope(bo.fit_xgb(X, y, seed=seed))
-    blk = bo.spatial_blocks(dsub["lon"], dsub["lat"], 5.0)
+    # as in the original analysis: sqrt(n0/n1) class weight; trees by early stopping
+    # on the last 26 training weeks (the class weight only shifts the intercept,
+    # so SHAP values of Z0 are unaffected)
+    val = (dsub["week"] >= sim.cfg.T_train - 26).to_numpy()
+    m0, spw = bo.fit_xgb_like_original(X, y, val, seed=seed)
+    rounds = m0.num_boosted_rounds()
+    point = slope(m0)
+    blk = bo.spatial_blocks(dsub["lon"], dsub["lat"], BLOCK_DEG)
     ub = np.unique(blk)
     boots = []
     for b in range(B_BOOT):
         cnt = np.bincount(rng.choice(len(ub), len(ub)), minlength=len(ub))
         wts = cnt[np.searchsorted(ub, blk)].astype(float)
         keep = wts > 0
-        mod = bo.fit_xgb(X[keep], y[keep], weight=wts[keep], seed=seed + b)
+        mod = bo.fit_xgb(X[keep], y[keep], weight=wts[keep], seed=seed + b, n_rounds=rounds,
+                         params={"scale_pos_weight": spw})
         boots.append(slope(mod))
     boots = np.array(boots)
     # as in the paper, the reported value is the median over bootstrap replicates
     rows.append(dict(scenario=scen, seed=seed, model="xgb_shap", est=float(np.median(boots)),
                      est_full=point,
                      se=boots.std(), lo=np.quantile(boots, 0.025), hi=np.quantile(boots, 0.975),
-                     iqr_lo=np.quantile(boots, 0.25), iqr_hi=np.quantile(boots, 0.75)))
+                     iqr_lo=np.quantile(boots, 0.25), iqr_hi=np.quantile(boots, 0.75),
+                     n_blocks=int(len(ub)), n_boot=int(B_BOOT)))
     return rows
 
 
 if __name__ == "__main__":
     args = [(s, seed) for s in SCENARIOS for seed in range(1, N_REPS + 1)]
     res = pd.DataFrame([r for rows in run_parallel(one, args, checkpoint=os.path.join(RESULTS, CKPT)) for r in rows])
+    if os.environ.get("SHARD"):
+        sys.exit(0)
     res["truth"] = res["scenario"].map({k: v["beta_nat"] for k, v in SCENARIOS.items()})
     res.to_csv(os.path.join(RESULTS, "s2_raw.csv"), index=False)
     res["covers"] = (res["lo"] <= res["truth"]) & (res["truth"] <= res["hi"])

@@ -89,3 +89,65 @@ def fit_gpboost(df, features, train_mask, coords_cols=("lon", "lat"), group_col=
              verbose=0, **(params or {}))
     booster = gpb.train(params=p, train_set=data, gp_model=gp, num_boost_round=n_rounds)
     return booster, gp
+
+
+# ---------------------------------------------------------------------------
+# Helpers mirroring the real-data pipeline (realdata/reproduce_xgb.py, fit_acled.py)
+# ---------------------------------------------------------------------------
+def fit_xgb_like_original(X, y, val_mask, nthread=1, seed=0, max_rounds=2000):
+    """XGBoost as in the original analysis: positives weighted by sqrt(n0/n1), number
+    of trees by early stopping on a held-out validation part of the TRAINING data
+    (here val_mask), then refitted on all training rows. Returns (model, spw); the
+    model's log-odds must be prior-corrected by log(spw) before scoring."""
+    p = dict(PAPER_PARAMS, nthread=nthread, seed=seed)
+    fit = ~val_mask
+    spw = float(np.sqrt((len(y[fit]) - y[fit].sum()) / max(y[fit].sum(), 1)))
+    p["scale_pos_weight"] = spw
+    m0 = xgb.train(p, xgb.DMatrix(X[fit], label=y[fit]), max_rounds,
+                   evals=[(xgb.DMatrix(X[val_mask], label=y[val_mask]), "val")],
+                   early_stopping_rounds=100, verbose_eval=False)
+    p["scale_pos_weight"] = float(np.sqrt((len(y) - y.sum()) / max(y.sum(), 1)))
+    return xgb.train(p, xgb.DMatrix(X, label=y), m0.best_iteration + 1), p["scale_pos_weight"]
+
+
+def crossfit_offset_groups(X, y, groups, train_mask, val_mask, folds=5, seed=0, nthread=1):
+    """Out-of-fold, unweighted XGBoost logits with whole groups (countries) as fold
+    units; trees chosen by early stopping on val_mask (a training sub-period)."""
+    rng = np.random.default_rng(seed)
+    gs = np.unique(groups); folds = min(folds, len(gs))
+    fold_of = dict(zip(gs, rng.permutation(len(gs)) % folds))
+    fold = np.array([fold_of[g] for g in groups])
+    p = dict(PAPER_PARAMS, nthread=nthread, seed=seed)
+    off = np.zeros(len(y))
+    for k in range(folds):
+        out = fold != k
+        fit, val = out & train_mask & ~val_mask, out & val_mask
+        m0 = xgb.train(p, xgb.DMatrix(X[fit], label=y[fit]), 2000,
+                       evals=[(xgb.DMatrix(X[val], label=y[val]), "val")],
+                       early_stopping_rounds=100, verbose_eval=False)
+        tr = out & train_mask
+        m = xgb.train(p, xgb.DMatrix(X[tr], label=y[tr]), m0.best_iteration + 1)
+        off[fold == k] = np.ravel(m.predict(xgb.DMatrix(X[fold == k]), output_margin=True))
+    return off
+
+
+def cell_rate_feature(cell, period, y, train_mask):
+    """Leave-one-period-out training event rate of each cell (location-aware feature):
+    training rows use the other training periods; test rows use all training periods."""
+    d = pd.DataFrame({"c": cell, "p": period, "y": y})[train_mask]
+    tot = d.groupby("c")["y"].agg(["sum", "count"])
+    byp = d.groupby(["c", "p"])["y"].agg(["sum", "count"])
+    s_all = tot["sum"].reindex(cell).to_numpy(); n_all = tot["count"].reindex(cell).to_numpy()
+    idx = pd.MultiIndex.from_arrays([cell, period])
+    s_p = np.where(train_mask, byp["sum"].reindex(idx).fillna(0).to_numpy(), 0)
+    n_p = np.where(train_mask, byp["count"].reindex(idx).fillna(0).to_numpy(), 0)
+    return (s_all - s_p) / np.maximum(n_all - n_p, 1)
+
+
+def shap_full_credit(model, X, j):
+    """Contribution of feature j with every pairwise interaction involving j credited
+    fully to j (TreeSHAP interaction values): Phi_jj + 2 * sum_{k != j} Phi_jk.
+    For an additive effect this equals the SHAP value; for f = g(b) t it recovers
+    g(b)(t - E t), whereas the ordinary SHAP value of t gets only half of it."""
+    I = model.predict(xgb.DMatrix(X), pred_interactions=True)[:, :-1, :-1]
+    return I[:, j, j] + 2 * (I[:, j, :].sum(axis=1) - I[:, j, j])

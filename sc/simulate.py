@@ -53,6 +53,7 @@ class SimConfig:
     st_sd: float = 0.0
     st_range: float = 300.0
     st_rho: float = 0.8
+    dgp: str = "gp"          # "gp": exact continuous Matern; "lattice": the fitted GMRF itself
     seed: int = 0
 
 
@@ -67,6 +68,28 @@ class SimData:
     extra: dict = field(default_factory=dict)
 
 
+_CHOL = {}
+
+
+def matern_gp(L, range_km, sd, rng, k=1):
+    """k draws at the cell centres of L from the exact continuous Matern (nu = 1)
+    covariance on the sphere (great-circle distances): sd^2 x K1(x), x = sqrt(8) d / range.
+    Used to generate data without the 'inverse crime' of simulating from the lattice
+    GMRF that is then fitted."""
+    from scipy.special import kv
+    from .diagnostics import haversine
+    key = (id(L), L.n, range_km)
+    if key not in _CHOL:
+        D = haversine(L.lon[:, None], L.lat[:, None], L.lon[None], L.lat[None])
+        x = np.sqrt(8.0) / range_km * D
+        with np.errstate(invalid="ignore"):
+            C = np.where(x > 0, x * kv(1, np.maximum(x, 1e-12)), 1.0)
+        if len(_CHOL) > 8:
+            _CHOL.clear()
+        _CHOL[key] = np.linalg.cholesky(C + 1e-8 * np.eye(L.n))
+    return sd * _CHOL[key] @ rng.standard_normal((L.n, k))
+
+
 def _standardize(v):
     return (v - v.mean()) / v.std()
 
@@ -79,8 +102,9 @@ def simulate(cfg: SimConfig) -> SimData:
     n = L.n
 
     def matern(range_km, sd, k=1):
-        mb = MaternBlock(L)
-        return mb.sample(np.log([range_km, sd]), rng, k)
+        if cfg.dgp == "lattice":
+            return MaternBlock(L).sample(np.log([range_km, sd]), rng, k)
+        return matern_gp(L, range_km, sd, rng, k)
 
     # --- geography --------------------------------------------------------
     seeds = rng.choice(n, cfg.n_countries, replace=False)
@@ -156,6 +180,11 @@ def simulate(cfg: SimConfig) -> SimData:
         "lag4": LAG[keep].ravel(), "y": Y[keep].ravel(), "p_true": P[keep].ravel(),
     })
     df["log_lag4"] = np.log1p(df["lag4"])
+    # raw temperature, as a boosting model would see it: climatology (warmer towards the
+    # "tropical" biomes) + seasonal cycle + the anomaly that carries the effect
+    clim = 30.0 - 1.2 * (L.lat - L.lat.min())
+    season = (1.0 + 0.15 * np.abs(L.lat))[None, :] * np.cos(2 * np.pi * np.arange(Ttot) / 52.0)[:, None]
+    df["temp_raw"] = (clim[None, :] + season + 2.5 * temp)[keep].ravel()
     df["train"] = df["week"] < cfg.T_train
     cells = pd.DataFrame({"cell": np.arange(n), "lon": L.lon, "lat": L.lat,
                           "country": country, "biome": biome, "pop": pop,
