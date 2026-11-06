@@ -1,18 +1,18 @@
 {
  "global": {
-  "rows": 19365684,
-  "cells": 59344,
+  "rows": 19364639,
+  "cells": 59339,
   "weeks": 366,
   "Conflict": {
-   "share_event_weeks": 0.012553132644320748,
-   "share_cells_any_event": 0.18028781342679967,
-   "share_cells_event_in_half_of_weeks": 0.004263278511728229,
+   "share_event_weeks": 0.012553810065862835,
+   "share_cells_any_event": 0.18030300476920744,
+   "share_cells_event_in_half_of_weeks": 0.0042636377424627985,
    "top1pct_cells_share_of_event_weeks": 0.4645043192102016
   },
   "Unrest": {
-   "share_event_weeks": 0.021250475841700193,
-   "share_cells_any_event": 0.26782825559449985,
-   "share_cells_event_in_half_of_weeks": 0.009975734699379887,
+   "share_event_weeks": 0.021251622609644312,
+   "share_cells_any_event": 0.2678508232359831,
+   "share_cells_event_in_half_of_weeks": 0.009976575270901093,
    "top1pct_cells_share_of_event_weeks": 0.3337666755765072
   }
  },

@@ -561,3 +561,19 @@ two files.
 - With country-clustered SEs, xgb_te beats xgb clearly for both outcomes (about 2.8 and 4.1 SE).
 - The hybrid models beat xgb for unrest (about 3 SE). For conflict the gain is within about 1.3 SE.
 - For unrest, the hybrid residuals have a higher Moran's I than the xgb residuals (0.29 vs 0.15).
+
+## 2026-11-06 14:25 EST: Round 3 simulations and figures done
+- **Sims** 1694073 (`-t 10-61`, 52 tasks, 13:41-14:10, maxvmem about 15.9 GB, no Tracebacks). Merge 1694074 had no FAILED scripts.
+  - Committed the updated `results/s2_*.csv`, `s3_*.csv`, `s4_*.csv` and `results/s1_maps.png`.
+  - New files: `results/s1_paired.csv`, `s1_paired_calibrated.csv`, `s1_raw_calibrated.csv`, `s1_scores_calibrated.csv`,
+    `s4_extra_asym.csv`, `s4_raw_asym.csv` and `s4_summary_asym.csv`.
+  - s0 and s1-base were not rerun, as asked: tasks 1-9 were skipped.
+- **Figures and tables** (job 1694170, all rc 0):
+  - `make_data_figure.py` on clean_r3: only `data_events.json` changed; the PNG is byte-identical.
+  - `make_fitted_figure.py`: real_fitted.png.
+  - `make_real_figures.py`: real_field.png, real_variogram.png and real_{xgb,diag,hybrid,field,boxes}.tex. I visually
+    checked real_field.png.
+  - `make_tables.py` and `make_sim_figures.py`: s2_estimates.png and s4_estimates.png. The s*.tex tables were rewritten
+    but came out unchanged.
+  - The real_* outputs use the Round 3 xgb, spatial and compare results. Global (1694070) and glmm (1694071) are
+    still running. If make_real_figures should include them, tell me and I'll rerun it once they finish.
