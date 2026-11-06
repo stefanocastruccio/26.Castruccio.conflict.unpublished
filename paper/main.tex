@@ -31,6 +31,7 @@
   \newenvironment{keyword}{\par\noindent\textbf{Keywords:} \ignorespaces}{\par}
   \newcommand{\kwd}[1]{#1;\ }
   \newenvironment{funding}{\section*{Funding}}{}
+  \newenvironment{acks}[1][Acknowledgments]{\section*{#1}}{}
   \newenvironment{supplement}{\section*{Supplementary material}}{}
   \newcommand{\stitle}[1]{\textbf{#1.}\ }
   \newcommand{\sdescription}[1]{#1}
@@ -50,7 +51,7 @@
 \numberwithin{equation}{section}
 \theoremstyle{plain}
 \newtheorem{proposition}{Proposition}
-\theoremstyle{remark}
+\theoremstyle{definition}
 \newtheorem{remark}{Remark}
 % notation
 \newcommand{\bx}{\bm{x}}
@@ -121,6 +122,15 @@ Global Affairs, University of Notre Dame}
 
 \section{Discussion}\label{sec:discussion}
 \todo{Discussion (not drafted yet).}
+
+\begin{acks}[Acknowledgments]
+The computer code for this work (the latent Gaussian model and inference engine, the
+simulator and simulation studies, and the pipeline for the reanalysis of the ACLED data)
+and the text of the manuscript were written with the assistance of Claude, an artificial
+intelligence model developed by Anthropic. The AI-assisted code and text were reviewed,
+checked and revised by the authors, who take full responsibility for the content of the
+paper.
+\end{acks}
 
 \begin{funding}
 \todo{Funding.}
