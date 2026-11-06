@@ -37,10 +37,17 @@ REPO=<your clone of stefanocastruccio/26.Castruccio.conflict.unpublished>
    pip install xgboost pyarrow pymetis geopandas pyogrio joblib matplotlib
    ```
    On a GPU node, check `python -c "import xgboost; print(xgboost.build_info()['USE_CUDA'])"`.
-3. Check that these inputs exist:
-   - `$DATA/world_map/ne_10m_admin_0_countries.shp`
-   - `$DATA/socioeconomic/GDP.csv`
-4. Report in STATUS: versions, the CUDA flag, and whether the two files exist.
+3. Two inputs that Luca's pipeline used are not on the CRC. Download both (they are public)
+   into `$WORK/inputs/`; both are **required**:
+   - Natural Earth 1:10m Admin 0 Countries: done, `$WORK/world_map/ne_10m_admin_0_countries.shp`
+     (`$COUNTRIES` in `env.sh`)
+   - World Bank GDP, current US$ (indicator `NY.GDP.MKTP.CD`), CSV:
+     `$WORK/inputs/GDP.csv`
+     (from https://data.worldbank.org/indicator/NY.GDP.MKTP.CD, "Download CSV": take the
+     `API_NY.GDP.MKTP.CD_DS2_*.csv` file from the zip; the loader skips its metadata lines).
+     Check it has columns `Country Name`, `Country Code` and `2018` ... `2024`.
+4. Report in STATUS: versions, the CUDA flag, the two input paths, and the GDP file's
+   header line.
 
 ## Task 2: clean tables (`crc/jobs/02_load.sh`, largemem queue)
 

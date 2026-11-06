@@ -138,7 +138,11 @@ def main():
             df[c] = fill[c].to_numpy(dtype="float32", na_value=np.nan)
             df[c] = df[c].fillna(df.groupby(["ISO_A3", "year"])[c].transform("first"))
         if a.gdp_csv and "gdp" in df.columns:
-            g = pd.read_csv(a.gdp_csv).drop(columns=["Indicator Name", "Indicator Code"], errors="ignore")
+            with open(a.gdp_csv, encoding="utf-8-sig") as fh:   # World Bank files start with metadata lines
+                skip = next(i for i, line in enumerate(fh) if line.lstrip('"').startswith("Country Name"))
+            g = pd.read_csv(a.gdp_csv, skiprows=skip, encoding="utf-8-sig")
+            g = g.loc[:, ~g.columns.str.startswith("Unnamed")]
+            g = g.drop(columns=["Indicator Name", "Indicator Code"], errors="ignore")
             g = g.melt(id_vars=[c for c in g.columns if not str(c).isdigit()], var_name="year",
                        value_name="gdp_nat").rename(columns={"Country Code": "ISO_A3"})
             g["year"] = g["year"].astype(int)
