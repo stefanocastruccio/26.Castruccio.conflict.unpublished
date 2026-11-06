@@ -1,9 +1,13 @@
 # Shared settings for the CRC jobs; edit to match the CRC setup.
 export DATA=/groups/scastruc/lmenical/drew/data
 export WORK=/groups/scastruc/conflict_spatial_work
-export REPO=${REPO:-$HOME/26.Castruccio.conflict.unpublished}
+export REPO=${REPO:-/users/scastruc/projects/26.Castruccio.conflict.unpublished}
 mkdir -p "$WORK/xgb" "$WORK/spatial"
 # conda environment with pandas, xgboost, pyarrow, pymetis, geopandas
-source "$(conda info --base)/etc/profile.d/conda.sh" 2>/dev/null || true
-conda activate /users/scastruc/envs/geo
-export OMP_NUM_THREADS=4
+# CRC: dedicated env (the geostatistics env "geo" is left untouched)
+module load conda >/dev/null 2>&1 || true
+source activate /users/scastruc/envs/conflict 2>/dev/null || conda activate /users/scastruc/envs/conflict
+export OMP_NUM_THREADS=${NSLOTS:-4} MKL_NUM_THREADS=${NSLOTS:-4} OPENBLAS_NUM_THREADS=${NSLOTS:-4}
+# Natural Earth 10m countries (downloaded to $WORK; not present under $DATA)
+export COUNTRIES=$WORK/world_map/ne_10m_admin_0_countries.shp
+echo "host $(hostname) job ${JOB_ID}.${SGE_TASK_ID:-0} start $(date -u +%FT%TZ)"
