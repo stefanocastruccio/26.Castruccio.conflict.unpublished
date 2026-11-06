@@ -40,9 +40,7 @@
 
 \RequirePackage{amsthm,amsmath,amsfonts,amssymb}
 \RequirePackage[authoryear]{natbib}
-\RequirePackage{xr-hyper}
 \RequirePackage[colorlinks,citecolor=blue,urlcolor=blue]{hyperref}
-\externaldocument[M-]{main}% labels of the main paper (needs main.aux)
 \RequirePackage{graphicx}
 \RequirePackage{booktabs}
 \RequirePackage{multirow}
@@ -106,7 +104,7 @@ Equation, section and table numbers without the prefix S refer to the main paper
 
 \section{Methods}\label{supp:methods}
 \begin{table}
-\caption{Latent blocks of model~(\ref{M-eq:model}), their precision matrices and
+\caption{Latent blocks of the latent Gaussian model of Section~3.1 of the main paper, their precision matrices and
 hyperparameters.}\label{tab:blocks}
 \centering\small
 \begin{tabular}{@{}llll@{}}
@@ -115,7 +113,7 @@ Block & Dimension & Precision & Hyperparameters \\
 \midrule
 fixed effects $\bbeta, \delta, \bgamma, \bm{\alpha}$ & $p$ & $10^{-4} \bm{I}$ & -- \\
 country effects $\bu$ & $n_c$ & $\sigma_u^{-2} \bm{I}$ & $\sigma_u$ \\
-spatial field $\bw$ & $n$ & $\bQ_s(\rho_w, \sigma_w)$, eq.~(\ref{M-eq:Qs}) & $\rho_w, \sigma_w$ \\
+spatial field $\bw$ & $n$ & $\bQ_s(\rho_w, \sigma_w)$, SPDE precision & $\rho_w, \sigma_w$ \\
 cell effects $\bm{e}$ & $n$ & $\sigma_e^{-2} \bm{I}$ & $\sigma_e$ \\
 SVC fields $\bmeta_k$ & $n$ each & $\bQ_s(\rho_k, \sigma_k)$ & $\rho_k, \sigma_k$ \\
 space-time field $\bv$ & $n\,T_v$ & $\bQ_{\mathrm{AR}}(\phi) \otimes \bQ_s(\rho_v, \sigma_v)$ & $\rho_v, \sigma_v, \phi$ \\
