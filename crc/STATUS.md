@@ -102,3 +102,26 @@ wrote /groups/scastruc/conflict_spatial_work/orig.parquet: 55,474,944 rows, 59,3
   falls to about 0.55 and is roughly equal for border and interior cells. That is consistent with the
   same-week leakage through `*_rollsum_4` described in STUDENT_CODE_REVIEW.md item 1b.
 - Task 4: job 1693186 `cs_spatial` tasks 1-2 are running on long. They are in hyperparameter optimisation; maxvmem so far is maxvmem=16.059G .
+
+## 2026-11-06 10:55 EST: Task 4 done (job 1693186, 2 tasks, rc 0)
+Job 1693186 `cs_spatial` ran on long (d32cepyc192 and 105) from 10:47:53 to about 10:53, about 5 min. maxvmem was 16.1 GB.
+The outputs are in `results_real/spatial/{conflict,unrest}/`: `summary.json`, `variogram.csv`, and `field.csv` (19,416 cells).
+`offset.npy` stays in `$WORK`.
+
+| outcome | model | log score | Brier | AUC-PR | AUC-ROC |
+|---|---|---|---|---|---|
+| conflict | XGB cross-fit | 0.0630 | 0.01608 | 0.508 | 0.942 |
+| conflict | XGB + field | 0.0600 | 0.01595 | 0.527 | 0.958 |
+| unrest | XGB cross-fit | 0.0672 | 0.01747 | 0.522 | 0.946 |
+| unrest | XGB + field | 0.0633 | 0.01698 | 0.548 | 0.959 |
+
+- Hyperparameters:
+  - conflict: country sd 0.354, field range 277 km, field sd 1.24.
+  - unrest: country sd 0.586, field range 72 km, field sd 1.11.
+- Persistence AUC-PR: 0.228 for conflict, 0.233 for unrest.
+- Residual diagnostics:
+  - Moran's I: 0.452 for conflict, 0.110 for unrest (p = 0.005 for both).
+  - Neighbour residual correlation within country vs across a border: 0.482 vs 0.305 for conflict, and 0.114 vs 0.108
+    for unrest (24,508 within-country pairs and 2,040 across-border pairs).
+
+## 2026-11-06 10:55 EST: Task 5: ready for next tasks
