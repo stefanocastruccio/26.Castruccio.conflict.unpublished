@@ -111,15 +111,26 @@ def figure(seed=1):
         g = np.full(L.mask.shape, np.nan); g[L.row, L.col] = v; return g
 
     fig, ax = plt.subplots(1, 4, figsize=(17, 3.8))
-    ext = [L.lon_c[0], L.lon_c[-1], L.lat_c[0], L.lat_c[-1]]
-    for a, v, t in [(ax[0], sim.cells["w"], "true residual field w(s)"),
-                    (ax[1], r, "cross-fitted XGBoost: cell Pearson residual"),
-                    (ax[2], m.block_mean(2), "estimated field (offset + u + w)")]:
-        im = a.imshow(grid(v), origin="lower", extent=ext, cmap="RdBu_r",
-                      vmin=-np.nanmax(np.abs(v)), vmax=np.nanmax(np.abs(v)))
+    ext = [L.lon_c[0] - 0.25, L.lon_c[-1] + 0.25, L.lat_c[0] - 0.25, L.lat_c[-1] + 0.25]
+    cg = grid(sim.cells["country"].to_numpy().astype(float))
+    # country borders: segments between horizontally / vertically adjacent cells of different countries
+    segs = []
+    for i in range(cg.shape[0]):
+        for j in range(cg.shape[1]):
+            x, y = L.lon_c[j], L.lat_c[i]
+            if j + 1 < cg.shape[1] and cg[i, j] != cg[i, j + 1]:
+                segs.append([(x + 0.25, y - 0.25), (x + 0.25, y + 0.25)])
+            if i + 1 < cg.shape[0] and cg[i, j] != cg[i + 1, j]:
+                segs.append([(x - 0.25, y + 0.25), (x + 0.25, y + 0.25)])
+    from matplotlib.collections import LineCollection
+    for a, v, t in [(ax[0], sim.cells["w"].to_numpy(), "true field $w(s)$"),
+                    (ax[1], r, "cross-fitted XGBoost: cell residual"),
+                    (ax[2], m.block_mean(2), "posterior mean of $w(s)$, hybrid model")]:
+        lim = np.nanquantile(np.abs(v), 0.98)
+        im = a.imshow(grid(v), origin="lower", extent=ext, cmap="RdBu_r", vmin=-lim, vmax=lim)
         a.set_title(t, fontsize=10); plt.colorbar(im, ax=a, shrink=0.8)
-        a.contour(L.lon_c, L.lat_c, grid(sim.cells["country"]), levels=np.arange(20) + .5,
-                  colors="k", linewidths=0.4)
+        a.add_collection(LineCollection(segs, colors="k", linewidths=0.6))
+        a.set_xlabel("longitude"); a.set_ylabel("latitude")
     vg = dg.variogram(r, L.lon, L.lat, np.arange(0, 1600, 100))
     ax[3].plot(vg.dist_km, vg.gamma, "o-")
     ax[3].set_xlabel("great-circle distance (km)"); ax[3].set_ylabel("semivariance")
