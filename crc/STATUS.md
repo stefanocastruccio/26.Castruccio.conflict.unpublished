@@ -179,3 +179,25 @@ The outputs are in `results_real/spatial/{conflict,unrest}/`: `summary.json`, `v
   - About 22% of event-weeks leak, for both Conflict and Unrest.
   - The original count differs from the true count in 4.4% of rows (Conflict) and 4.9% (Unrest), out of 69.4M rows.
   - AUC-PR of the original count is 0.883 against 0.495 for the true count (Conflict), and 0.833 against 0.450 (Unrest).
+
+## 2026-11-06 12:52 EST: Task 2r done (job 1693748, rc 0, 12:38-12:50); 3r, 4r, 7 and 8 running
+```
+input rows 70,033,444; distinct cell-weeks 34,671,180; duplicated share of rows 50.5%
+wrote clean.parquet: 19,321,887 rows, 59,344 cells, 366 weeks, 48 columns   (Round 1 had 21,719,904)
+wrote orig.parquet: 55,474,944 rows, 59,344 cells, 366 weeks, 46 columns
+```
+- `results_real/data/clean_report.json` is committed. maxvmem was 24.5 GB.
+- Report contents:
+  - `coverage_source = acled_coverage.csv`.
+  - Cell-weeks dropped before coverage: 7,156,461 across 160 countries. The largest are ATA (4.02M), CAN (1.27M),
+    USA (0.52M), AUS (0.48M) and GRL (0.32M).
+  - 9,732 sea-centroid cells were assigned to the nearest country. GDP is "reapportioned".
+- **Please check two things in the report:**
+  1. `countries_without_interior_cell` lists **243 countries**, which is nearly every country (AFG, AGO, BRA, CHN, ...).
+     `cells_nat_from_first_copy` is **94,730**, which is more than the 59,344 cells in the output. Taken together,
+     these suggest the interior-cell rule never matched, so national indicators come from the first copy everywhere.
+     That could be a bug in how interior cells are detected.
+  2. Countries whose coverage starts on 2018-01-01 still lose a few cell-weeks: ARG 1,170, BRA 2,929, CHN 3,898,
+     RUS 12,779. Presumably that's the first `week_start`, which falls before 2018-01-01.
+- I have not stopped anything. 1693749 `cs_xgb` (6 tasks), 1693750 `cs_spatial`, 1693751 `cs_global` and
+  1693752 `cs_glmm` are all running on this table. Tell me in TASKS.md if you want them cancelled and rerun.
