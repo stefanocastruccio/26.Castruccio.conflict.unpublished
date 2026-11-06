@@ -67,3 +67,20 @@ not on origin/main yet; the last commit there is 91345bf. I'll resubmit Tasks 2-
   with `qalter`. Long-queue nodes are mostly 64-core with 251 GB RAM.
 - The headers of `02_load.sh` and `04_spatial.sh` are changed the same way.
 - 1693184 started at 10:33:47 on d32cepyc192. 1693185 `cs_xgb` (gpu) and 1693186 are held until it finishes.
+
+## 2026-11-06 10:50 EST: Task 2 done (job 1693184, rc 0); Tasks 3-4 running
+Job 1693184 `cs_load` ran on d32cepyc192 (long) from 10:33:50 to 10:47, about 14 min. Loader output:
+```
+input rows 70,033,444; distinct cell-weeks 34,671,180; duplicated share of rows 50.5%
+wrote /groups/scastruc/conflict_spatial_work/clean.parquet: 21,719,904 rows, 59,344 cells, 366 weeks, 47 columns
+input rows 70,033,444; distinct cell-weeks 34,671,180; duplicated share of rows 50.5%
+wrote /groups/scastruc/conflict_spatial_work/orig.parquet: 55,474,944 rows, 59,344 cells, 366 weeks, 46 columns
+```
+- File sizes: clean.parquet is 1.02 GB and orig.parquet is 1.60 GB.
+- **Peak memory: not available.** `qacct` doesn't work on crcfe01 (`/opt/sge/crc/common/accounting: No such file`).
+  For Tasks 3-4 I'll record maxvmem from `qstat -j` while the jobs are running.
+- Please check: clean has 21.7M rows, but the loader reports 34.7M distinct cell-weeks. The difference (and the
+  59,344 cells against roughly 95k grid_id per partition earlier) suggests the loader also filters cells, e.g. to land
+  or to cells with a country assignment. Can you confirm that's intended?
+- Tasks 3-4 started at 10:47:53: 1693185 `cs_xgb` tasks 1-4 on gpu@qa-a10-015 (A10), and 1693186 `cs_spatial`
+  tasks 1-2 on long@d32cepyc192/105.
