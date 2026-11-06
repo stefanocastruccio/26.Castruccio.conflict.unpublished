@@ -32,3 +32,21 @@ exit status, key numbers, and any error output.
 - 1693181 `cs_load` (largemem).
 - 1693182 `cs_xgb` (gpu, array 1-4) and 1693183 `cs_spatial` (largemem, array 1-2), both held until `cs_load`
   finishes.
+
+## 2026-11-06 10:00 EST: jobs cancelled; required inputs now in place
+
+**Jobs cancelled.** I deleted 1693181 `cs_load`, 1693182 `cs_xgb` and 1693183 `cs_spatial` while they were still queued,
+before any of them ran, because they had been submitted without GDP.csv.
+
+**Inputs.**
+- Countries: `/groups/scastruc/conflict_spatial_work/inputs/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp`
+  (Natural Earth 10m admin-0, VERSION 5.1.1, fetched from naciscdn.org).
+- GDP: `/groups/scastruc/conflict_spatial_work/inputs/GDP.csv`. This is `API_NY.GDP.MKTP.CD_DS2_en_csv_v2_512.csv`
+  from `https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.CD?downloadformat=csv`, unmodified:
+  271 lines, "Last Updated Date" 2026-10-08, data for 1960-2025.
+- GDP header line (line 5):
+  `"Country Name","Country Code","Indicator Name","Indicator Code","1960","1961",...,"2024","2025",`
+  The first 4 lines are metadata (Data Source, blank, Last Updated Date, blank).
+
+**Next.** Your updated `crc/jobs/02_load.sh`, with the `$WORK/inputs` paths and the stop when an input is missing, is
+not on origin/main yet; the last commit there is 91345bf. I'll resubmit Tasks 2-4 once it is pushed.
