@@ -188,3 +188,12 @@ mean-impute them. Please run on a login or short node, since it only reads parqu
 Commit the JSON and summarise in STATUS: the missing shares in the Africa+ME box, and which countries account for them.
 Keep the running jobs going. The downstream rerun on clean_v2 will happen once, together with any code changes from
 the next review round.
+
+## Task 2f: READY (data figure for the paper)
+Please pull and run it on a node with enough memory to read clean_v2, for example `qrsh -q long -l mem_free=60G`:
+```
+python realdata/make_data_figure.py /groups/scastruc/conflict_spatial_work/clean_v2.parquet \
+    "$COUNTRIES" paper/figures/data_events.png
+```
+(`$COUNTRIES` is in crc/jobs/env.sh.) Commit `paper/figures/data_events.png` and `paper/figures/data_events.json`,
+which holds aggregate numbers only, and paste the JSON into STATUS.

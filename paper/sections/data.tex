@@ -22,6 +22,29 @@ covered cell-weeks of Africa and the Middle East with complete history,
 one unrest event. Over all covered cell-weeks worldwide the shares are \todo{x}\%
 and \todo{x}\%.
 
+Figure~\ref{fig:data} shows where and when events are recorded. Both outcomes are
+spatially concentrated. Conflict event weeks are clustered in a few regions, which
+are discussed in Section~\ref{sec:app-hybrid}. Over the study period,
+\todo{x}\% of cells record at least one conflict event and \todo{x}\% at least one
+unrest event, and the 1\% of cells with the most event weeks account for \todo{x}\%
+and \todo{x}\% of all event weeks. A small number of cells record events in more
+than half of all weeks, which is why recent history is such a strong predictor
+(Section~\ref{sec:data-history}). Unrest is more widespread, and its distribution
+follows population more closely. The weekly share of cells with an event varies
+between \todo{x}\% and \todo{x}\% for conflict and between \todo{x}\% and \todo{x}\%
+for unrest, without a strong trend over the period. The test period of 2023--2024
+therefore does not differ markedly in overall frequency from the training period.
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{figures/data_events.png}
+\caption{ACLED events on the $0.5^\circ$ grid, 2018--2024, over covered cell-weeks.
+(a, b) Share of weeks with at least one event in each cell, for violent conflict and
+social unrest (logarithmic colour scale); grey cells have no event week.
+(c) Weekly share of covered cells with at least one event. The dashed line marks
+the start of the test period.}\label{fig:data}
+\end{figure}
+
 The grid consists of all $0.5^\circ$ cells that intersect a country polygon of
 Natural Earth (1:10m), excluding cells without a terrestrial biome (rock and ice, and
 large lakes). Each cell is assigned to the country that contains its centroid. A
