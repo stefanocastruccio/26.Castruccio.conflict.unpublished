@@ -624,3 +624,14 @@ two files.
   prefers the field: +1045 for conflict, +69 for unrest.
 - The field removes the residual autocorrelation. For conflict it slightly over-corrects, to a negative Moran's I.
 - Rolling (tasks 3-4) and space-time (tasks 5-8) have been running since 16:06. Glmm 1694071 is still running, at maxvmem about 33.6 GB.
+
+## 2026-11-06 16:24 EST: Round 4 rolling done (1694603.3-4, rc 0; conflict about 16 min, unrest about 13 min; maxvmem about 21 GB)
+`results_real/dynamic/<outcome>/summary_rolling.json` is committed. Training years are 2018-2023 and the test year is 2024.
+
+| outcome | xgb cross-fit, rolling | + field (AUC-PR / log) | + iid (AUC-PR / log) | field range |
+|---|---|---|---|---|
+| conflict | 0.487 / 0.0682 | 0.535 / 0.0597 | 0.535 / 0.0600 | 248 km |
+| unrest | 0.526 / 0.0695 | 0.572 / 0.0626 | 0.572 / 0.0626 | 66 km |
+
+- The space-time tasks 5-8 have been running since 16:06 (about 16 min so far). They print no progress. I'll check
+  their elapsed time and maxvmem every ~2 h and flag here if any looks set to exceed 24 h.
