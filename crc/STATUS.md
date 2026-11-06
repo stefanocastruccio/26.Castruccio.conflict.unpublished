@@ -541,3 +541,23 @@ two files.
 
   The across-border pairs are 264 same-fold pairs out of 2,040.
 - Compare (1694069) started at 14:13.
+
+## 2026-11-06 14:17 EST: Round 3 compare done (job 1694069, 2 tasks, rc 0, about 1 min, no Tracebacks)
+- Files in `results_real/compare/`: `compare_{conflict,unrest}.json` and `compare_{conflict,unrest}_variogram.csv`.
+- Setup: same Africa + ME test rows for every model, 13,719 cells, 93 countries, reference model = xgb.
+- Δlog score is model minus xgb, so negative is better. SEs are clustered by cell and by country. Moran's I is on the
+  test-period residuals.
+
+| model | conflict AUC-PR | Δlog (SE cell / SE country) | Moran's I | unrest AUC-PR | Δlog (SE cell / SE country) | Moran's I |
+|---|---|---|---|---|---|---|
+| xgb (corrected) | 0.515 | (ref) | 0.424 | 0.532 | (ref) | 0.148 |
+| xgb_dedup | 0.518 | -0.00061 (0.00008 / 0.00053) | 0.354 | 0.534 | +0.000001 (0.00006 / 0.00015) | 0.156 |
+| xgb_te | **0.533** | **-0.00350** (0.00023 / 0.00127) | **0.295** | **0.550** | **-0.00322** (0.00020 / 0.00078) | 0.253 |
+| xgb_crossfit | 0.461 | +0.00824 (0.00042 / 0.00227) | 0.539 | 0.493 | +0.00474 (0.00025 / 0.00120) | 0.258 |
+| hybrid_iid | 0.519 | -0.00093 (0.00020 / 0.00089) | 0.450 | 0.540 | -0.00204 (0.00017 / 0.00067) | 0.292 |
+| hybrid_field | 0.519 | -0.00117 (0.00021 / 0.00094) | 0.449 | 0.540 | -0.00207 (0.00017 / 0.00066) | 0.287 |
+| persistence | 0.446 | | | 0.451 | | |
+
+- With country-clustered SEs, xgb_te beats xgb clearly for both outcomes (about 2.8 and 4.1 SE).
+- The hybrid models beat xgb for unrest (about 3 SE). For conflict the gain is within about 1.3 SE.
+- For unrest, the hybrid residuals have a higher Moran's I than the xgb residuals (0.29 vs 0.15).
