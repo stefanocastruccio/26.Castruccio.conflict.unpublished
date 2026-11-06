@@ -514,3 +514,30 @@ two files.
   silently falling back to the first.
 - The onset AUC-PR values are about 0.007-0.012, and the onset rows key holds a single AUC-PR. Onsets are very rare,
   so compare these against onset prevalence, not against the overall numbers.
+
+## 2026-11-06 14:15 EST: Round 3 spatial done (job 1694068, 2 tasks, rc 0, about 15 min; maxvmem 15.7 GB, no Tracebacks)
+- Files in `results_real/spatial/{conflict,unrest}/`: `summary.json`, `variogram.csv` (test period), `variogram_train.csv`
+  and `field.csv`.
+- Model inputs: 4,976,634 rows and 13,719 cells. The offset is trained on the Africa + ME rows only.
+
+| outcome | model | AUC-PR | AUC-ROC | log score | hyperparameters |
+|---|---|---|---|---|---|
+| conflict | XGB cross-fit | 0.461 | | | |
+| conflict | + field | 0.519 | 0.959 | 0.0606 | country sd 0.76, range 263 km, field sd 1.48 |
+| conflict | + iid | 0.519 | 0.959 | 0.0609 | country sd 1.37, cell sd 1.30 |
+| unrest | XGB cross-fit | 0.493 | | | |
+| unrest | + field | 0.540 | 0.958 | 0.0639 | country sd 1.01, range 65 km, field sd 1.25 |
+| unrest | + iid | 0.540 | 0.958 | 0.0640 | country sd 1.06, cell sd 1.15 |
+
+- Persistence AUC-PR: 0.446 for conflict, 0.451 for unrest.
+- Cells with P(w > 0) above 0.95 / below 0.05: 0.189 / 0.030 for conflict, 0.116 / 0.026 for unrest.
+- Moran's I, test vs training period: 0.539 vs 0.636 for conflict, 0.258 vs 0.197 for unrest.
+- Test-period border contrast:
+
+| outcome | within-country | across border (all) | across border, same fold | across border, different fold |
+|---|---|---|---|---|
+| conflict | 0.585 | 0.285 | 0.247 | 0.284 |
+| unrest | 0.287 | 0.097 | 0.137 | 0.091 |
+
+  The across-border pairs are 264 same-fold pairs out of 2,040.
+- Compare (1694069) started at 14:13.
