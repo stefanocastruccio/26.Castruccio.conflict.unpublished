@@ -74,7 +74,7 @@ def build_lattice(lon, lat, res=0.5, periodic=None, buffer=6):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("parquet"); ap.add_argument("--outcome", default="conflict")
-    ap.add_argument("--region", default=None)
+    ap.add_argument("--region", default=None, help="key of REGIONS; omit for the whole world")
     ap.add_argument("--out", default="results_real"); ap.add_argument("--nthread", type=int, default=4)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
@@ -138,6 +138,13 @@ def main():
                                           + 1e-6 * np.random.default_rng(0).random(te.sum()))["auc_pr"],
           "hyper": m.hyper(), "diagnostics": diag}
     json.dump(sc, open(os.path.join(a.out, "summary.json"), "w"), indent=1, default=float)
+    # test-period predictions (stay on the cluster; used by compare.py)
+    pd.DataFrame({"grid_id": d_te["grid_id"].to_numpy(), "week_start": d_te[C["week"]].to_numpy(),
+                  "y": d_te["y"].to_numpy().astype("int8"),
+                  "lag_total": d_te["lag_total"].to_numpy(dtype="float32"),
+                  "p_xgb_crossfit": expit(off[te]).astype("float32"),
+                  "p_hybrid": prob_from_eta(eta, sd).astype("float32")}
+                 ).to_parquet(os.path.join(a.out, "test_pred.parquet"), index=False)
     print(json.dumps(sc, indent=1, default=float))
 
 

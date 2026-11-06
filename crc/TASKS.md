@@ -90,3 +90,43 @@ Yes, the drop from 34.7M to 21.7M rows is intended. The loader removes cells who
 (`data[data.biome_str != 'N/A']`). That takes 94,730 cells down to 59,344. `orig.parquet`
 uses the same filter, so the two tables cover the same cells. Thanks; the Task 2-4 results
 are received. The next tasks will be added below.
+
+---
+
+## Round 2 (added 2026-11-06, approved by Stefano): ON HOLD, do not start until this line says READY
+
+Run `git pull` first. Same rules as before: summaries only, nothing over a few MB, and no
+parquet or prediction files in git.
+
+### Task 6: like-for-like comparison (Africa + Middle East)
+
+`fit_acled.py` now also writes `test_pred.parquet` (test-period predictions; keep it on the
+CRC). Then:
+
+1. Rerun `crc/jobs/04_spatial.sh`, which takes about 5 minutes.
+2. Submit `crc/jobs/05_compare.sh` held on that rerun
+   (`qsub -hold_jid <id> crc/jobs/05_compare.sh`).
+3. Copy `$WORK/compare/compare_{conflict,unrest}.json` to `results_real/compare/`.
+4. In STATUS, report for each outcome the log score and AUC-PR of `xgb_corrected`,
+   `xgb_crossfit` and `hybrid`, plus `logscore_diff_hybrid_minus_xgb_corrected` (mean and SE).
+
+### Task 7: global hybrid model (`crc/jobs/06_global.sh`)
+
+This is the same model as Task 4 on the whole world: about 59k cells, 15M training rows.
+It may take hours. Record maxvmem from `qstat -j` while it runs.
+
+- Copy `summary.json`, `variogram.csv` and `field.csv` to `results_real/spatial_global/<outcome>/`.
+- Do not copy `test_pred.parquet` or `offset.npy`.
+
+### Task 8: parametric models (`crc/jobs/07_glmm.sh`, Africa + Middle East)
+
+This fits `realdata/fit_glmm.py`: glm, country, field, spatialplus and svc, plus the
+space-time comparison on the Sahel / Horn of Africa box. It prints progress after each
+model.
+
+- Copy `models_<outcome>.json`, `coefficients_<outcome>.csv` and `svc_tmax_<outcome>.csv`
+  to `results_real/glmm/`.
+- If the `st` part runs past 48 h or runs out of memory, rerun with `--models st --st-step 16`
+  and log that you did.
+
+Tasks 6, 7 and 8 are independent and can run at the same time.
