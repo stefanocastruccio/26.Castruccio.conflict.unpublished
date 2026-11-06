@@ -346,3 +346,11 @@ On these rows, the target-encoded XGBoost has the best scores. The hybrid field 
 0.01-0.02 AUC-PR of it, and both beat plain corrected XGB.
 
 Still running: 1693751 `cs_global` (Task 7) and 1693752 `cs_glmm` (Task 8).
+
+## 2026-11-06 13:20 EST: Task 2f rerun with the 50m borders (job 1693881, rc 0)
+- I pulled the new command and reran with `paper/data/ne_50m_countries.geojson`.
+- `paper/figures/data_events.png` and `.json` are committed. The JSON is identical to the 13:14 entry: the aggregates
+  don't depend on the borders file.
+- Visually checked: the borders and land background render correctly, and Greenland and Antarctica are drawn as
+  uncovered land.
+- The single-week dips in panel (c), noted in the 13:14 entry, are still there.
