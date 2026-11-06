@@ -162,3 +162,21 @@ and interaction-credited SHAP slopes. They need no data and can start immediatel
 
 Submit order: 2r, 2c and 9 now; then (3r, 4r, 7, 8) held on 2r; then 6 held on 3r and 4r.
 Log the job ids.
+
+## Reply to STATUS (Task 2r report), 2026-11-06 — Task 2d: READY
+Thanks, both points were real issues in the code or the report:
+1. **Interior-cell report.** The old `countries_without_interior_cell` listed any country with at least one
+   country-year lacking interior values. Most likely that is every country, because the national
+   indicators are not published for the last year or two (all NaN), not because the interior rule failed. The
+   loader now also reports `countries_without_any_interior_cell`, `share_rows_nat_from_interior_by_year`
+   and `share_rows_nat_missing_by_year`.
+2. **Coverage edge.** Fixed: a week counts as covered if it *ends* on or after the coverage start, so the
+   first week (which starts before 1 January 2018) is no longer dropped for countries covered from 2018.
+
+**Do not cancel the running jobs.** Please:
+- pull, then run `02_load.sh` with the output redirected to `$WORK/clean_v2.parquet` (do not overwrite
+  `clean.parquet` while jobs read it);
+- commit `results_real/data/clean_v2_report.json` and in STATUS give the row counts against clean.parquet
+  and the two new interior fields.
+I'll decide from that whether the downstream jobs need a rerun. If the only difference is the first week,
+they don't, until the final rerun.

@@ -157,8 +157,15 @@ def main():
                                             right_index=True, how="left")
         no_interior = fill[nat].isna().all(axis=1).to_numpy()
         df["nat_source"] = np.where(no_interior, "first_copy", "interior")
-        report["countries_without_interior_cell"] = sorted(df.loc[no_interior, "ISO_A3"].astype(str).unique().tolist())
-        report["cells_nat_from_first_copy"] = int(df.loc[no_interior, "grid_id"].nunique())
+        # a country-year can lack interior values because the country has no interior
+        # cell, or because the indicators are not yet published for that year (all NaN)
+        has_int = set(interior["ISO_A3"].dropna().astype(str))
+        report["countries_without_any_interior_cell"] = sorted(set(df["ISO_A3"].dropna().astype(str)) - has_int)
+        report["share_rows_nat_from_interior_by_year"] = {
+            int(y): float(v) for y, v in pd.Series(~no_interior).groupby(df["year"].to_numpy()).mean().items()}
+        report["share_rows_nat_missing_by_year"] = {
+            c: {int(y): float(v) for y, v in df[c].isna().groupby(df["year"]).mean().items()} for c in nat}
+        report["cells_nat_from_first_copy_any_year"] = int(df.loc[no_interior, "grid_id"].nunique())
         for c in nat:   # countries with no interior cell keep their first copy
             df[c] = fill[c].to_numpy(dtype="float32", na_value=np.nan)
             df[c] = df[c].fillna(df.groupby(["ISO_A3", "year"])[c].transform("first"))
@@ -207,8 +214,11 @@ def main():
             report["coverage_source"] = ("estimated: late entry if first event after 2018-06-30 "
                                          "with >= 20 events in the following 52 weeks")
         start = df["ISO_A3"].map(cov)
-        covered = df["week_start"] >= start          # countries never covered: dropped
-        warm = covered & (df["week_start"] < start + pd.Timedelta(weeks=4))
+        # a week is covered if it ends on or after the coverage start (weeks may start
+        # before 1 January 2018); countries never covered are dropped
+        week_end = df["week_start"] + pd.Timedelta(days=6)
+        covered = week_end >= start
+        warm = covered & (week_end < start + pd.Timedelta(weeks=4))
         lagcols = [f"{c}_rollsum_4" for c in EVENT_COLS]
         df.loc[warm, lagcols] = np.nan
         dropped = (~covered).groupby(df["ISO_A3"]).sum()
