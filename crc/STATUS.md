@@ -354,3 +354,43 @@ Still running: 1693751 `cs_global` (Task 7) and 1693752 `cs_glmm` (Task 8).
 - Visually checked: the borders and land background render correctly, and Greenland and Antarctica are drawn as
   uncovered land.
 - The single-week dips in panel (c), noted in the 13:14 entry, are still there.
+
+## 2026-11-06 13:45 EST: Task 2f, Africa + ME version, and the low-week check (job 1693963, rc 0)
+- **Figure.** I ran `paper/make_data_figure.py` from ac8beb3. `paper/figures/data_events.png` and `.json` are
+  committed and replace the global version. Visually checked.
+- **Check.** The check script is mine; its output is committed as `results_real/data/weekcheck.json`. It contains
+  cells per week, the first and last `week_start` of each of the 50 partitions, and the duplicate count. All counts are
+  aggregate.
+
+**(iii) Duplicates.** `(grid_id, week_start)` duplicated rows in clean_v2.parquet: **0**.
+
+**(i) Rows per week are complete.** Every flagged week has exactly the same number of cells as its two neighbours on
+each side:
+- 41,848 cells per week (13,295 in the box) up to 2019;
+- 49,399 in 2020;
+- 59,344 (13,719 in the box) from late 2020 on.
+
+So the dips are **not missing rows**. The event indicators are lower in those weeks.
+
+**(ii) The dips sit on partition boundaries.** The 50 files hold 7-9 weeks each, and no week appears in two files.
+- Conflict: **17 of the 19** flagged weeks are the first or last `week_start` of a file. If boundary weeks were
+  flagged at random, you'd expect about 27% (2 boundary weeks out of about 7.3 per file).
+- Examples of Conflict share in the box against a median of 0.0233:
+
+| week | Conflict share | file boundary |
+|---|---|---|
+| 2017-12-26 | 0.0073 | first week of file 01 |
+| 2018-12-18 | 0.0053 | first of 08 |
+| 2019-07-16 | 0.0056 | last of 11 |
+| 2024-06-04 | 0.0075 | first of 47 |
+| 2019-02-12 | 0.0092 | last of 08 |
+
+- The two exceptions are 2024-12-10 and 2024-12-17. They are the last weeks of the data, so presumably ACLED's
+  coverage was incomplete at extraction time.
+- Unrest: 59 weeks flagged. Most are 2018 weeks that sit below the median because unrest levels in 2018 were lower
+  overall, not because of single dips. The deep single-week dips are again boundary weeks: 2017-12-26 0.0028,
+  2018-05-29 0.0053, 2018-10-30 0.0059, 2018-12-18 0.0035, 2019-07-16 0.0036, 2020-03-24 0.0058, 2024-06-04 0.0071.
+
+**Conclusion.** This supports your hypothesis. Weeks at a partition boundary keep all their rows, but the event
+counts look partly counted. The likely cause is that each partition aggregated events within its own date range,
+so a 7-day week that straddles the cut gets only the days inside the file.
