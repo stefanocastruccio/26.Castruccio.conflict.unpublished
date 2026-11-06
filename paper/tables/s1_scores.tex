@@ -1,14 +1,14 @@
-\begin{tabular}{@{}lccccc@{}}
+\begin{tabular}{@{}lcccccc@{}}
 \toprule
-Model & Log score & Brier & AUC-PR & AUC-ROC & Better log score \\
+Model & Log score & Brier & AUC-PR & AUC-ROC & $<$ (a) & $<$ (b) \\
 \midrule
-True probabilities & 0.1343 (0.0070) & 0.0334 (0.0022) & 0.200 (0.015) & 0.805 (0.004) & 20/20 \\
-XGBoost as in the original analysis & 0.1401 (0.0072) & 0.0341 (0.0023) & 0.172 (0.015) & 0.767 (0.006) & -- \\
-XGBoost + cell training rate & 0.1385 (0.0070) & 0.0338 (0.0022) & 0.185 (0.015) & 0.781 (0.005) & 18/20 \\
-XGBoost, cross-fitted by country & 0.1537 (0.0085) & 0.0360 (0.0026) & 0.101 (0.011) & 0.670 (0.008) & 0/20 \\
-Cross-fitted XGBoost + $u$ + iid cell effects & 0.1387 (0.0071) & 0.0339 (0.0023) & 0.181 (0.015) & 0.778 (0.005) & 19/20 \\
-Cross-fitted XGBoost + $u + w$ & 0.1374 (0.0071) & 0.0339 (0.0023) & 0.184 (0.015) & 0.789 (0.005) & 20/20 \\
-Parametric model with $u + w$ & 0.1365 (0.0071) & 0.0336 (0.0022) & 0.189 (0.015) & 0.792 (0.005) & 20/20 \\
-Persistence baseline & -- & -- & 0.095 (0.010) & -- & -- \\
+True probabilities & 0.1343 (0.0070) & 0.0334 (0.0022) & 0.200 (0.015) & 0.805 (0.004) & 20/20 & 20/20 \\
+XGBoost as in the original analysis & 0.1401 (0.0072) & 0.0341 (0.0023) & 0.172 (0.015) & 0.767 (0.006) & -- & 2/20 \\
+XGBoost + cell training rate & 0.1385 (0.0070) & 0.0338 (0.0022) & 0.185 (0.015) & 0.781 (0.005) & 18/20 & -- \\
+XGBoost, cross-fitted by country & 0.1537 (0.0085) & 0.0360 (0.0026) & 0.101 (0.011) & 0.670 (0.008) & 0/20 & 0/20 \\
+Cross-fitted XGBoost + $u$ + iid cell effects & 0.1387 (0.0071) & 0.0339 (0.0023) & 0.181 (0.015) & 0.778 (0.005) & 19/20 & 6/20 \\
+Cross-fitted XGBoost + $u + w$ & 0.1374 (0.0071) & 0.0339 (0.0023) & 0.184 (0.015) & 0.789 (0.005) & 20/20 & 16/20 \\
+Parametric model with $u + w$ & 0.1365 (0.0071) & 0.0336 (0.0022) & 0.189 (0.015) & 0.792 (0.005) & 20/20 & 20/20 \\
+Persistence baseline & -- & -- & 0.095 (0.010) & -- & -- & -- \\
 \bottomrule
 \end{tabular}

@@ -44,7 +44,11 @@ def s0():
     for lab, k, d in lines:
         if k not in raw:
             continue
-        cells = [f"{g[k].mean()[c]:.{d}f} ({g[k].std()[c]:.{d}f})" for c in cfgs]
+        if k == "b1_cover":   # a proportion: report its Monte Carlo standard error
+            cells = [f"{g[k].mean()[c]:.{d}f} ({np.sqrt(g[k].mean()[c] * (1 - g[k].mean()[c]) / g.size()[c]):.{d}f})"
+                     for c in cfgs]
+        else:
+            cells = [f"{g[k].mean()[c]:.{d}f} ({g[k].std()[c]:.{d}f})" for c in cfgs]
         rows.append(lab + " & " + " & ".join(cells) + r" \\")
     rows.append(f"Marginal variance of $w$, interior cells [nominal 1] & " + " & ".join([f"{v.iloc[0]:.2f}"] + ["--"] * (len(cfgs) - 1)) + r" \\")
     rows.append(f"Marginal variance of $w$, edge cells & " + " & ".join([f"{v.iloc[1]:.2f}"] + ["--"] * (len(cfgs) - 1)) + r" \\")
@@ -75,11 +79,13 @@ def s1():
         dl = raw.get(f"{key}.logscore_minus_xgb_original")
         cells.append("--" if dl is None or key == "xgb_original" else
                      f"{(dl < 0).sum()}/{len(dl)}")
+        dt = None if dl is None else dl - raw["xgb_te.logscore_minus_xgb_original"]
+        cells.append("--" if dt is None or key == "xgb_te" else f"{(dt < 0).sum()}/{len(dt)}")
         rows.append(lab + " & " + " & ".join(cells) + r" \\")
     v = raw["persistence.auc_pr"]
-    rows.append(f"Persistence baseline & -- & -- & {v.mean():.3f} ({v.std() / np.sqrt(len(v)):.3f}) & -- & -- \\\\")
-    body = (r"\begin{tabular}{@{}lccccc@{}}" "\n" r"\toprule" "\n"
-            r"Model & Log score & Brier & AUC-PR & AUC-ROC & Better log score \\" "\n" r"\midrule" "\n"
+    rows.append(f"Persistence baseline & -- & -- & {v.mean():.3f} ({v.std() / np.sqrt(len(v)):.3f}) & -- & -- & -- \\\\")
+    body = (r"\begin{tabular}{@{}lcccccc@{}}" "\n" r"\toprule" "\n"
+            r"Model & Log score & Brier & AUC-PR & AUC-ROC & $<$ (a) & $<$ (b) \\" "\n" r"\midrule" "\n"
             + "\n".join(rows) + "\n" r"\bottomrule" "\n" r"\end{tabular}" "\n")
     write("s1_scores.tex", body)
     lines = [
