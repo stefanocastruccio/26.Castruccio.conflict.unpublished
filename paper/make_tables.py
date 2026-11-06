@@ -190,5 +190,22 @@ def s4():
     write("s4_extra.tex", body)
 
 
+def barrier():
+    r = pd.read_csv(os.path.join(RES, "barrier_check.csv"))
+    tr = ["land only", "sea = land", "barrier 0.1", "barrier 0.2", "barrier 0.5"]
+    head = ["Land only", "Sea = land", "$f=0.1$", "$f=0.2$", "$f=0.5$"]
+    body = r"\begin{tabular}{@{}ll" + "r" * len(tr) + "@{}}\n\\toprule\n"
+    body += "Strait & & " + " & ".join(head) + r" \\" + "\n\\midrule\n"
+    for w in sorted(r.width_cells.unique()):
+        d = r[r.width_cells == w].set_index("treatment")
+        for k, (lab, col, dg) in enumerate([("var.\\ coast", "var_coast", 2), ("var.\\ inland", "var_inland", 2),
+                                             ("corr.\\ across", "corr_across", 2)]):
+            first = f"{w} cells" if k == 0 else ""
+            body += f"{first} & {lab} & " + " & ".join(f(d.loc[t, col], dg) for t in tr) + r" \\" + "\n"
+        body += "\\addlinespace\n" if w != r.width_cells.max() else ""
+    body += "\\bottomrule\n\\end{tabular}\n"
+    write("barrier.tex", body)
+
+
 if __name__ == "__main__":
-    s0(); s1(); s2(); s3(); s4()
+    s0(); s1(); s2(); s3(); s4(); barrier()
