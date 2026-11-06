@@ -656,3 +656,12 @@ two files.
   26-week tasks needed about 20 min. With twice the steps and a latent size about 2x, a 2-hour run is plausible but
   slower than linear. I'll keep checking and flag here if either passes about 12 h, the halfway point to your 24 h limit.
 - Round 3 glmm (1694071.1-2): wall time 4 h 05 min, maxvmem about 38.5 GB, no Traceback.
+
+## 2026-11-06 18:23 EST: Round 4 space-time, conflict at 13-week steps done (1694603.5, rc 0, wall about 2 h 15 min; fit 7970 s; maxvmem 21.2 GB)
+`results_real/dynamic/conflict/summary_st13_r1.json` is committed.
+- Setup: 3,637 cells, 29 steps (21 train), latent size 124,983.
+- Scores: AUC-PR **0.519**, AUC-ROC 0.959, log score 0.0602, log-ML -182,981.
+  - Against the 26-week fit: 0.518 / 0.0603 / -183,089.
+  - Against the static field: 0.519 / 0.0606 / -184,943.
+- Hyperparameters: country sd 0.79, cell sd 0.81, space-time range 779 km, sd 1.39, rho **0.986**.
+- The unrest 13-week task (1694603.6) is still running. It should be similar, about 2.5 h, so done around 18:40.
