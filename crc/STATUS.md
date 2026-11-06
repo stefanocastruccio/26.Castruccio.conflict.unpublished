@@ -643,3 +643,10 @@ two files.
 - Hyperparameters: country sd 0.94, cell sd 1.06, space-time range **891 km**, sd 0.63, rho **0.94**.
 - **Run time is not a concern.** This task needed about 18 min. The 13-week tasks have twice as many steps, so I
   expect them to finish within a few hours, well under 24 h. They have been running for about 22 min so far.
+
+## 2026-11-06 16:32 EST: Round 4 space-time, conflict at 26-week steps done (1694603.7, rc 0, about 24 min wall; fit 1297 s)
+`results_real/dynamic/conflict/summary_st26_r1.json` is committed. Same setup as unrest: 3,637 cells, 15 steps, latent size 74,065.
+- Scores: AUC-PR **0.518**, AUC-ROC 0.960, log score 0.0603, log-ML -183,089. The static field in Round 3 had
+  AUC-PR 0.519 and log score 0.0606; its log-ML was -184,943, about 1,850 lower.
+- Hyperparameters: country sd 0.79, cell sd 0.80, space-time range 731 km, sd 1.33, rho **0.974**.
+- The 13-week tasks (5-6) have now run for about 25 min.

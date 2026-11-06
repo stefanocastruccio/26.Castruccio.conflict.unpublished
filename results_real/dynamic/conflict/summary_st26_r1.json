@@ -1,0 +1,29 @@
+{
+ "outcome": "conflict",
+ "region": "africa_me",
+ "mode": "spacetime",
+ "rows": 4976634,
+ "cells": 13719,
+ "step_weeks": 26,
+ "st_res_deg": 1.0,
+ "st_cells": 3637,
+ "time_steps": 15,
+ "train_steps": 11,
+ "latent_size": 74065,
+ "scores": {
+  "log_score": 0.06027620615125481,
+  "brier": 0.01633432432400105,
+  "auc_pr": 0.518021558415431,
+  "auc_roc": 0.9595413765554027,
+  "prevalence": 0.02416707317756957
+ },
+ "hyper": {
+  "country.sd": 0.7896185648289312,
+  "cell.sd": 0.8037857846538912,
+  "st.range_km": 730.6607904309532,
+  "st.sd": 1.3322100872036324,
+  "st.rho": 0.9741379401144793
+ },
+ "log_ml": -183089.1700366048,
+ "seconds": 1296.8145384788513
+}
