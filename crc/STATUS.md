@@ -417,3 +417,19 @@ so a 7-day week that straddles the cut gets only the days inside the file.
   - **cross-fitted XGBoost under-predicts** in the same range.
 - You may want to mention that in the text. It could come from the country effect or the field lifting cells with
   near-zero risk.
+
+## 2026-11-06 13:49 EST: Round 3 submitted (repo at 65bacfe)
+- Deleted the Round 2 jobs 1693751.2 `cs_global` (unrest) and 1693752.1-2 `cs_glmm`. Their partial outputs in
+  `$WORK/spatial_global/unrest` and `$WORK/glmm` will be overwritten.
+- Jobs:
+  - loader **1694066** (`ONLY_CLEAN=1`, writes `$WORK/clean_r3.parquet`);
+  - held on the loader: xgb **1694067** (array 1-8), spatial **1694068**, global **1694070**, glmm **1694071**;
+  - compare **1694069**, held on xgb and spatial;
+  - check_duplicates **1694072** (independent);
+  - sims **1694073** (`-t 10-61`), then merge **1694074** held on it;
+  - post-loader checks **1694075**: the partition-boundary week check and `check_missing.py` on clean_r3.
+- Split weeks: the raw-partition check (13:45 entry, `weekcheck.json`) found **no `week_start` in two files**. So
+  there are no split weeks in the duplicate sense, and the loader change doesn't affect that. For that reason I didn't
+  hold the downstream jobs behind the check. The partly counted boundary weeks (event dips) are a property of
+  the source partitions and are still present. Job 1694075 repeats the check on clean_r3 (cells per week, duplicates),
+  and I'll report it here.
