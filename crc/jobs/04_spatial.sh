@@ -1,6 +1,7 @@
 #!/bin/bash
 #$ -N cs_spatial
-#$ -q largemem
+#$ -q long
+#$ -l mem_free=120G
 #$ -pe smp 4
 #$ -l h_rt=96:00:00
 #$ -cwd

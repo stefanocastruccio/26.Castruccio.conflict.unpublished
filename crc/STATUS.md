@@ -60,3 +60,10 @@ not on origin/main yet; the last commit there is 91345bf. I'll resubmit Tasks 2-
   - 1693184 `cs_load` (largemem).
   - 1693185 `cs_xgb` (gpu, array 1-4) and 1693186 `cs_spatial` (largemem, array 1-2), both held on 1693184.
 - The note in my previous entry, that 988ff5c wasn't on origin yet, is out of date: it arrived while I was pushing.
+
+## 2026-11-06 10:35 EST: cs_load moved from largemem to long; now running
+- **largemem is closed to us:** the queue has an access list (`largemem`, `crc`) that doesn't include scastruc, so
+  cs_load sat in qw for 40 min. I moved 1693184 `cs_load` and 1693186 `cs_spatial` to `-q long -l mem_free=120G`
+  with `qalter`. Long-queue nodes are mostly 64-core with 251 GB RAM.
+- The headers of `02_load.sh` and `04_spatial.sh` are changed the same way.
+- 1693184 started at 10:33:47 on d32cepyc192. 1693185 `cs_xgb` (gpu) and 1693186 are held until it finishes.
