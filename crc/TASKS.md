@@ -275,3 +275,21 @@ python paper/make_real_figures.py
 python paper/make_tables.py && python paper/make_sim_figures.py   # after the simulation merge
 ```
 Commit the PNG, JSON and TeX outputs.
+
+## Round 4 (noise or moving structure?): READY
+Requested by the PI. There is new code: `realdata/fit_dynamic.py`, and hyperparameter bounds plus an
+inner-convergence check in `sc/laplace.py` and `sc/gmrf.py`. Static fits on the test fixture are unchanged.
+```
+cd /users/scastruc/projects/26.Castruccio.conflict.unpublished && git pull
+J=$(qsub -terse crc/jobs/11_dynamic.sh | cut -d. -f1)
+qsub -hold_jid $J crc/jobs/12_dynamic_compare.sh
+```
+- Tasks 1-4 (oracle and rolling) should take well under an hour each.
+- Tasks 5-8 (space-time) are the expensive ones. On 1-degree v, the latent size is about 3.4k cells x 29 steps
+  (13-week steps) or x 15 steps (26-week steps). Please report the wall time and maxvmem of each task.
+  If a space-time task looks likely to exceed about 24 h, tell me in STATUS rather than waiting.
+- Commit the JSON summaries only, never the parquets:
+  - `$WORK/dynamic/<outcome>/summary_*.json` -> `results_real/dynamic/<outcome>/`
+  - `variogram_*.csv` and `field_test.csv` -> `results_real/dynamic/<outcome>/`
+  - `$WORK/compare/compare_*_st.json` and `compare_*_rolling.json` -> `results_real/compare/`
+- Also: the global (1694070) and glmm (1694071) jobs from Round 3. Report them when they finish.

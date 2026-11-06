@@ -142,6 +142,7 @@ class LatentGaussianModel:
             _, w = self._grad_w(eta)
             self._perm = (nested_dissection(Q + self.At @ sp.diags(w) @ self.A)
                           if self.dim > 2000 else None)
+        self._converged = False
         for it in range(maxit):
             g_lik, w = self._grad_w(eta)
             grad = self.At @ g_lik - Q @ x
@@ -156,12 +157,17 @@ class LatentGaussianModel:
             x, df = x + t * step, fn - f
             f, eta = fn, etan
             if abs(df) < tol * (1 + abs(f)) and np.max(np.abs(t * step)) < 1e-5:
+                self._converged = True
                 break
         _, w = self._grad_w(eta)
         return x, f, Factor(Q + self.At @ sp.diags(w) @ self.A, self._perm)
 
-    def log_marginal(self, theta):
+    def log_marginal(self, theta, require_converged=False):
         x, f, lu = self.mode(theta)
+        if require_converged and not self._converged:
+            # an unconverged inner solve gives a meaningless (often spuriously high)
+            # Laplace value; reject it and keep the previous warm start
+            raise FloatingPointError("inner Newton iterations did not converge")
         self._x = x
         ld_post = lu.logdet()
         return f + 0.5 * self.logdet_Q(theta) - 0.5 * ld_post
@@ -177,15 +183,15 @@ class LatentGaussianModel:
             def nlp(th):
                 self.n_evals += 1
                 try:
-                    v = -(self.log_marginal(th) + self.log_prior(th))
+                    v = -(self.log_marginal(th, require_converged=True) + self.log_prior(th))
                 except Exception:
                     return 1e100
                 if verbose:
                     print(np.round(th, 3), round(v, 3), flush=True)
                 return v if np.isfinite(v) else 1e100
 
-            res = minimize(nlp, theta0, method="L-BFGS-B",
-                           bounds=[(-8, 10)] * self.n_theta,
+            bounds = [bd for b in self.blocks for bd in b.bounds()]
+            res = minimize(nlp, theta0, method="L-BFGS-B", bounds=bounds,
                            options=dict(maxiter=maxiter, eps=1e-4))
             self.theta, self.opt = res.x, res
         self.x_hat, self.f_hat, self.lu = self.mode(self.theta)

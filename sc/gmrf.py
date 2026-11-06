@@ -133,8 +133,19 @@ class Block:
     def log_prior(self, th):
         return 0.0
 
+    def bounds(self):
+        """Box constraints on the internal hyperparameters for the outer optimiser."""
+        return [(-8.0, 10.0)] * self.n_theta
+
     def describe(self, th):
         return {}
+
+
+# plausible ranges on the internal scale: log sd in [log 0.005, log 20],
+# log range in [log 10 km, log 20,000 km], atanh(rho) in [-3, 3] (|rho| <= 0.995)
+LOG_SD = (np.log(0.005), np.log(20.0))
+LOG_RANGE = (np.log(10.0), np.log(2.0e4))
+ATANH_RHO = (-3.0, 3.0)
 
 
 class FixedBlock(Block):
@@ -171,6 +182,9 @@ class IIDBlock(Block):
 
     def log_prior(self, th):
         return log_pc_sd(th[0], *self.pc)
+
+    def bounds(self):
+        return [LOG_SD]
 
     def describe(self, th):
         return {f"{self.name}.sd": float(np.exp(th[0]))}
@@ -234,6 +248,9 @@ class MaternBlock(Block):
     def log_prior(self, th):
         return log_pc_range2d(th[0], *self.pc_range) + log_pc_sd(th[1], *self.pc_sd)
 
+    def bounds(self):
+        return [LOG_RANGE, LOG_SD]
+
     def describe(self, th):
         rng, sd = np.exp(th)
         return {f"{self.name}.range_km": float(rng), f"{self.name}.sd": float(sd)}
@@ -283,6 +300,9 @@ class SpaceTimeAR1Block(Block):
     def log_prior(self, th):
         # weak N(0, 1.5^2) on atanh(rho)
         return self.space.log_prior(th[:2]) - 0.5 * (th[2] / 1.5) ** 2
+
+    def bounds(self):
+        return [LOG_RANGE, LOG_SD, ATANH_RHO]
 
     def describe(self, th):
         d = self.space.describe(th[:2])
