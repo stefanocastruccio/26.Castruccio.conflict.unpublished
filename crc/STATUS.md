@@ -225,3 +225,27 @@ The six `metrics_*.json` files replace the old ones in `results_real/xgb/`. They
 - 1693744 `cs_sims_merge`: no FAILED scripts. It wrote s0, s1_scores, s1_field, s2, s3, s4, s4_extra and barrier `.tex`.
 - Committed: `results/*.csv` (15 files changed), `results/s1_maps.png` and `paper/tables/*.tex` (7 changed;
   barrier.tex is unchanged). The `*_ckpt*.jsonl` files are not committed.
+
+## 2026-11-06 13:03 EST: Task 2d done (job 1693835, rc 0, 12:53-13:01, maxvmem about 25 GB)
+`results_real/data/clean_v2_report.json` is committed. clean_v2.parquet compared with clean.parquet (2r):
+
+| | clean (2r) | clean_v2 (2d) |
+|---|---|---|
+| rows | 19,321,887 | **19,365,684** (+43,797) |
+| cells / weeks | 59,344 / 366 | 59,344 / 366 |
+| cell-weeks dropped before coverage | 7,156,461 | 7,078,822 (-77,639) |
+| countries with dropped weeks | 160 | 79 |
+| sea-centroid cells | 9,732 | 9,732 |
+
+- The extra rows are the first week. The largest gains are ATA 25,467, RUS 12,779, CAN 8,057, USA 4,917, CHN 3,898,
+  AUS 3,056, GRL 3,007 and BRA 2,929 cell-weeks.
+- **`countries_without_any_interior_cell`: [] (0 countries).**
+- **`share_rows_nat_from_interior_by_year`:** 2017: 0.000; every year from 2018 to 2024: 0.729.
+- `share_rows_nat_missing_by_year`:
+  - In 2017 (the single week starting in Dec 2017) every indicator is 1.0 missing.
+  - In 2018-2024 the missing shares are roughly constant: EPI_index 0.276, v2x_libdem 0.311, and
+    GHG/MF/ECO 0.41-0.43.
+  - So the gaps are not concentrated in the last year or two. About 28-43% of rows lack these indicators in every
+    year, probably countries that the indicator sources don't cover.
+- `cells_nat_from_first_copy_any_year`: 94,730. That is all input grid_ids, including cells later dropped, which is
+  why it's more than 59,344.
