@@ -650,3 +650,9 @@ two files.
   AUC-PR 0.519 and log score 0.0606; its log-ML was -184,943, about 1,850 lower.
 - Hyperparameters: country sd 0.79, cell sd 0.80, space-time range 731 km, sd 1.33, rho **0.974**.
 - The 13-week tasks (5-6) have now run for about 25 min.
+
+## 2026-11-06 18:03 EST: progress check
+- Round 4 space-time at 13-week steps (1694603.5-6): wall time 1 h 55 min so far, maxvmem 21.2 GB, no Traceback. The
+  26-week tasks needed about 20 min. With twice the steps and a latent size about 2x, a 2-hour run is plausible but
+  slower than linear. I'll keep checking and flag here if either passes about 12 h, the halfway point to your 24 h limit.
+- Round 3 glmm (1694071.1-2): wall time 4 h 05 min, maxvmem about 38.5 GB, no Traceback.
