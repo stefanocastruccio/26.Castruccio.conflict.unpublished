@@ -407,3 +407,13 @@ so a 7-day week that straddles the cut gets only the days inside the file.
 - Size: 15,303,100 rows (4,787,224 test), 46,031 cells and 16,962 barrier cells.
 - Persistence AUC-PR: 0.481.
 - Residual diagnostics: Moran's I 0.581. Within-country vs across-border correlation is 0.608 vs 0.440 (83,886 and 4,359 pairs).
+
+## 2026-11-06 13:52 EST: fitted-vs-observed figure (job 1693985, rc 0)
+- I ran `paper/make_fitted_figure.py` from 288a737 on the Task 4r `test_pred.parquet` files (Africa + ME,
+  computed on clean.parquet from 2r). `paper/figures/real_fitted.png` is committed, after a visual check.
+- In the calibration panels (c) and (f), both models track the diagonal above about 1%. Below about 0.5%:
+  - the **hybrid model over-predicts**: for example, a bin mean near 1e-3 has observed frequency about 2e-4 (conflict)
+    or about 4e-4 (unrest);
+  - **cross-fitted XGBoost under-predicts** in the same range.
+- You may want to mention that in the text. It could come from the country effect or the field lifting cells with
+  near-zero risk.
