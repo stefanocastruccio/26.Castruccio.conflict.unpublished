@@ -3,29 +3,34 @@
 Estimator / biome & Mean est. & Cov.\ $\gamma_b$ & Cov.\ $\bar\beta_b$ & Detects sign \\
 \midrule
 \multicolumn{5}{@{}l}{\emph{Biome slopes, no latent effects}} \\
-\quad biome 1 ($\gamma = -0.3$) & -0.263 & 0.47 & 0.60 & 1.00 \\
-\quad biome 2 ($\gamma = -0.1$) & -0.089 & 0.67 & 0.77 & 0.57 \\
-\quad biome 3 ($\gamma = +0.1$) & 0.124 & 0.57 & 0.57 & 0.73 \\
-\quad biome 4 ($\gamma = +0.3$) & 0.295 & 0.40 & 0.50 & 0.97 \\
+\quad biome 1 ($\gamma = -0.3$) & -0.273 & 0.57 & 0.77 & 1.00 \\
+\quad biome 2 ($\gamma = -0.1$) & -0.083 & 0.57 & 0.83 & 0.60 \\
+\quad biome 3 ($\gamma = +0.1$) & 0.108 & 0.53 & 0.70 & 0.73 \\
+\quad biome 4 ($\gamma = +0.3$) & 0.307 & 0.50 & 0.53 & 1.00 \\
 \multicolumn{5}{@{}l}{\emph{Biome slopes + $u$ + $w$}} \\
-\quad biome 1 ($\gamma = -0.3$) & -0.289 & 0.63 & 0.73 & 1.00 \\
-\quad biome 2 ($\gamma = -0.1$) & -0.093 & 0.63 & 0.87 & 0.67 \\
-\quad biome 3 ($\gamma = +0.1$) & 0.131 & 0.57 & 0.67 & 0.73 \\
-\quad biome 4 ($\gamma = +0.3$) & 0.319 & 0.37 & 0.80 & 0.97 \\
+\quad biome 1 ($\gamma = -0.3$) & -0.286 & 0.53 & 0.87 & 1.00 \\
+\quad biome 2 ($\gamma = -0.1$) & -0.082 & 0.57 & 0.90 & 0.67 \\
+\quad biome 3 ($\gamma = +0.1$) & 0.119 & 0.60 & 0.73 & 0.73 \\
+\quad biome 4 ($\gamma = +0.3$) & 0.319 & 0.53 & 0.87 & 1.00 \\
 \multicolumn{5}{@{}l}{\emph{SVC: biome means + $\eta$ + $u$ + $w$}} \\
-\quad biome 1 ($\gamma = -0.3$) & -0.301 & 0.97 & 1.00 & 0.87 \\
-\quad biome 2 ($\gamma = -0.1$) & -0.096 & 0.93 & 1.00 & 0.20 \\
-\quad biome 3 ($\gamma = +0.1$) & 0.124 & 0.90 & 1.00 & 0.43 \\
-\quad biome 4 ($\gamma = +0.3$) & 0.321 & 0.90 & 1.00 & 0.87 \\
-\multicolumn{5}{@{}l}{\emph{XGBoost SHAP slope}} \\
-\quad biome 1 ($\gamma = -0.3$) & -0.092 & 0.03 & 0.07 & 0.57 \\
-\quad biome 2 ($\gamma = -0.1$) & -0.022 & 0.47 & 0.57 & 0.23 \\
-\quad biome 3 ($\gamma = +0.1$) & 0.063 & 0.67 & 0.60 & 0.43 \\
-\quad biome 4 ($\gamma = +0.3$) & 0.113 & 0.07 & 0.07 & 0.53 \\
-\multicolumn{5}{@{}l}{\emph{XGBoost median SHAP$^\ddagger$}} \\
-\quad biome 1 ($\gamma = -0.3$) & -0.043 & 0.00 & 0.00 & 0.97 \\
-\quad biome 2 ($\gamma = -0.1$) & -0.042 & 0.00 & 0.07 & 1.00 \\
-\quad biome 3 ($\gamma = +0.1$) & -0.043 & 0.00 & 0.00 & 0.00 \\
-\quad biome 4 ($\gamma = +0.3$) & -0.051 & 0.00 & 0.00 & 0.00 \\
+\quad biome 1 ($\gamma = -0.3$) & -0.277 & 0.97 & 1.00 & 0.93 \\
+\quad biome 2 ($\gamma = -0.1$) & -0.077 & 0.93 & 1.00 & 0.23 \\
+\quad biome 3 ($\gamma = +0.1$) & 0.111 & 0.90 & 1.00 & 0.33 \\
+\quad biome 4 ($\gamma = +0.3$) & 0.309 & 0.83 & 1.00 & 0.97 \\
+\multicolumn{5}{@{}l}{\emph{XGBoost SHAP slope (targets $\gamma_b/2$)}} \\
+\quad biome 1 ($\gamma = -0.3$) & -0.092 & 0.03 & 0.03 & 0.60 \\
+\quad biome 2 ($\gamma = -0.1$) & -0.026 & 0.47 & 0.53 & 0.23 \\
+\quad biome 3 ($\gamma = +0.1$) & 0.048 & 0.47 & 0.40 & 0.37 \\
+\quad biome 4 ($\gamma = +0.3$) & 0.091 & 0.03 & 0.00 & 0.60 \\
+\multicolumn{5}{@{}l}{\emph{XGBoost SHAP slope, interactions credited}} \\
+\quad biome 1 ($\gamma = -0.3$) & -0.191 & 0.27 & 0.40 & 0.83 \\
+\quad biome 2 ($\gamma = -0.1$) & -0.056 & 0.63 & 0.63 & 0.30 \\
+\quad biome 3 ($\gamma = +0.1$) & 0.089 & 0.57 & 0.73 & 0.53 \\
+\quad biome 4 ($\gamma = +0.3$) & 0.176 & 0.40 & 0.30 & 0.80 \\
+\multicolumn{5}{@{}l}{\emph{XGBoost median SHAP, raw temperature$^\ddagger$}} \\
+\quad biome 1 ($\gamma = -0.3$) & -0.052 & 0.03 & 0.07 & 0.57 \\
+\quad biome 2 ($\gamma = -0.1$) & -0.151 & 0.13 & 0.13 & 0.97 \\
+\quad biome 3 ($\gamma = +0.1$) & -0.150 & 0.00 & 0.00 & 0.00 \\
+\quad biome 4 ($\gamma = +0.3$) & -0.043 & 0.00 & 0.00 & 0.20 \\
 \bottomrule
 \end{tabular}

@@ -218,3 +218,10 @@ The six `metrics_*.json` files replace the old ones in `results_real/xgb/`. They
 | original_Conflict | 0.9342 | 0.9665 | 0.4976 | 0.8896 | 0.9945 | 1998 | 14425130 |
 | original_Unrest | 0.9175 | 0.9684 | 0.5281 | 0.8519 | 0.9926 | 1474 | 14425130 |
 
+
+## 2026-11-06 12:58 EST: Task 9 done
+- 1693743 `cs_sims`: all 40 tasks finished between 12:38 and 12:56, with about 15 GB maxvmem and no Tracebacks.
+  They ran on the `sc/laplace.py` before af03a94; see the 12:41 entry.
+- 1693744 `cs_sims_merge`: no FAILED scripts. It wrote s0, s1_scores, s1_field, s2, s3, s4, s4_extra and barrier `.tex`.
+- Committed: `results/*.csv` (15 files changed), `results/s1_maps.png` and `paper/tables/*.tex` (7 changed;
+  barrier.tex is unchanged). The `*_ckpt*.jsonl` files are not committed.

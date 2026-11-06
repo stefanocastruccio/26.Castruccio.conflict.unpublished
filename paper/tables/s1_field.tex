@@ -2,11 +2,10 @@
 \toprule
 Quantity & Mean & SD \\
 \midrule
-Moran's $I$ of cell residuals, XGBoost (original) & 0.330 & 0.069 \\
-Moran's $I$ of cell residuals, XGBoost cross-fitted & 0.591 & 0.064 \\
-$\mathrm{cor}(\hat w, w)$, XGBoost + $w$ & 0.768 & 0.049 \\
-$\mathrm{cor}(\hat w, w)$, XGBoost + $u + w$ & 0.814 & 0.036 \\
-$\hat\rho_w$ (km), XGBoost + $u + w$ [truth 400] & 373.374 & 48.288 \\
-$\hat\sigma_w$, XGBoost + $u + w$ [truth 1] & 0.943 & 0.095 \\
+Moran's $I$ of cell residuals, XGBoost as in the original & 0.360 & 0.050 \\
+Moran's $I$ of cell residuals, cross-fitted XGBoost & 0.637 & 0.067 \\
+$\mathrm{cor}(\hat w, w)$, hybrid with $u + w$ & 0.849 & 0.044 \\
+$\hat\rho_w$ (km) [truth 400] & 408.726 & 49.880 \\
+$\hat\sigma_w$ [truth 1] & 0.829 & 0.069 \\
 \bottomrule
 \end{tabular}

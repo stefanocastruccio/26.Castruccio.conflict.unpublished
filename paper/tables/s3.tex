@@ -3,14 +3,22 @@
 Estimator & Mean $\hat\delta$ & Emp.\ SD & Mean SE & Coverage \\
 \midrule
 \multicolumn{5}{@{}l}{\emph{State dependence ($\delta = 1$)}} \\
-\quad Lags only & 1.322 & 0.181 & 0.133 & 0.35 \\
-\quad Lags + $w$ & 1.022 & 0.136 & 0.136 & 0.95 \\
-\quad Lags + $w$ + $v$ & 0.975 & 0.143 & 0.137 & 0.95 \\
-\quad XGBoost: share of mean $|$SHAP$|$ for lags & 0.108 & 0.032 & -- & -- \\
+\quad Lags only & 1.263 & 0.107 & 0.136 & 0.60 \\
+\quad Lags + $w$ & 1.032 & 0.131 & 0.139 & 0.90 \\
+\quad Lags + $w$ + $v$ (4-week steps) & 0.990 & 0.135 & 0.140 & 0.95 \\
+\quad Lags + $w$ + $v$ (weekly steps) & 0.997 & 0.143 & 0.140 & 0.95 \\
+\quad XGBoost: share of mean $|$SHAP$|$ for lags & 0.108 & 0.034 & -- & -- \\
 \multicolumn{5}{@{}l}{\emph{Heterogeneity ($\delta = 0$)}} \\
-\quad Lags only & 2.132 & 0.425 & 0.071 & 0.00 \\
-\quad Lags + $w$ & 0.704 & 0.155 & 0.085 & 0.00 \\
-\quad Lags + $w$ + $v$ & 0.108 & 0.117 & 0.096 & 0.80 \\
-\quad XGBoost: share of mean $|$SHAP$|$ for lags & 0.168 & 0.048 & -- & -- \\
+\quad Lags only & 1.614 & 0.386 & 0.099 & 0.00 \\
+\quad Lags + $w$ & 0.464 & 0.093 & 0.111 & 0.00 \\
+\quad Lags + $w$ + $v$ (4-week steps) & 0.045 & 0.152 & 0.119 & 0.90 \\
+\quad Lags + $w$ + $v$ (weekly steps) & 0.011 & 0.162 & 0.120 & 0.90 \\
+\quad XGBoost: share of mean $|$SHAP$|$ for lags & 0.094 & 0.038 & -- & -- \\
+\multicolumn{5}{@{}l}{\emph{Mixed ($\delta = 0.5$)}} \\
+\quad Lags only & 1.659 & 0.351 & 0.106 & 0.00 \\
+\quad Lags + $w$ & 0.782 & 0.111 & 0.115 & 0.25 \\
+\quad Lags + $w$ + $v$ (4-week steps) & 0.545 & 0.152 & 0.120 & 0.85 \\
+\quad Lags + $w$ + $v$ (weekly steps) & 0.535 & 0.172 & 0.120 & 0.80 \\
+\quad XGBoost: share of mean $|$SHAP$|$ for lags & 0.116 & 0.044 & -- & -- \\
 \bottomrule
 \end{tabular}
