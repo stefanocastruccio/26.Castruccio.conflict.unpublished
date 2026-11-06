@@ -466,3 +466,27 @@ So keeping the first row of each cell-week, as the loader now does, removes the 
 - `share_rows_nat_from_interior_by_year`: 0.729 in every year from 2018 to 2024 (0 in 2017, the one December-2017 week).
 - `countries_without_any_interior_cell`: [].
 - Xgb 1694067 (8), spatial 1694068, global 1694070, glmm 1694071 and the post-load checks 1694075 are now running.
+
+## 2026-11-06 14:01 EST: Round 3 post-load checks done (job 1694075, rc 0, about 3 min)
+`results_real/data/missing_r3.json` and `results_real/data/weekcheck_r3.json` are committed.
+
+**Week check on clean_r3.** There are **0** duplicated `(grid_id, week_start)` rows. Every flagged low week has the same
+cell count as its neighbours: 41,848 up to 2019, 49,399 in 2020 and 59,339 afterwards. The partition files
+are the same raw data, so the boundary-week event dips reported at 13:45 are still there. No `week_start` occurs in
+two files.
+
+**Missingness in the final clean_r3 table.**
+
+| | all (19,364,639) | Africa + ME (4,976,634) |
+|---|---|---|
+| EPI_index / v2x_libdem | 0.0035 / 0.0038 | 0.0027 / 0.0027 |
+| GHG / MF / ECO | **0.0058** (clean_v2: 0.178) | **0.0028** (clean_v2: 0.279) |
+| gdp / gdp_pc | 0.014 / **0.014** | 0.036 / **0.036** (SSD, YEM, SOL, ERI, ESH, SYR, KOS) |
+| electricity_access | 0.0038 | 0.0054 |
+| IPC phase | 0.896 | 0.627 |
+| pm25 | 0.556 | 0.555 |
+
+- **Correction to my 13:58 note.** In the final table, `gdp_pc` is missing exactly where `gdp` is (1.4%), not 28%. The
+  report's `share_rows_gdp_pc_missing = 0.282` must be computed on a different row set: before the coverage and land
+  filters, or before the first-copy fallback. The report field is misleading but the data are fine.
+- The new national-indicator fallback works: the sustainability trio dropped from 28% missing to 0.3% in the box.
