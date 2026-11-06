@@ -277,3 +277,22 @@ I ran it as a short batch job (long queue, 4 cores, mem_free=60G) rather than on
 (EPI 0.276, v2x 0.311, GHG 0.41-0.43). That suggests the report field is computed before the per-country fill or
 before the coverage and land filtering, so it doesn't describe the final table. In the final table, only the
 sustainability trio (about 28% in the box) and IPC/pm25 have large gaps.
+
+## 2026-11-06 13:11 EST: Task 4r done (job 1693750, 2 tasks, rc 0, no Tracebacks; maxvmem about 15.7 GB)
+- Run on clean.parquet (2r) with `--land`. Each outcome has 4,975,444 rows, 13,719 cells and 3,725 barrier
+  (sea) cells, with country folds.
+- `summary.json`, `variogram.csv` and `field.csv` replace the old files in `results_real/spatial/{conflict,unrest}/`.
+- Task 6 (1693753 `cs_compare`) started as soon as this finished.
+
+| outcome | model | AUC-PR | AUC-ROC | log score | hyperparameters |
+|---|---|---|---|---|---|
+| conflict | XGB cross-fit (country folds) | 0.444 | 0.916 | 0.0716 | |
+| conflict | + barrier field | 0.521 | 0.959 | 0.0605 | country sd 0.80, range 264 km, field sd 1.47 |
+| conflict | + iid cell | 0.521 | 0.958 | 0.0609 | country sd 1.40, cell sd 1.30 |
+| unrest | XGB cross-fit | 0.507 | 0.939 | 0.0697 | |
+| unrest | + barrier field | 0.547 | 0.959 | 0.0634 | country sd 1.05, range 68 km, field sd 1.20 |
+| unrest | + iid cell | 0.547 | 0.959 | 0.0634 | country sd 1.10, cell sd 1.11 |
+
+- Persistence AUC-PR: 0.446 for conflict and 0.451 for unrest (the fixed baseline).
+- Moran's I of the residuals: 0.620 for conflict, 0.210 for unrest.
+- Within-country vs across-border correlation: 0.644 vs 0.417 for conflict, 0.232 vs 0.109 for unrest.
