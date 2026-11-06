@@ -447,3 +447,22 @@ The row-level numbers are unchanged from Round 2. The new per-cell-week fields:
 | AUC-PR of the true count, first copy | 0.477 | 0.459 |
 
 So keeping the first row of each cell-week, as the loader now does, removes the same-week leakage entirely.
+
+## 2026-11-06 13:58 EST: Round 3 loader done (job 1694066, rc 0, 13:49-13:56 about 8 min, maxvmem 21.7 GB, no Traceback)
+`results_real/data/clean_r3_report.json` is committed.
+
+| | clean_v2 | clean_r3 |
+|---|---|---|
+| rows | 19,365,684 | **19,364,639** (-1,045) |
+| cells | 59,344 | **59,339** (-5) |
+| weeks | 366 | 366 |
+| cell-weeks dropped before coverage | 7,078,822 | 7,078,822 |
+
+- `share_rows_nat_from_first_copy`: **0.145**.
+- `share_rows_gdp_pc_missing`: **0.282**. Please check this. It's much higher than the 0.014 missing share of
+  `gdp` in clean_v2, so `gdp_pc` (World Bank GDP / summed GHSL population) seems to be missing for whole
+  countries or years where gdp itself was present. That could be a country-code mismatch with the World Bank file, or a
+  zero or NaN population sum.
+- `share_rows_nat_from_interior_by_year`: 0.729 in every year from 2018 to 2024 (0 in 2017, the one December-2017 week).
+- `countries_without_any_interior_cell`: [].
+- Xgb 1694067 (8), spatial 1694068, global 1694070, glmm 1694071 and the post-load checks 1694075 are now running.
