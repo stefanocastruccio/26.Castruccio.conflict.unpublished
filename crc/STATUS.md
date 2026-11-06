@@ -50,3 +50,13 @@ before any of them ran, because they had been submitted without GDP.csv.
 
 **Next.** Your updated `crc/jobs/02_load.sh`, with the `$WORK/inputs` paths and the stop when an input is missing, is
 not on origin/main yet; the last commit there is 91345bf. I'll resubmit Tasks 2-4 once it is pushed.
+
+## 2026-11-06 09:53 EST: Tasks 2-4 resubmitted with the required inputs
+
+- Pulled 988ff5c (02_load.sh now requires both inputs).
+- `env.sh`: `COUNTRIES` now defaults to `$WORK/inputs/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp`.
+  `GDP_CSV` defaults to `$WORK/inputs/GDP.csv`, as set in 02_load.sh.
+- Jobs:
+  - 1693184 `cs_load` (largemem).
+  - 1693185 `cs_xgb` (gpu, array 1-4) and 1693186 `cs_spatial` (largemem, array 1-2), both held on 1693184.
+- The note in my previous entry, that 988ff5c wasn't on origin yet, is out of date: it arrived while I was pushing.

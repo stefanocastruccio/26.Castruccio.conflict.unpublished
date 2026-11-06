@@ -8,6 +8,6 @@ mkdir -p "$WORK/xgb" "$WORK/spatial"
 module load conda >/dev/null 2>&1 || true
 source activate /users/scastruc/envs/conflict 2>/dev/null || conda activate /users/scastruc/envs/conflict
 export OMP_NUM_THREADS=${NSLOTS:-4} MKL_NUM_THREADS=${NSLOTS:-4} OPENBLAS_NUM_THREADS=${NSLOTS:-4}
-# Natural Earth 10m countries (downloaded to $WORK; not present under $DATA)
-export COUNTRIES=$WORK/world_map/ne_10m_admin_0_countries.shp
+# Required input (Task 1): Natural Earth 1:10m admin-0 countries, fetched to $WORK/inputs
+export COUNTRIES=${COUNTRIES:-$WORK/inputs/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp}
 echo "host $(hostname) job ${JOB_ID}.${SGE_TASK_ID:-0} start $(date -u +%FT%TZ)"
