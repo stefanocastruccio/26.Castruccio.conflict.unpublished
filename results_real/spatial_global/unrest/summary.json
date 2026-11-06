@@ -1,0 +1,239 @@
+{
+ "outcome": "unrest",
+ "region": null,
+ "rows": 15333584,
+ "test_rows": 4787224,
+ "cells": 46031,
+ "barrier_cells": 16962,
+ "barrier_rule": "sea cells from country shapefile",
+ "folds": "countries",
+ "offset_rounds_per_fold": [
+  1683,
+  1318,
+  1000,
+  1192,
+  1999
+ ],
+ "offset_training_region": {
+  "region": "world",
+  "box": null,
+  "note": "cross-fitted offset trained on the rows of this region only"
+ },
+ "offset_class_weight": null,
+ "diagnostics": {
+  "period": "2023-2024",
+  "moran": {
+   "I": 0.370052479375844,
+   "p_value": 0.001,
+   "E_I": -2.1724961981316532e-05
+  },
+  "border": {
+   "within_country": 0.4071853959332039,
+   "across_border": 0.18666887476362662,
+   "n_within": 83886,
+   "n_across": 4359,
+   "across_border_same_fold": 0.2835983915981431,
+   "across_border_diff_fold": 0.1594136817653437,
+   "n_across_same_fold": 901,
+   "n_across_diff_fold": 3458
+  }
+ },
+ "diagnostics_train": {
+  "period": "2018-2022",
+  "moran": {
+   "I": 0.31025884244278074,
+   "p_value": 0.001,
+   "E_I": -2.1724961981316532e-05
+  },
+  "border": {
+   "within_country": 0.3385851591957905,
+   "across_border": 0.1630488214445591,
+   "n_within": 83886,
+   "n_across": 4359,
+   "across_border_same_fold": 0.20979143773321177,
+   "across_border_diff_fold": 0.14970394606314918,
+   "n_across_same_fold": 901,
+   "n_across_diff_fold": 3458
+  }
+ },
+ "xgb_crossfit": {
+  "log_score": 0.06924197432015786,
+  "brier": 0.018150186965990904,
+  "auc_pr": 0.5083311248451534,
+  "auc_roc": 0.9446998528006597,
+  "prevalence": 0.02728073722892432
+ },
+ "persistence_auc_pr": 0.4676133315744231,
+ "models": {
+  "field": {
+   "scores": {
+    "log_score": 0.06114854162578772,
+    "brier": 0.016738847363010078,
+    "auc_pr": 0.5725958735527366,
+    "auc_roc": 0.9644067683125923,
+    "prevalence": 0.02728073722892432
+   },
+   "hyper": {
+    "country.sd": 1.0660493927624257,
+    "field.range_km": 64.95883299504824,
+    "field.sd": 1.1423391365326943
+   },
+   "log_ml": -647599.5178343868,
+   "seconds": 624.6928679943085,
+   "boxes": {
+    "eastern_DRC": {
+     "box": [
+      27,
+      30.5,
+      -5,
+      2
+     ],
+     "cells": 94,
+     "mean": 0.5112657736640681,
+     "sd": 0.10025946712125801,
+     "p_positive": 1.0
+    },
+    "northern_Mozambique": {
+     "box": [
+      38,
+      41,
+      -14,
+      -10
+     ],
+     "cells": 39,
+     "mean": 0.14264339931195658,
+     "sd": 0.1868154904390526,
+     "p_positive": 0.772
+    },
+    "Syria_Iraq": {
+     "box": [
+      36,
+      46,
+      32,
+      38
+     ],
+     "cells": 240,
+     "mean": 0.004622587142679917,
+     "sd": 0.090369027264831,
+     "p_positive": 0.524
+    },
+    "Yemen": {
+     "box": [
+      43,
+      49,
+      13,
+      17
+     ],
+     "cells": 84,
+     "mean": 0.014111635505080641,
+     "sd": 0.15071022184657468,
+     "p_positive": 0.553
+    },
+    "Lake_Chad": {
+     "box": [
+      12,
+      16,
+      10,
+      14
+     ],
+     "cells": 64,
+     "mean": -0.17164335969913083,
+     "sd": 0.131630566740426,
+     "p_positive": 0.1
+    },
+    "central_Sahel": {
+     "box": [
+      -5,
+      5,
+      11,
+      17
+     ],
+     "cells": 240,
+     "mean": 0.00014300754675988924,
+     "sd": 0.08715274384923985,
+     "p_positive": 0.491
+    },
+    "Horn_of_Africa": {
+     "box": [
+      38,
+      48,
+      3,
+      10
+     ],
+     "cells": 277,
+     "mean": -0.02483363554404204,
+     "sd": 0.08400855086923692,
+     "p_positive": 0.386
+    },
+    "Sudan": {
+     "box": [
+      23,
+      35,
+      10,
+      16
+     ],
+     "cells": 288,
+     "mean": 0.10506478432976146,
+     "sd": 0.08047756905899067,
+     "p_positive": 0.904
+    },
+    "Arabian_interior": {
+     "box": [
+      42,
+      55,
+      18,
+      27
+     ],
+     "cells": 423,
+     "mean": -0.026327874925051342,
+     "sd": 0.08095412007651882,
+     "p_positive": 0.385
+    },
+    "western_Congo_basin": {
+     "box": [
+      14,
+      24,
+      -5,
+      3
+     ],
+     "cells": 320,
+     "mean": -0.1417118519066657,
+     "sd": 0.07728338791211796,
+     "p_positive": 0.03
+    },
+    "southern_Africa": {
+     "box": [
+      18,
+      32,
+      -34,
+      -22
+     ],
+     "cells": 619,
+     "mean": -0.0009799664557016904,
+     "sd": 0.06820257876396756,
+     "p_positive": 0.498
+    }
+   },
+   "cells_p_positive": {
+    "n_cells": 46031,
+    "share_above_0.95": 0.11009971540918077,
+    "share_below_0.05": 0.0254176533205883
+   }
+  },
+  "iid": {
+   "scores": {
+    "log_score": 0.06117389456510136,
+    "brier": 0.01673747825864597,
+    "auc_pr": 0.5726489485360216,
+    "auc_roc": 0.9643625439323178,
+    "prevalence": 0.02728073722892432
+   },
+   "hyper": {
+    "country.sd": 1.0989269247533437,
+    "cell.sd": 1.0573149048349686
+   },
+   "log_ml": -647966.218711497,
+   "seconds": 360.940945148468
+  }
+ }
+}

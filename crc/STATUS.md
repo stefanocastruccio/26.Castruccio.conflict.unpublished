@@ -577,3 +577,29 @@ two files.
     but came out unchanged.
   - The real_* outputs use the Round 3 xgb, spatial and compare results. Global (1694070) and glmm (1694071) are
     still running. If make_real_figures should include them, tell me and I'll rerun it once they finish.
+
+## 2026-11-06 15:21 EST: Round 3 global done (job 1694070, 2 tasks, rc 0, no Tracebacks)
+- Run times: conflict 13:57-14:45 (about 48 min), unrest 13:57-15:19 (about 82 min). maxvmem about 25.4 GB.
+- Files in `results_real/spatial_global/{conflict,unrest}/`: `summary.json`, `variogram.csv`, `variogram_train.csv` and
+  `field.csv`.
+- Model inputs: 15,333,584 rows (4,787,224 test), 46,031 cells and 16,962 barrier cells.
+
+| outcome | XGB cross-fit | + field (AUC-PR / ROC / log) | + iid | persistence | field hyperparameters |
+|---|---|---|---|---|---|
+| conflict | 0.468 | **0.533** / 0.969 / 0.0409 | 0.533 / 0.969 / 0.0410 | 0.481 | country sd 0.75, range 313 km, sd 1.27 (813 s) |
+| unrest | 0.508 | **0.573** / 0.964 / 0.0611 | 0.573 / 0.964 / 0.0612 | 0.468 | country sd 1.07, range 65 km, sd 1.14 (625 s) |
+
+- Cells with P(w > 0) above 0.95 / below 0.05: 0.141 / 0.036 for conflict, 0.110 / 0.025 for unrest.
+- Moran's I, test vs train: 0.593 vs 0.554 for conflict, 0.370 vs 0.310 for unrest.
+- Test-period border contrast:
+
+| outcome | within-country | across border (all) | same fold | different fold |
+|---|---|---|---|---|
+| conflict | 0.608 | 0.564 | **0.750** | 0.281 |
+| unrest | 0.407 | 0.187 | 0.284 | 0.159 |
+
+- **Please look at this.** For conflict, globally, the across-border correlation is 0.75 between cells in the same
+  cross-fitting fold but only 0.28 across folds. The overall across-border figure, 0.564, is close to the within-country
+  0.608, so it looks like the fold assignment, not the border, drives much of the residual correlation. In Africa + ME
+  the split was flat: 0.247 vs 0.284.
+- Glmm (1694071) is still running; both tasks are at maxvmem about 29.7 GB.
