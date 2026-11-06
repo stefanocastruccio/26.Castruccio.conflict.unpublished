@@ -159,3 +159,14 @@ The outputs are in `results_real/spatial/{conflict,unrest}/`: `summary.json`, `v
 - Task 2r: 1693748 `cs_load` (long, mem_free=120G; running since 12:38).
 - Held on 2r: 1693749 `cs_xgb` (gpu, 1-6), 1693750 `cs_spatial` (1-2), 1693751 `cs_global` (1-2) and 1693752 `cs_glmm` (1-2).
 - Task 6: 1693753 `cs_compare` (1-2), held on 1693749 and 1693750.
+
+## 2026-11-06 12:41 EST: pulled af03a94; Task 2c submitted
+- Task 2c: job **1693762** `cs_check` (long, mem_free=120G).
+- Pulled af03a94 before any of the held jobs (3r, 4r, 6, 7, 8) started, so they will run the new code.
+- Two jobs were already running when af03a94 arrived:
+  - 1693748 `cs_load` (2r) started at 12:38. 02_load.sh and load_partitions.py are unchanged in af03a94, so this
+    doesn't matter.
+  - 1693743 `cs_sims` (Task 9, 40 tasks) also started at 12:38, on the previous `sc/laplace.py`. The only change
+    there is batched sampling in `LatentGaussianModel.sample` (batch=25). It draws from the same distribution, but the
+    RNG stream differs when n > 25. I let the simulations continue rather than restart them. If you want them rerun on
+    af03a94, say so and I'll qdel them, delete the shard checkpoints and resubmit.
