@@ -394,3 +394,16 @@ So the dips are **not missing rows**. The event indicators are lower in those we
 **Conclusion.** This supports your hypothesis. Weeks at a partition boundary keep all their rows, but the event
 counts look partly counted. The likely cause is that each partition aggregated events within its own date range,
 so a 7-day week that straddles the cut gets only the days inside the file.
+
+## 2026-11-06 13:48 EST: Task 7, conflict done (job 1693751.1, no Tracebacks; maxvmem 23.1 GB); unrest (.2) still running
+`results_real/spatial_global/conflict/{summary.json,variogram.csv,field.csv}` is committed.
+
+| global, conflict | AUC-PR | AUC-ROC | log score | hyperparameters |
+|---|---|---|---|---|
+| XGB cross-fit (country folds) | 0.496 | 0.937 | 0.0466 | |
+| + barrier field | 0.557 | 0.971 | 0.0399 | country sd 0.82, range 298 km, field sd 1.30 (fit time 284 s) |
+| + iid cell | 0.557 | 0.971 | 0.0400 | country sd 1.40, cell sd 1.12 |
+
+- Size: 15,303,100 rows (4,787,224 test), 46,031 cells and 16,962 barrier cells.
+- Persistence AUC-PR: 0.481.
+- Residual diagnostics: Moran's I 0.581. Within-country vs across-border correlation is 0.608 vs 0.440 (83,886 and 4,359 pairs).
