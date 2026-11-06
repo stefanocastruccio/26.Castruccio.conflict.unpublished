@@ -48,7 +48,7 @@ sys.path.insert(0, os.path.join(HERE, "..")); sys.path.insert(0, HERE)
 from sc import design as de, diagnostics as dg  # noqa: E402
 from sc.gmrf import FixedBlock, IIDBlock, MaternBlock, SpaceTimeAR1Block  # noqa: E402
 from sc.laplace import LatentGaussianModel, prob_from_eta  # noqa: E402
-from fit_acled import REGIONS, build_lattice  # noqa: E402
+from fit_acled import REGIONS, build_lattice, sea_cells  # noqa: E402
 
 REGIONS = dict(REGIONS, sahel_horn=(-18, 52, 0, 22), central_sahel=(-6, 16, 9, 20))
 OWN = {"conflict": ["Battles_rollsum_4", "ExplosionsRemote_violence_rollsum_4",
@@ -80,10 +80,21 @@ def prepare(df, outcome):
         st = df[["grid_id", "month"]].merge(g, left_on=["grid_id", "month"], right_index=True, how="left")
         df[z] = (df[c].to_numpy() - st["mean"].to_numpy()) / st["std"].clip(lower=1e-6).to_numpy()
         df[z.replace("_z", "_clim")] = df["grid_id"].map(df[df.train].groupby("grid_id")[c].mean())
-    cov = (["lag_own", "lag_other", "log_pop", "malaria", "log_ipc3p", "log_river", "log_lake"]
-           + list(clim) + [z.replace("_z", "_clim") for z in clim] + NATIONAL)
+    # initial conditions (Wooldridge 2005): each cell's history at its first usable week
+    df = df.sort_values(["grid_id", "week_start"])
+    df["h_init"] = df.groupby("grid_id")["lag_own"].transform("first")
+    # national indicators: between-country (country mean over the training years) and
+    # within-country (year-to-year deviation) components, Mundlak style
+    nat_parts = []
+    for v in NATIONAL:
+        cm = df[df.train].groupby("ISO_A3")[v].mean()
+        df[f"{v}_between"] = df["ISO_A3"].map(cm)
+        df[f"{v}_within"] = df[v] - df[f"{v}_between"]
+        nat_parts += [f"{v}_between", f"{v}_within"]
+    cov = (["lag_own", "lag_other", "h_init", "log_pop", "malaria", "log_ipc3p", "log_river", "log_lake"]
+           + list(clim) + [z.replace("_z", "_clim") for z in clim] + nat_parts)
     tr = df.train
-    for c in cov[2:]:   # standardise (lags kept on their natural log scale); missing -> mean
+    for c in cov[3:]:   # standardise (lags kept on their natural log scale); missing -> mean
         mu, sd = df.loc[tr, c].mean(), df.loc[tr, c].std()
         df[c] = ((df[c] - mu) / (sd if sd > 0 else 1)).fillna(0.0)
     df["lag_own"] = df["lag_own"].fillna(0); df["lag_other"] = df["lag_other"].fillna(0)
@@ -106,15 +117,31 @@ def svc_cols(df):
     return sorted([c for c in df.columns if c.startswith("tmax_z_x_biome_")], key=lambda c: int(c.rsplit("_", 1)[1]))
 
 
-def spatial_plus(df, cov_nat, L, cell, k=20):
-    E = L.smooth_basis(k)[cell]                     # rows: observations
-    cells, first = np.unique(cell, return_index=True)
-    Ec = E[first]
+def spatial_plus(df, cov_nat, lon, lat, m):
+    """spatial+ (Dupont et al. 2022): replace each between-country national component
+    by its residual after projection, over the observed cells, on the m smoothest
+    eigenvectors of G e = lambda C e computed on the observed land cells only."""
+    Lo, cell_o, _ = build_lattice(lon, lat, buffer=0)
+    E = Lo.smooth_basis(m)
+    W = Lo.area / Lo.area.sum()
+    cells = np.unique(cell_o)
     for c in cov_nat:
-        cm = pd.Series(df[c].to_numpy()).groupby(cell).mean().reindex(cells).to_numpy()
-        beta = np.linalg.lstsq(Ec, cm, rcond=None)[0]
-        df[c] = df[c].to_numpy() - E @ beta
+        cm = pd.Series(df[c].to_numpy()).groupby(cell_o).mean().reindex(cells).to_numpy()
+        Ec = E[cells]
+        sw = np.sqrt(W[cells])
+        beta = np.linalg.lstsq(Ec * sw[:, None], cm * sw, rcond=None)[0]
+        df[c] = df[c].to_numpy() - E[cell_o] @ beta
     return df
+
+
+def n_eigen_below(lon, lat, rho_km, kmax=400):
+    """Number of eigenvalues of G e = lambda C e (observed cells) below kappa^2 = 8 / rho^2:
+    the eigenvectors that vary on scales longer than the field's range."""
+    from scipy.sparse.linalg import eigsh
+    Lo, _, _ = build_lattice(lon, lat, buffer=0)
+    k = min(kmax, Lo.n - 2)
+    vals = eigsh(Lo.G, k=k, M=Lo.C, sigma=-1e-8, which="LM", return_eigenvectors=False)
+    return int(max(5, (vals < 8.0 / rho_km ** 2).sum()))
 
 
 def fit(d, L, cell, nC, cov, *, country=False, field=False, svc=False, st=None, barrier=None):
@@ -169,6 +196,7 @@ def main():
     ap.add_argument("--models", default="glm,country,field,spatialplus,svc,st")
     ap.add_argument("--st-region", default="central_sahel"); ap.add_argument("--st-step", type=int, default=8)
     ap.add_argument("--out", default="results_real/glmm")
+    ap.add_argument("--land", default=None, help="country shapefile; sea cells become barriers")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     models = a.models.split(",")
@@ -184,6 +212,7 @@ def main():
     nC = int(df["country_id"].max() + 1)
     L, cell, observed = build_lattice(df.lon.to_numpy(), df.lat.to_numpy())
     df["cell"] = cell
+    barrier = sea_cells(L, a.land) if a.land else ~observed
     tr, te = df[df.train], df[~df.train]
     print(f"{len(df):,} rows, {observed.sum():,} cells, {nC} countries, prevalence {tr.y.mean():.4f}", flush=True)
 
@@ -192,7 +221,7 @@ def main():
     spec = {"glm": {}, "country": dict(country=True), "field": dict(country=True, field=True),
             "svc": dict(country=True, field=True, svc=True)}
     for name in [m for m in models if m in spec]:
-        m, names = fit(tr, L, tr["cell"].to_numpy(), nC, cov, barrier=~observed, **spec[name])
+        m, names = fit(tr, L, tr["cell"].to_numpy(), nC, cov, barrier=barrier, **spec[name])
         res["models"][name] = summarise(m, names, te, test_designs(m, te, L, te["cell"].to_numpy(),
                                                                    nC, cov, svc=(name == "svc")))
         if name == "svc":
@@ -202,12 +231,19 @@ def main():
                 os.path.join(a.out, f"svc_tmax_{a.outcome}.csv"), index=False)
         print(name, json.dumps(res["models"][name].get("test", {})), flush=True)
     if "spatialplus" in models:
-        d2 = spatial_plus(df.copy(), NATIONAL, L, df["cell"].to_numpy())
-        tr2, te2 = d2[d2.train], d2[~d2.train]
-        m, names = fit(tr2, L, tr2["cell"].to_numpy(), nC, cov, country=True, field=True, barrier=~observed)
-        res["models"]["spatialplus"] = summarise(m, names, te2, test_designs(
-            m, te2, L, te2["cell"].to_numpy(), nC, cov))
-        print("spatialplus", json.dumps(res["models"]["spatialplus"]["test"]), flush=True)
+        rho = res["models"].get("field", {}).get("hyper", {}).get("field.range_km", 300.0)
+        m_star = n_eigen_below(df.lon.to_numpy(), df.lat.to_numpy(), rho)
+        between = [f"{v}_between" for v in NATIONAL]
+        res["spatialplus_m"] = {"rho_km": float(rho), "m_star": m_star}
+        for mm in sorted({10, 20, m_star}):
+            d2 = spatial_plus(df.copy(), between, df.lon.to_numpy(), df.lat.to_numpy(), mm)
+            tr2, te2 = d2[d2.train], d2[~d2.train]
+            m, names = fit(tr2, L, tr2["cell"].to_numpy(), nC, cov, country=True, field=True,
+                           barrier=barrier)
+            key = f"spatialplus_m{mm}"
+            res["models"][key] = summarise(m, names, te2, test_designs(
+                m, te2, L, te2["cell"].to_numpy(), nC, cov))
+            print(key, json.dumps(res["models"][key]["test"]), flush=True)
     if "st" in models:
         x0, x1, y0, y1 = REGIONS[a.st_region] if a.st_region in REGIONS else (-180, 180, -90, 90)
         ds = tr[tr.lon.between(x0, x1) & tr.lat.between(y0, y1)].copy()

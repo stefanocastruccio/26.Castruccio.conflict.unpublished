@@ -45,6 +45,12 @@ from sc.laplace import LatentGaussianModel, prob_from_eta
 from reproduce_xgb import features, LAGS
 
 YCOL = {"conflict": "Conflict", "unrest": "Unrest"}
+# named boxes (lon0, lon1, lat0, lat1) for posterior summaries of the field
+BOXES = {"eastern_DRC": (27, 30.5, -5, 2), "northern_Mozambique": (38, 41, -14, -10),
+         "Syria_Iraq": (36, 46, 32, 38), "Yemen": (43, 49, 13, 17), "Lake_Chad": (12, 16, 10, 14),
+         "central_Sahel": (-5, 5, 11, 17), "Horn_of_Africa": (38, 48, 3, 10), "Sudan": (23, 35, 10, 16),
+         "Arabian_interior": (42, 55, 18, 27), "western_Congo_basin": (14, 24, -5, 3),
+         "southern_Africa": (18, 32, -34, -22)}
 REGIONS = {"africa": (-20, 55, -36, 38), "mena": (-20, 65, 10, 45), "africa_me": (-20, 65, -36, 45),
            "south_asia": (60, 100, 0, 40), "latam": (-120, -30, -56, 33)}
 
@@ -191,12 +197,25 @@ def main():
                                "log_ml": float(m.log_ml), "seconds": float(m.fit_seconds)}
         preds[f"p_{name}"] = p.astype("float32")
         if name == "field":
+            S = m.sample(1000, np.random.default_rng(a.seed))[m.slices[2]]
             pd.DataFrame({"lon": L.lon, "lat": L.lat, "observed": observed, "barrier": barrier,
-                          "field": m.block_mean(2), "field_sd": m.block_sd(2, n=200)}).to_csv(
+                          "field": m.block_mean(2), "field_sd": S.std(axis=1),
+                          "p_positive": (S > 0).mean(axis=1)}).to_csv(
                 os.path.join(a.out, "field.csv"), index=False)
+            boxes = {}
+            for bn, (x0, x1, y0, y1) in BOXES.items():
+                sel = observed & (L.lon >= x0) & (L.lon <= x1) & (L.lat >= y0) & (L.lat <= y1)
+                if sel.sum() == 0:
+                    continue
+                avg = S[sel].mean(axis=0)
+                boxes[bn] = {"box": [x0, x1, y0, y1], "cells": int(sel.sum()), "mean": float(avg.mean()),
+                             "sd": float(avg.std()), "p_positive": float((avg > 0).mean())}
+            res["models"][name]["boxes"] = boxes
         print(name, json.dumps(res["models"][name]["scores"]), flush=True)
     json.dump(res, open(os.path.join(a.out, "summary.json"), "w"), indent=1, default=float)
     pd.DataFrame({"grid_id": d_te["grid_id"].to_numpy(), "week_start": d_te["week_start"].to_numpy(),
+                  "lon": d_te["lon"].to_numpy(), "lat": d_te["lat"].to_numpy(),
+                  "ISO_A3": d_te["ISO_A3"].astype(str).to_numpy(),
                   "y": y_te.astype("int8"), "lag_total": d_te["lag_total"].to_numpy(dtype="float32"),
                   **preds}).to_parquet(os.path.join(a.out, "test_pred.parquet"), index=False)
     print(json.dumps({k: v for k, v in res.items() if k != "models"}, indent=1, default=float))

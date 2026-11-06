@@ -119,6 +119,11 @@ Try to obtain ACLED's official "country and time-period coverage" table from acl
   fallbacks.
 - `orig.parquet` is rebuilt the same way as before.
 
+### Task 2c: direct checks on the original files (`10_check_duplicates.sh`, independent)
+
+Copy `$WORK/data/check_duplicates.json` to `results_real/data/check_duplicates.json`. It holds
+aggregate shares only.
+
 ### Task 3r: XGBoost (`03_xgb.sh`, now an array of 6, held on 2r)
 
 The array covers original, corrected, and corrected with target encoding, for both outcomes.
@@ -155,5 +160,5 @@ and interaction-credited SHAP slopes. They need no data and can start immediatel
 - Commit and push the updated `results/*.csv`, `results/s1_maps.png` and
   `paper/tables/*.tex`. Leave out `results/*_ckpt*.jsonl`, which are gitignored.
 
-Submit order: 2r and 9 now; then (3r, 4r, 7, 8) held on 2r; then 6 held on 3r and 4r.
+Submit order: 2r, 2c and 9 now; then (3r, 4r, 7, 8) held on 2r; then 6 held on 3r and 4r.
 Log the job ids.

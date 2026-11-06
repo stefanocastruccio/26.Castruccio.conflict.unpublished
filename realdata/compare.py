@@ -2,9 +2,12 @@
 
 Each --pred is NAME=FILE:COLUMN; COLUMN is a probability, or 'logit_cal' / 'logit'
 (converted with expit). The persistence baseline (ranking by past 4-week event count)
-is taken from --lag FILE (a test_pred.parquet with a lag_total column). Paired
+is taken from --lag FILE (a test_pred.parquet with lag_total, lon, lat, ISO_A3 columns). Paired
 differences in mean log score and Brier score are reported against --ref, with
 standard errors clustered by cell (cells are the units of dependence over time).
+For every model, residual diagnostics on the test period are also reported: Moran's I
+of the standardised cell residuals (999 permutations; p is bounded below by 1/1000)
+and the neighbour residual correlation within countries and across borders.
 
 Usage:
   python compare.py --pred xgb=XGB/pred_corrected_Conflict.parquet:logit_cal \
@@ -64,7 +67,7 @@ def main():
             assert (m["y"] == m["y_dup"]).all(), f"outcomes differ for {name}"
             m = m.drop(columns="y_dup")
     if a.lag:
-        lag = pd.read_parquet(a.lag, columns=KEY + ["lag_total"])
+        lag = pd.read_parquet(a.lag, columns=KEY + ["lag_total", "lon", "lat", "ISO_A3"])
         lag["week_start"] = pd.to_datetime(lag["week_start"])
         m = m.merge(lag, on=KEY)
     y = m["y"].to_numpy(); cells = m["grid_id"].to_numpy()
@@ -83,6 +86,18 @@ def main():
         out["models"][n] = r
     if a.lag:
         out["persistence_auc_pr"] = float(average_precision_score(y, m["lag_total"].to_numpy()))
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from fit_acled import build_lattice
+        L, cell, observed = build_lattice(m["lon"].to_numpy(), m["lat"].to_numpy(), buffer=0)
+        m["cell"] = cell
+        country = m.groupby("cell")["ISO_A3"].first().reindex(range(L.n)).to_numpy()
+        for n in names:
+            r = dg.cell_pearson(m, m[n].to_numpy())
+            rf = np.full(L.n, np.nan); rf[r.index] = r.to_numpy()
+            ok = ~np.isnan(rf)
+            adj = L.adjacency[ok][:, ok]
+            out["models"][n]["residual_moran"] = dg.morans_i(rf[ok], adj, n_perm=999)
+            out["models"][n]["residual_border"] = dg.border_contrast(rf[ok], adj, country[ok])
     json.dump(out, open(a.out, "w"), indent=1)
     print(json.dumps(out, indent=1))
 

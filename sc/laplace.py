@@ -204,16 +204,21 @@ class LatentGaussianModel:
         E[np.arange(s.start, s.stop), np.arange(s.stop - s.start)] = 1.0
         return self.lu.solve(E)[s]
 
-    def sample(self, n, rng: np.random.Generator):
+    def sample(self, n, rng: np.random.Generator, batch=25):
         """Draws from N(x*, (Q + H)^{-1}) via the perturbation trick:
-        x = x* + (Q + H)^{-1} (R' e1 + A' W^{1/2} e2)."""
+        x = x* + (Q + H)^{-1} (R' e1 + A' W^{1/2} e2), in batches of `batch` draws so
+        that the observation-level noise never needs more than len(y) x batch memory."""
         R = self.R(self.theta)
         eta = self.offset + self.A @ self.x_hat
         _, w = self._grad_w(eta)
-        e1 = rng.standard_normal((self.dim, n))
-        e2 = rng.standard_normal((len(self.y), n)) * np.sqrt(w)[:, None]
-        rhs = R.T @ e1 + self.At @ e2
-        return self.x_hat[:, None] + self.lu.solve(rhs)
+        sw = np.sqrt(w)[:, None]
+        out = np.empty((self.dim, n))
+        for a in range(0, n, batch):
+            k = min(batch, n - a)
+            e1 = rng.standard_normal((self.dim, k))
+            e2 = rng.standard_normal((len(self.y), k)) * sw
+            out[:, a:a + k] = self.x_hat[:, None] + self.lu.solve(R.T @ e1 + self.At @ e2)
+        return out
 
     def block_sd(self, k, n=200, rng=None):
         rng = rng or np.random.default_rng(0)

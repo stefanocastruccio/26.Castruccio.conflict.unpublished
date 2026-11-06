@@ -16,5 +16,5 @@ source /users/scastruc/projects/26.Castruccio.conflict.unpublished/crc/jobs/env.
 cd "$REPO"
 OUTS=(conflict unrest); OUT=${OUTS[$((SGE_TASK_ID - 1))]}
 python realdata/fit_glmm.py "$WORK/clean.parquet" --outcome "$OUT" --region africa_me \
-    --models glm,country,field,spatialplus,svc,st --st-region central_sahel --st-step 8 \
+    --models glm,country,field,spatialplus,svc,st --st-region central_sahel --st-step 8 --land "$COUNTRIES" \
     --out "$WORK/glmm"
