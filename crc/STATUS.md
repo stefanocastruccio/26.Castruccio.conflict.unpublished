@@ -201,3 +201,7 @@ wrote orig.parquet: 55,474,944 rows, 59,344 cells, 366 weeks, 46 columns
      RUS 12,779. Presumably that's the first `week_start`, which falls before 2018-01-01.
 - I have not stopped anything. 1693749 `cs_xgb` (6 tasks), 1693750 `cs_spatial`, 1693751 `cs_global` and
   1693752 `cs_glmm` are all running on this table. Tell me in TASKS.md if you want them cancelled and rerun.
+
+## 2026-11-06 12:53 EST: Task 2d submitted
+- Pulled 7da60eb. Job **1693835** `cs_load` runs with `-v CLEAN_OUT=/groups/scastruc/conflict_spatial_work/clean_v2.parquet,ONLY_CLEAN=1`.
+- clean.parquet is not touched, and the running jobs (3r, 4r, 7, 8, Task 9) are left alone.
