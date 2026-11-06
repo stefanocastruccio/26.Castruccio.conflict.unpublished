@@ -665,3 +665,22 @@ two files.
   - Against the static field: 0.519 / 0.0606 / -184,943.
 - Hyperparameters: country sd 0.79, cell sd 0.81, space-time range 779 km, sd 1.39, rho **0.986**.
 - The unrest 13-week task (1694603.6) is still running. It should be similar, about 2.5 h, so done around 18:40.
+
+## 2026-11-06 18:29 EST: Round 4 space-time, unrest at 13-week steps done (1694603.6, rc 0, wall about 2 h 21 min; fit 8333 s; maxvmem 21.2 GB). All of 11_dynamic is done.
+`results_real/dynamic/unrest/summary_st13_r1.json` is committed. Latent size 124,983 over 29 steps.
+- Scores: AUC-PR **0.541**, AUC-ROC 0.959, log score 0.0637, log-ML -191,267.
+  - Against the 26-week fit: 0.540 / 0.0637 / -191,541.
+  - Against the static field: 0.540 / 0.0639 / -193,055.
+- Hyperparameters: country sd 0.96, cell sd 1.07, space-time range 996 km, sd 0.62, rho 0.949.
+- Wall-time summary for 11_dynamic:
+
+| task | wall time |
+|---|---|
+| oracle | about 3 min |
+| rolling | 13-16 min |
+| space-time, 26-week steps | 20-24 min |
+| space-time, 13-week steps | 2 h 15 min - 2 h 21 min |
+
+  maxvmem was about 21 GB for every task. No task came close to 24 h.
+- `field_test.csv` (from the oracle tasks) is unchanged since the 16:13 commit.
+- 12_dynamic_compare (1694604.1-2) started at 18:27.
