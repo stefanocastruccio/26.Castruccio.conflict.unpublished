@@ -1,0 +1,29 @@
+{
+ "outcome": "unrest",
+ "region": "africa_me",
+ "mode": "spacetime",
+ "rows": 4976634,
+ "cells": 13719,
+ "step_weeks": 26,
+ "st_res_deg": 1.0,
+ "st_cells": 3637,
+ "time_steps": 15,
+ "train_steps": 11,
+ "latent_size": 74065,
+ "scores": {
+  "log_score": 0.06370363748035324,
+  "brier": 0.0171101390046526,
+  "auc_pr": 0.5404770338357247,
+  "auc_roc": 0.958916700944703,
+  "prevalence": 0.026831822234183924
+ },
+ "hyper": {
+  "country.sd": 0.9442343819394592,
+  "cell.sd": 1.059569663076099,
+  "st.range_km": 891.23071440371,
+  "st.sd": 0.6335369903240062,
+  "st.rho": 0.9425154151094299
+ },
+ "log_ml": -191541.31582538027,
+ "seconds": 1077.4229485988617
+}

@@ -635,3 +635,11 @@ two files.
 
 - The space-time tasks 5-8 have been running since 16:06 (about 16 min so far). They print no progress. I'll check
   their elapsed time and maxvmem every ~2 h and flag here if any looks set to exceed 24 h.
+
+## 2026-11-06 16:28 EST: Round 4 space-time, unrest at 26-week steps done (1694603.8, rc 0, about 20 min wall; fit 1077 s; maxvmem about 21 GB)
+`results_real/dynamic/unrest/summary_st26_r1.json` is committed.
+- Setup: 3,637 one-degree cells, 15 steps (11 train), latent size 74,065.
+- Scores: AUC-PR **0.540**, AUC-ROC 0.959, log score 0.0637. The static field in Round 3 spatial had 0.540 / 0.0639.
+- Hyperparameters: country sd 0.94, cell sd 1.06, space-time range **891 km**, sd 0.63, rho **0.94**.
+- **Run time is not a concern.** This task needed about 18 min. The 13-week tasks have twice as many steps, so I
+  expect them to finish within a few hours, well under 24 h. They have been running for about 22 min so far.
