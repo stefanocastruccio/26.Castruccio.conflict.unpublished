@@ -1,6 +1,6 @@
 % Annals of Applied Statistics submission (IMS imsart class).
-% If imsart.cls / imsart-nameyear.bst are in the project (they come with Overleaf's
-% "Annals of Applied Statistics" template or https://www.e-publications.org/ims/support/),
+% imsart.cls / imsart.sty / spr-ims-nameyear.bst are included (VTeX texsupport.ims-aoas,
+% MIT licence, see LICENSE-imsart);
 % the IMS class is used. Otherwise the document falls back to the article class
 % with minimal stand-ins for the imsart front-matter macros, so it always compiles.
 \IfFileExists{imsart.cls}{%
@@ -132,7 +132,7 @@ Global Affairs, University of Notre Dame}
 and all simulation studies.}
 \end{supplement}
 
-\IfFileExists{imsart-nameyear.bst}{\bibliographystyle{imsart-nameyear}}{\bibliographystyle{plainnat}}
+\IfFileExists{spr-ims-nameyear.bst}{\bibliographystyle{spr-ims-nameyear}}{\bibliographystyle{plainnat}}
 \bibliography{refs}
 
 \end{document}
