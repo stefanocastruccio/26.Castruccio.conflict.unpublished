@@ -1,0 +1,13 @@
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Model & Log score & Brier & AUC-PR & AUC-ROC \\
+\midrule
+True probabilities & 0.1429 (0.0080) & 0.0367 (0.0026) & 0.267 (0.018) & 0.826 (0.005) \\
+XGBoost (as in original analysis) & 0.1501 (0.0084) & 0.0377 (0.0027) & 0.235 (0.017) & 0.790 (0.006) \\
+XGBoost, spatially cross-fitted & 0.1649 (0.0098) & 0.0402 (0.0031) & 0.152 (0.015) & 0.715 (0.008) \\
+Cross-fitted XGBoost + $w$ & 0.1470 (0.0082) & 0.0374 (0.0027) & 0.245 (0.017) & 0.809 (0.005) \\
+Cross-fitted XGBoost + $u + w$ & 0.1469 (0.0082) & 0.0374 (0.0027) & 0.245 (0.017) & 0.810 (0.005) \\
+Parametric model with $u + w$ & 0.1457 (0.0081) & 0.0371 (0.0026) & 0.253 (0.018) & 0.814 (0.005) \\
+Persistence baseline & -- & -- & 0.103 (0.009) & -- \\
+\bottomrule
+\end{tabular}

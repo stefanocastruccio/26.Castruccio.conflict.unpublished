@@ -1,0 +1,27 @@
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Estimator & Mean & Emp.\ SD & Mean SE & Coverage & Reject $\alpha=0$ \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{No confounding, $\alpha = 0$}} \\
+\quad Logistic regression & -0.013 & 0.102 & 0.016 & 0.27 & 0.73 \\
+\quad + country effects $u$ & -0.002 & 0.124 & 0.132 & 0.97 & 0.03 \\
+\quad + spatial field $w$ & 0.002 & 0.068 & 0.055 & 0.90 & 0.10 \\
+\quad + $u$ + $w$ & -0.002 & 0.070 & 0.084 & 1.00 & 0.00 \\
+\quad spatial+ with $u$ + $w$ & -0.002 & 0.077 & 0.085 & 1.00 & 0.00 \\
+\quad XGBoost SHAP slope$^\dagger$ & 0.002 & 0.088 & 0.070 & 0.60 & 0.40 \\
+\multicolumn{6}{@{}l}{\emph{Confounding, $\alpha = 0$}} \\
+\quad Logistic regression & 0.469 & 0.095 & 0.017 & 0.00 & 1.00 \\
+\quad + country effects $u$ & 0.517 & 0.115 & 0.086 & 0.00 & 1.00 \\
+\quad + spatial field $w$ & 0.197 & 0.072 & 0.060 & 0.13 & 0.87 \\
+\quad + $u$ + $w$ & 0.204 & 0.059 & 0.081 & 0.20 & 0.80 \\
+\quad spatial+ with $u$ + $w$ & 0.151 & 0.065 & 0.084 & 0.50 & 0.50 \\
+\quad XGBoost SHAP slope$^\dagger$ & 0.394 & 0.093 & 0.086 & 0.00 & 1.00 \\
+\multicolumn{6}{@{}l}{\emph{Confounding, $\alpha = -0.3$}} \\
+\quad Logistic regression & 0.250 & 0.102 & 0.017 & 0.00 & 1.00 \\
+\quad + country effects $u$ & 0.269 & 0.117 & 0.085 & 0.00 & 0.77 \\
+\quad + spatial field $w$ & -0.091 & 0.074 & 0.060 & 0.17 & 0.33 \\
+\quad + $u$ + $w$ & -0.086 & 0.059 & 0.082 & 0.17 & 0.20 \\
+\quad spatial+ with $u$ + $w$ & -0.133 & 0.059 & 0.084 & 0.40 & 0.23 \\
+\quad XGBoost SHAP slope$^\dagger$ & 0.178 & 0.093 & 0.075 & 0.00 & 0.70 \\
+\bottomrule
+\end{tabular}

@@ -1,0 +1,144 @@
+% Annals of Applied Statistics submission (IMS imsart class).
+% If imsart.cls / imsart-nameyear.bst are in the project (they come with Overleaf's
+% "Annals of Applied Statistics" template or https://www.e-publications.org/ims/support/),
+% the IMS class is used. Otherwise the document falls back to the article class
+% with minimal stand-ins for the imsart front-matter macros, so it always compiles.
+\IfFileExists{imsart.cls}{%
+  \documentclass[aoas,preprint]{imsart}\def\IMSfallback{0}%
+}{%
+  \documentclass[11pt]{article}\def\IMSfallback{1}%
+}
+
+\makeatletter
+\ifnum\IMSfallback=1
+  \usepackage[margin=1in]{geometry}
+  \newcommand{\startlocaldefs}{}
+  %\newcommand{\endlocaldefs}{}
+  \newenvironment{frontmatter}{}{}
+  \newcommand{\runtitle}[1]{}
+  \def\IMS@authors{}
+  \renewcommand{\author}[2][]{%
+    \ifx\IMS@authors\@empty\g@addto@macro\IMS@authors{#2}%
+    \else\g@addto@macro\IMS@authors{\and #2}\fi
+    \gdef\@author{\IMS@authors}}
+  \newcommand{\fnms}[1]{#1}
+  \newcommand{\snm}[1]{#1}
+  \newcommand{\ead}[2][]{}
+  \newcommand{\printead}[2][]{}
+  \newcommand{\address}[2][]{}
+  % the aug block ends the title block: typeset the title after it
+  \newenvironment{aug}{\let\and\relax}{\aftergroup\maketitle}
+  \newenvironment{keyword}{\par\noindent\textbf{Keywords:} \ignorespaces}{\par}
+  \newcommand{\kwd}[1]{#1;\ }
+  \newenvironment{funding}{\section*{Funding}}{}
+  \newenvironment{supplement}{\section*{Supplementary material}}{}
+  \newcommand{\stitle}[1]{\textbf{#1.}\ }
+  \newcommand{\sdescription}[1]{#1}
+\fi
+\makeatother
+
+\RequirePackage{amsthm,amsmath,amsfonts,amssymb}
+\RequirePackage[authoryear]{natbib}
+\RequirePackage[colorlinks,citecolor=blue,urlcolor=blue]{hyperref}
+\RequirePackage{graphicx}
+\RequirePackage{booktabs}
+\RequirePackage{multirow}
+\RequirePackage{bm}
+\RequirePackage{xcolor}
+
+\startlocaldefs
+\numberwithin{equation}{section}
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+% notation
+\newcommand{\bx}{\bm{x}}
+\newcommand{\bz}{\bm{z}}
+\newcommand{\bw}{\bm{w}}
+\newcommand{\bv}{\bm{v}}
+\newcommand{\bu}{\bm{u}}
+\newcommand{\bA}{\bm{A}}
+\newcommand{\bQ}{\bm{Q}}
+\newcommand{\bH}{\bm{H}}
+\newcommand{\bC}{\bm{C}}
+\newcommand{\bG}{\bm{G}}
+\newcommand{\bK}{\bm{K}}
+\newcommand{\btheta}{\bm{\theta}}
+\newcommand{\bbeta}{\bm{\beta}}
+\newcommand{\bgamma}{\bm{\gamma}}
+\newcommand{\bmeta}{\bm{\eta}}
+\newcommand{\logit}{\operatorname{logit}}
+\newcommand{\expit}{\operatorname{expit}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Normal}{\mathcal{N}}
+\newcommand{\sphere}{\mathbb{S}^2}
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+%\endlocaldefs
+
+\begin{document}
+
+\begin{frontmatter}
+\title{Where violence persists: latent spatial fields for the residual risk of
+armed conflict and social unrest}
+\runtitle{Latent spatial fields for conflict risk}
+
+\begin{aug}
+\author[A]{\fnms{Stefano}~\snm{Castruccio}\ead[label=e1]{scastruc@nd.edu}}
+\and
+\author[B]{\fnms{Richard}~\snm{Marcantonio}}
+
+\address[A]{Department of Applied and Computational Mathematics and Statistics,
+University of Notre Dame\printead[presep={,\ }]{e1}}
+\address[B]{Kroc Institute for International Peace Studies, Keough School of
+Global Affairs, University of Notre Dame}
+\end{aug}
+
+\begin{abstract}
+\todo{Abstract to be written after the application.}
+\end{abstract}
+
+\begin{keyword}
+\kwd{armed conflict}
+\kwd{ACLED}
+\kwd{latent Gaussian models}
+\kwd{SPDE}
+\kwd{spatial confounding}
+\kwd{spatially varying coefficients}
+\kwd{gradient boosting}
+\end{keyword}
+\end{frontmatter}
+
+\section{Introduction}\label{sec:intro}
+\todo{Introduction (not drafted yet).}
+
+\input{sections/data}
+\input{sections/methods}
+\input{sections/simulation}
+
+\section{Application to ACLED 2018--2024}\label{sec:application}
+\todo{Application: to be written once the grid-cell $\times$ week data are available.
+Planned structure: (i) residual diagnostics of the cross-fitted XGBoost model;
+(ii) hybrid model with residual field; (iii) fully parametric model with
+country effects, biome-pooled spatially varying climate coefficients and a
+space-time field; (iv) national sustainability indicators under spatial
+confounding; (v) forecast comparison on 2023--2024.}
+
+\section{Discussion}\label{sec:discussion}
+\todo{Discussion (not drafted yet).}
+
+\begin{funding}
+\todo{Funding.}
+\end{funding}
+
+\begin{supplement}
+\stitle{Code}
+\sdescription{Python implementation of the latent Gaussian model, the simulator
+and all simulation studies.}
+\end{supplement}
+
+\IfFileExists{imsart-nameyear.bst}{\bibliographystyle{imsart-nameyear}}{\bibliographystyle{plainnat}}
+\bibliography{refs}
+
+\end{document}
