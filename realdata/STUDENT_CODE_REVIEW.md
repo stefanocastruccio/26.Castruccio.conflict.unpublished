@@ -1,8 +1,7 @@
 # Notes on the original pipeline (papersblindreview/26.Conflicts.unpublished)
 
-Read from the public code on 2026-10-31. The data are not in that repository, so items marked
-**check** could not be verified numerically yet. Each one can be checked with one line once
-the partition files `data/partitions/data_final_world_XX.csv` are available.
+Read from the public code on 2026-10-31. Item 1 was confirmed on the CRC on 2026-11-06
+(data in `/groups/scastruc/lmenical/drew/data/partitions/`, 50 files, 16 GB).
 
 ## 1. Border cells are duplicated and get mixed national covariates (likely serious)
 
@@ -25,10 +24,28 @@ row per `(ISO_A3, grid_id, year)`. A cell that touches *k* countries therefore h
 This would explain why the held-out set has 15.36M rows for about 105 weeks, i.e. about
 146,000 rows per week, against roughly 65,000 land cells at 0.5°.
 
-**Check:** `data.groupby(['grid_id','week_start']).size().describe()` should be 1 everywhere.
+**Confirmed** on `data_final_world_25.csv`, which covers 7 weeks (2021-05-11 to 2021-06-22) of
+94,730 cells. It has 1,357,440 rows for about 663,000 distinct cell-weeks. 613,459 cell-weeks
+appear once, and the rest appear 2, 3, 8, 16, 32, 48 and up to 648 times. These counts are
+products of the per-join multiplicities. About 9% of cell-weeks are duplicated, and these
+make up more than half of all rows. The files have no country-code column.
 **Fix:** assign each cell to a single country (for example, the country covering the cell
 centroid, or the largest overlap), keep `ISO_A3` in the final table, and merge national
 indicators on `['ISO_A3', 'year']`.
+
+## 1b. The duplication leaks the outcome into the "past 4-week" features (likely serious)
+
+`feature_engineering` sorts by `(cell_id, week_start)` and computes
+`groupby('cell_id').shift(1).rolling(4)` **row by row**. When a cell-week has *k* copies,
+they sit next to each other. For every copy except the first, `shift(1)` is another copy of
+the *same week*, so `*_rollsum_4` contains the current week's event counts, which is the
+outcome itself. This affects more than half of the rows. On simulated data with the same
+duplication pattern (`realdata/reproduce_xgb.py`, `--mode original` against
+`--mode corrected`), the original pipeline reaches AUC-PR 0.53, and 0.82 on duplicated
+border cells. The corrected pipeline on the same data reaches 0.12, the same for border
+and interior cells. The reported AUC-PR of 0.93 / 0.91 and the dominance of "recent
+history" in the SHAP rankings should be re-examined once the corrected model has been run
+on the real data.
 
 ## 2. Early stopping uses the evaluation years
 
@@ -67,6 +84,13 @@ mixes climatology and anomaly.
   cells, but the first four weeks of every cell are missing.
 - `scale_pos_weight = sqrt(n0/n1)` shifts the fitted log-odds by `log(sqrt(n0/n1))`. Predicted
   probabilities are not calibrated (see `sc/diagnostics.prior_correction`).
+
+## Status of the reanalysis
+
+`realdata/load_partitions.py` repairs the tables. It assigns each cell to the country that
+contains its centroid, takes national indicators from interior cells, averages the IPC
+phases over copies, and re-apportions GDP. `realdata/reproduce_xgb.py` reruns the
+original and corrected models. The CRC runs are coordinated through `crc/TASKS.md`.
 
 ## What the spatial analysis needs
 

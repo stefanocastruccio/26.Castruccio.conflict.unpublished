@@ -31,14 +31,14 @@ from sc.gmrf import FixedBlock, IIDBlock, MaternBlock, SphereLattice
 from sc.laplace import LatentGaussianModel, prob_from_eta
 
 # ---- column names of the table written by load_partitions.py -----------------
-COLUMNS = dict(lon="lon", lat="lat", week="week_start", country="country",
+COLUMNS = dict(lon="lon", lat="lat", week="week_start", country="ISO_A3",
                outcomes={"conflict": "Conflict", "unrest": "Unrest"},
                lag_total={"conflict": ["Battles_rollsum_4", "ExplosionsRemote_violence_rollsum_4",
                                        "Violence_against_civilians_rollsum_4"],
                           "unrest": ["Riots_rollsum_4", "Protests_rollsum_4"]})
-ID_COLUMNS = {"grid_id", "cell_id", "t", "country_is_proxy"}
+ID_COLUMNS = {"grid_id", "cell_id", "t", "country_is_proxy", "n_copies", "Strategic_developments"}
 FEATURES = None   # None = every numeric column except ids/outcomes
-REGIONS = {"africa": (-20, 55, -36, 38), "mena": (-20, 65, 10, 45),
+REGIONS = {"africa": (-20, 55, -36, 38), "mena": (-20, 65, 10, 45), "africa_me": (-20, 65, -36, 45),
            "south_asia": (60, 100, 0, 40), "latam": (-120, -30, -56, 33)}
 TRAIN_END = "2023-01-01"
 

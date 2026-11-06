@@ -19,7 +19,12 @@ Bernoulli, binomial or Poisson likelihoods.
 | `sc/boosting.py` | XGBoost with the paper's hyperparameters, **spatially cross-fitted offsets**, exact TreeSHAP, SHAP slopes, GPBoost wrapper |
 | `sc/diagnostics.py` | scores (log score, Brier, AUC-PR, AUC-ROC), persistence baseline, prior correction for `scale_pos_weight`, randomised quantile and cell Pearson residuals, Moran's I, great-circle variogram, residual ACF, within- vs across-border residual correlation |
 | `sims/s1_residual_field.py` … `s4_svc.py` | simulation studies (below) |
-| `realdata/fit_acled.py` | the S1 pipeline applied to the real Parquet table (edit `COLUMNS`) |
+| `realdata/load_partitions.py` | builds one clean row per cell-week from the original partition files (repairs duplicated border cells, assigns countries) |
+| `realdata/reproduce_xgb.py` | reruns the original XGBoost model as published and in corrected form |
+| `realdata/fit_acled.py` | hybrid spatial model on the real data: cross-fitted XGBoost offset + country effects + barrier Matérn field |
+| `realdata/STUDENT_CODE_REVIEW.md` | issues found in the original pipeline |
+| `crc/` | task list, SGE job scripts and status log for the runs on the Notre Dame CRC |
+| `results_real/` | summaries of the real-data runs (no ACLED rows) |
 | `results/` | outputs of the simulation studies |
 
 ## Running
