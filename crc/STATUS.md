@@ -490,3 +490,27 @@ two files.
   report's `share_rows_gdp_pc_missing = 0.282` must be computed on a different row set: before the coverage and land
   filters, or before the first-copy fallback. The report field is misleading but the data are fine.
 - The new national-indicator fallback works: the sustainability trio dropped from 28% missing to 0.3% in the box.
+
+## 2026-11-06 14:03 EST: Round 3 xgb done (job 1694067, 8 tasks on gpu, rc 0, no Tracebacks; maxvmem 68.6 GB)
+- Tasks started at 13:57. The corrected and dedup tasks finished at 13:58, the original ones at 14:00-14:01.
+- The 8 `metrics_*.json` files are in `results_real/xgb/`. Rounds and AUC-PR by group:
+
+| run | rounds | AUC-PR | border | interior | onset AUC-PR | continuation AUC-PR | persistence | 2023 / 2024 AUC-PR |
+|---|---|---|---|---|---|---|---|---|
+| original Conflict | 1998 | 0.934 | 0.966 | 0.498 | None | None | 0.882 | 0.934 / 0.935 |
+| original Unrest | 1474 | 0.917 | 0.968 | 0.528 | None | None | 0.843 | 0.917 / 0.918 |
+| dedup Conflict | 488 | 0.546 | 0.590 | 0.523 | 0.008 | 0.581 | 0.481 | 0.544 / 0.548 |
+| dedup Unrest | 646 | 0.555 | 0.543 | 0.558 | 0.009 | 0.580 | 0.468 | 0.557 / 0.554 |
+| corrected Conflict | 637 | 0.544 | 0.588 | 0.521 | 0.007 | 0.580 | 0.481 | 0.543 / 0.545 |
+| corrected Unrest | 814 | 0.557 | 0.545 | 0.559 | 0.010 | 0.581 | 0.468 | 0.559 / 0.554 |
+| corrected_te Conflict | 381 | 0.566 | 0.598 | 0.549 | 0.011 | 0.596 | 0.481 | 0.569 / 0.563 |
+| corrected_te Unrest | 135 | 0.583 | 0.567 | 0.586 | 0.012 | 0.605 | 0.468 | 0.588 / 0.577 |
+
+- **original, scored on one row per cell-week** (4,787,224 test rows, the repaired test set): AUC-PR **0.473** for
+  Conflict (persistence 0.450) and **0.479** for Unrest (persistence 0.443). That is down from 0.93 / 0.92 on the
+  duplicated rows.
+- In both original files, `one_row_per_cell_week` and `one_row_per_cell_week_repaired_test_set` are identical. Both
+  have 4,787,224 rows and the same scores. If they are meant to be different row sets, check that the second one isn't
+  silently falling back to the first.
+- The onset AUC-PR values are about 0.007-0.012, and the onset rows key holds a single AUC-PR. Onsets are very rare,
+  so compare these against onset prevalence, not against the overall numbers.

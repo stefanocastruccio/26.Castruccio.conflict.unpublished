@@ -2,7 +2,13 @@
  "mode": "original",
  "outcome": "Unrest",
  "rounds": 1474,
+ "class_weight": "scale_pos_weight = sqrt(n0/n1)",
+ "scale_pos_weight": 5.63609922318334,
+ "early_stopping": "on the test years 2023-2024",
+ "sampling": "with replacement",
+ "training_region": "global",
  "n_train_rows": 5000000,
+ "n_train_rows_available": 35250071,
  "n_test_rows": 14425130,
  "n_test_cells": 46031,
  "test_prevalence": 0.03579822157581942,
@@ -18,7 +24,8 @@
   "auc_roc": 0.9925520520410974,
   "prevalence": 0.03579822157581942
  },
- "persistence_auc_pr": 0.8518978303482824,
+ "persistence_auc_pr": 0.8428865833366725,
+ "ppt_centred_by_global_calendar_month_mean": true,
  "features": [
   "population",
   "gdp",
@@ -62,6 +69,36 @@
  ],
  "auc_pr_interior_cells": 0.528076500338426,
  "auc_pr_border_cells": 0.9684017321182389,
+ "one_row_per_cell_week": {
+  "n_rows": 4787224,
+  "prevalence": 0.02728073722892432,
+  "auc_pr": 0.4787491478915863,
+  "auc_roc": 0.9489835039036438,
+  "persistence_auc_pr": 0.44322048109701895
+ },
+ "one_row_per_cell_week_repaired_test_set": {
+  "n_rows": 4787224,
+  "prevalence": 0.02728073722892432,
+  "auc_pr": 0.4787491478915863,
+  "auc_roc": 0.9489835039036438,
+  "persistence_auc_pr": 0.44322048109701895
+ },
+ "by_test_year": {
+  "2023": {
+   "n_rows": 7185846,
+   "prevalence": 0.03637358774457454,
+   "auc_pr": 0.9169661498530728,
+   "auc_roc": 0.9923939512988549,
+   "persistence_auc_pr": 0.8431085942114875
+  },
+  "2024": {
+   "n_rows": 7239284,
+   "prevalence": 0.03522710256981215,
+   "auc_pr": 0.9180324373435648,
+   "auc_roc": 0.9927092719266507,
+   "persistence_auc_pr": 0.8426978025610294
+  }
+ },
  "top_gain": {
   "Protests_rollsum_4": 24739026.0,
   "Riots_rollsum_4": 4424076.5,
