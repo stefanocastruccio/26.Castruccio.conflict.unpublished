@@ -249,3 +249,31 @@ The six `metrics_*.json` files replace the old ones in `results_real/xgb/`. They
     year, probably countries that the indicator sources don't cover.
 - `cells_nat_from_first_copy_any_year`: 94,730. That is all input grid_ids, including cells later dropped, which is
   why it's more than 59,344.
+
+## 2026-11-06 13:10 EST: Task 2e done (job 1693848, rc 0, about 5 min)
+I ran it as a short batch job (long queue, 4 cores, mem_free=60G) rather than on the 1-core login node, because it reads the 0.9 GB parquet.
+`results_real/data/missing_v2.json` is committed.
+
+**Share of rows missing in the Africa + ME box (4,976,634 rows):**
+- Sustainability, GHG_pc_t / MF_pc_t / ECO_pc_gha: **0.279**. Most of it comes from COD 277,794, IRN 226,920,
+  LBY 216,672, SAU 213,520, TUR 118,584, SSD 73,932, SDN 65,940, CIV 40,626, COG 40,260 and SYR 25,986 cell-weeks.
+  These are whole countries absent from the sustainability source.
+- gdp: 0.036. SSD 73,932, YEM 48,515, SOL 21,228, ERI 14,274, ESH 11,712, SYR 7,384, KOS 2,196.
+- EPI_index and v2x_libdem: 0.004 each. KOS 2,196, GMB 1,098, SWZ 1,050, DZA 854, COD 759, PSE 732, ...
+- electricity_access: 0.005. MAR 21,228, ESH 5,490, SDN 366.
+- Other covariates in the box:
+  - IPC phase_1-5: 0.627.
+  - pm25 and its 4-week mean: 0.555 / 0.560.
+  - Event rollsums: 0.011, the warm-up weeks after coverage starts.
+  - Climate rollmeans: 0.011.
+
+**Whole table (19,365,684 rows):**
+- GHG/MF/ECO: 0.178, mostly USA 1.14M, KAZ 0.41M, COD, IRN, LBY, SAU and GRL.
+- v2x_libdem: 0.013 (GRL 168,606, ATA, RUS, ...).
+- EPI_index: 0.004. gdp: 0.014.
+- IPC phase: 0.896. pm25: 0.556. ppt: 0.208. tmin/tmax/hi/wbgt: 0.053.
+
+**Note.** These shares are much lower than the report's `share_rows_nat_missing_by_year`
+(EPI 0.276, v2x 0.311, GHG 0.41-0.43). That suggests the report field is computed before the per-country fill or
+before the coverage and land filtering, so it doesn't describe the final table. In the final table, only the
+sustainability trio (about 28% in the box) and IPC/pm25 have large gaps.
