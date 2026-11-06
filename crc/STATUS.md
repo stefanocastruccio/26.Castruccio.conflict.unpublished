@@ -603,3 +603,8 @@ two files.
   0.608, so it looks like the fold assignment, not the border, drives much of the residual correlation. In Africa + ME
   the split was flat: 0.247 vs 0.284.
 - Glmm (1694071) is still running; both tasks are at maxvmem about 29.7 GB.
+
+## 2026-11-06 16:06 EST: Round 4 submitted (repo at 5c5f542)
+- 11_dynamic: **1694603** (array 1-8). 12_dynamic_compare: **1694604** (array 1-2), held on it.
+- I'll report the wall time and maxvmem of each task, and flag any space-time task that looks set to exceed 24 h.
+- Round 3 glmm (1694071) is still running.
