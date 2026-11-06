@@ -3,3 +3,10 @@ __pycache__/
 results/*_ckpt.jsonl
 results/*_log.txt
 results/*_smoke.txt
+paper/*.aux
+paper/*.log
+paper/*.bbl
+paper/*.blg
+paper/*.out
+paper/*.fls
+paper/*.fdb_latexmk
