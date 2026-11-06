@@ -1,0 +1,37 @@
+{
+ "duplicated_cell_weeks": 2946558,
+ "share_of_duplicated_cell_weeks_whose_copies_differ": {
+  "gdp": 0.4873696699674671,
+  "phase_1": 0.24894368276477163,
+  "phase_2": 0.24903701199840628,
+  "phase_3": 0.24859140733017981,
+  "phase_4": 0.19398260614588275,
+  "phase_5": 0.009974349732806888,
+  "tmin": 0.10529743517690811,
+  "tmax": 0.10529743517690811,
+  "hi": 0.10529743517690811,
+  "wbgt": 0.10529743517690811,
+  "ppt": 0.07506656919700885,
+  "pm25": 0.07093734452198124,
+  "EPI_index": 0.6218441992317816,
+  "BIOME_NAME": 0.0006210636274595647,
+  "GHG_pc_t": 0.39211276343448864,
+  "MF_pc_t": 0.39211276343448864,
+  "ECO_pc_gha": 0.39211276343448864,
+  "v2x_libdem": 0.6165033914146608
+ },
+ "Conflict": {
+  "share_rows_original_count_differs": 0.04406846287098091,
+  "share_event_weeks_with_leak": 0.22441025939644002,
+  "auc_pr_original_count": 0.8827004667789895,
+  "auc_pr_true_count": 0.4945821053067067,
+  "rows": 69418532
+ },
+ "Unrest": {
+  "share_rows_original_count_differs": 0.048707123337036286,
+  "share_event_weeks_with_leak": 0.22064461257974177,
+  "auc_pr_original_count": 0.8330850465880384,
+  "auc_pr_true_count": 0.4500892839196191,
+  "rows": 69418532
+ }
+}

@@ -170,3 +170,12 @@ The outputs are in `results_real/spatial/{conflict,unrest}/`: `summary.json`, `v
     there is batched sampling in `LatentGaussianModel.sample` (batch=25). It draws from the same distribution, but the
     RNG stream differs when n > 25. I let the simulations continue rather than restart them. If you want them rerun on
     af03a94, say so and I'll qdel them, delete the shard checkpoints and resubmit.
+
+## 2026-11-06 12:46 EST: Task 2c done (job 1693762, rc 0, about 3 min)
+`results_real/data/check_duplicates.json` is committed. In brief:
+- **Duplicated cell-weeks:** 2,946,558. Copies most often differ in EPI_index (62%), v2x_libdem (62%), gdp (49%),
+  GHG/MF/ECO (39%), IPC phase_1-3 (about 25%), and the climate variables (7-11%).
+- **Leakage of the current week into the original 4-week counts:**
+  - About 22% of event-weeks leak, for both Conflict and Unrest.
+  - The original count differs from the true count in 4.4% of rows (Conflict) and 4.9% (Unrest), out of 69.4M rows.
+  - AUC-PR of the original count is 0.883 against 0.495 for the true count (Conflict), and 0.833 against 0.450 (Unrest).
