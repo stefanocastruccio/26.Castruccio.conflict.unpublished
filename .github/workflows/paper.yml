@@ -14,6 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch the IMS class (imsart) from CTAN
+        run: |
+          curl -fsSL -o /tmp/imsart.zip https://mirrors.ctan.org/macros/latex/contrib/imsart.zip
+          unzip -q /tmp/imsart.zip -d /tmp/imsart
+          find /tmp/imsart \( -name imsart.cls -o -name imsart-nameyear.bst \) -exec cp {} paper/ \;
+          ls paper/imsart*
       - name: Compile paper/main.tex
         uses: xu-cheng/latex-action@v3
         with:
@@ -23,6 +29,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f paper/imsart.cls paper/imsart-nameyear.bst
           git add -f paper/main.pdf
           if git diff --cached --quiet; then echo "PDF unchanged"; exit 0; fi
           git commit -m "Build paper PDF [skip ci]"
