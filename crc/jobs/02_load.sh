@@ -21,7 +21,10 @@ done
 # ACLED coverage: the official table if Task 1b produced it, otherwise the estimated rule
 COV_ARG=()
 [ -f "$WORK/inputs/acled_coverage.csv" ] && COV_ARG=(--coverage-csv "$WORK/inputs/acled_coverage.csv")
-python realdata/load_partitions.py "$DATA/partitions" "$WORK/clean.parquet" \
+# CLEAN_OUT: output of the repaired table (default clean.parquet); ONLY_CLEAN=1 skips orig.parquet
+CLEAN_OUT=${CLEAN_OUT:-$WORK/clean.parquet}
+python realdata/load_partitions.py "$DATA/partitions" "$CLEAN_OUT" \
     --countries "$COUNTRIES" --gdp-csv "$GDP_CSV" "${COV_ARG[@]}"
+[ "${ONLY_CLEAN:-0}" = 1 ] && exit 0
 python realdata/load_partitions.py "$DATA/partitions" "$WORK/orig.parquet" \
     --countries "$COUNTRIES" --keep-duplicates

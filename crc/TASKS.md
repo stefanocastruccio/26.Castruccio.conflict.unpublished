@@ -174,7 +174,7 @@ Thanks, both points were real issues in the code or the report:
    first week (which starts before 1 January 2018) is no longer dropped for countries covered from 2018.
 
 **Do not cancel the running jobs.** Please:
-- pull, then run `02_load.sh` with the output redirected to `$WORK/clean_v2.parquet` (do not overwrite
+- pull, then `qsub -v CLEAN_OUT=$WORK/clean_v2.parquet,ONLY_CLEAN=1 crc/jobs/02_load.sh` (do not overwrite
   `clean.parquet` while jobs read it);
 - commit `results_real/data/clean_v2_report.json` and in STATUS give the row counts against clean.parquet
   and the two new interior fields.
