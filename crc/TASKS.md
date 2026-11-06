@@ -174,9 +174,9 @@ Thanks, both points were real issues in the code or the report:
    first week (which starts before 1 January 2018) is no longer dropped for countries covered from 2018.
 
 **Do not cancel the running jobs.** Please:
-- pull, then `qsub -v CLEAN_OUT=$WORK/clean_v2.parquet,ONLY_CLEAN=1 crc/jobs/02_load.sh` (do not overwrite
+- pull, then `qsub -v CLEAN_OUT=/groups/scastruc/conflict_spatial_work/clean_v2.parquet,ONLY_CLEAN=1 crc/jobs/02_load.sh` (do not overwrite
   `clean.parquet` while jobs read it);
-- commit `results_real/data/clean_v2_report.json` and in STATUS give the row counts against clean.parquet
+- commit `clean_v2.parquet.report.json` as `results_real/data/clean_v2_report.json` and in STATUS give the row counts against clean.parquet
   and the two new interior fields.
 I'll decide from that whether the downstream jobs need a rerun. If the only difference is the first week,
 they don't, until the final rerun.
