@@ -1,0 +1,773 @@
+{
+ "n_rows": 713388,
+ "n_cells": 13719,
+ "prevalence": 0.02772404357796879,
+ "reference": "xgb",
+ "period": "test (2023-2024)",
+ "se_note": "cluster-robust SEs of the mean paired difference, small-sample factor G/(G-1)",
+ "models": {
+  "xgb": {
+   "log_score": 0.06586597114801407,
+   "brier": 0.017373941838741302,
+   "auc_pr": 0.5526770673075931,
+   "auc_roc": 0.9528850241938629,
+   "prevalence": 0.02772404357796879,
+   "residual_moran": {
+    "I": 0.17044840911052286,
+    "p_value": 0.001,
+    "E_I": -7.289692374981776e-05
+   },
+   "residual_border": {
+    "within_country": 0.18334077201517612,
+    "across_border": 0.11566933833107886,
+    "n_within": 24508,
+    "n_across": 2040,
+    "across_border_same_fold": 0.06522471405405637,
+    "across_border_diff_fold": 0.1253174205529783,
+    "n_across_same_fold": 264,
+    "n_across_diff_fold": 1776
+   }
+  },
+  "xgb_te": {
+   "log_score": 0.06352442502975464,
+   "brier": 0.017206989228725433,
+   "auc_pr": 0.5617578810506542,
+   "auc_roc": 0.9604190899982001,
+   "prevalence": 0.02772404357796879,
+   "logscore_diff_vs_ref": {
+    "mean": -0.0023415423048009985,
+    "se_cell": 0.00026322567247221774,
+    "se_country": 0.0009562055206297909,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "brier_diff_vs_ref": {
+    "mean": -0.00016695112843987788,
+    "se_cell": 6.606714893130837e-05,
+    "se_country": 0.0002444392253915255,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "residual_moran": {
+    "I": 0.23950251499618844,
+    "p_value": 0.001,
+    "E_I": -7.289692374981776e-05
+   },
+   "residual_border": {
+    "within_country": 0.25877996173626294,
+    "across_border": 0.12936512714962875,
+    "n_within": 24508,
+    "n_across": 2040,
+    "across_border_same_fold": 0.1258785641816099,
+    "across_border_diff_fold": 0.13001953427627427,
+    "n_across_same_fold": 264,
+    "n_across_diff_fold": 1776
+   }
+  },
+  "hybrid_field": {
+   "log_score": 0.06413339823484421,
+   "brier": 0.0172908715903759,
+   "auc_pr": 0.5569520024893956,
+   "auc_roc": 0.9597752045367979,
+   "prevalence": 0.02772404357796879,
+   "logscore_diff_vs_ref": {
+    "mean": -0.0017325737609642595,
+    "se_cell": 0.00020532014946621362,
+    "se_country": 0.0006749634550353111,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "brier_diff_vs_ref": {
+    "mean": -8.306829607980664e-05,
+    "se_cell": 6.78579214708039e-05,
+    "se_country": 0.00018479161327330672,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "residual_moran": {
+    "I": 0.2720672772893815,
+    "p_value": 0.001,
+    "E_I": -7.289692374981776e-05
+   },
+   "residual_border": {
+    "within_country": 0.3015029744068995,
+    "across_border": 0.059843843008793425,
+    "n_within": 24508,
+    "n_across": 2040,
+    "across_border_same_fold": 0.04157122879104332,
+    "across_border_diff_fold": 0.06480164989015023,
+    "n_across_same_fold": 264,
+    "n_across_diff_fold": 1776
+   }
+  },
+  "hybrid_iid": {
+   "log_score": 0.06415124982595444,
+   "brier": 0.01728583499789238,
+   "auc_pr": 0.5571013532884206,
+   "auc_roc": 0.9596854506818916,
+   "prevalence": 0.02772404357796879,
+   "logscore_diff_vs_ref": {
+    "mean": -0.0017147100225975384,
+    "se_cell": 0.00020407039809458257,
+    "se_country": 0.0006774042859362246,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "brier_diff_vs_ref": {
+    "mean": -8.810678605147153e-05,
+    "se_cell": 6.753790093108728e-05,
+    "se_country": 0.00018455414288011222,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "residual_moran": {
+    "I": 0.2753528605798805,
+    "p_value": 0.001,
+    "E_I": -7.289692374981776e-05
+   },
+   "residual_border": {
+    "within_country": 0.3051869217010186,
+    "across_border": 0.06271626743147923,
+    "n_within": 24508,
+    "n_across": 2040,
+    "across_border_same_fold": 0.04203765223658995,
+    "across_border_diff_fold": 0.06805826995154057,
+    "n_across_same_fold": 264,
+    "n_across_diff_fold": 1776
+   }
+  },
+  "xgb_crossfit": {
+   "log_score": 0.0707864835858345,
+   "brier": 0.018358886241912842,
+   "auc_pr": 0.5134369454758272,
+   "auc_roc": 0.9416389746357285,
+   "prevalence": 0.02772404357796879,
+   "logscore_diff_vs_ref": {
+    "mean": 0.0049205224199237434,
+    "se_cell": 0.000301450969127227,
+    "se_country": 0.0014263036690912159,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "brier_diff_vs_ref": {
+    "mean": 0.0009849468875724624,
+    "se_cell": 9.398340694914007e-05,
+    "se_country": 0.000364771422612888,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "residual_moran": {
+    "I": 0.25052208509077134,
+    "p_value": 0.001,
+    "E_I": -7.289692374981776e-05
+   },
+   "residual_border": {
+    "within_country": 0.2737545880289267,
+    "across_border": 0.1292825477764966,
+    "n_within": 24508,
+    "n_across": 2040,
+    "across_border_same_fold": 0.1284428084484923,
+    "across_border_diff_fold": 0.13089072232207952,
+    "n_across_same_fold": 264,
+    "n_across_diff_fold": 1776
+   }
+  },
+  "hybrid_field_roll": {
+   "log_score": 0.0625942051410675,
+   "brier": 0.016904333606362343,
+   "auc_pr": 0.5723669618460664,
+   "auc_roc": 0.962427540646462,
+   "prevalence": 0.02772404357796879,
+   "logscore_diff_vs_ref": {
+    "mean": -0.003271767062675379,
+    "se_cell": 0.00018498884154216256,
+    "se_country": 0.0007924144503071623,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "brier_diff_vs_ref": {
+    "mean": -0.0004696067263616207,
+    "se_cell": 5.8743364504809125e-05,
+    "se_country": 0.00018838582057219662,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "residual_moran": {
+    "I": 0.2255732118483448,
+    "p_value": 0.001,
+    "E_I": -7.289692374981776e-05
+   },
+   "residual_border": {
+    "within_country": 0.2495740326539336,
+    "across_border": 0.07343228320111977,
+    "n_within": 24508,
+    "n_across": 2040,
+    "across_border_same_fold": 0.07809537126294831,
+    "across_border_diff_fold": 0.07367773355942825,
+    "n_across_same_fold": 264,
+    "n_across_diff_fold": 1776
+   }
+  },
+  "hybrid_iid_roll": {
+   "log_score": 0.06262598931789398,
+   "brier": 0.0169025007635355,
+   "auc_pr": 0.5724162091917668,
+   "auc_roc": 0.962337901420142,
+   "prevalence": 0.02772404357796879,
+   "logscore_diff_vs_ref": {
+    "mean": -0.003239976484718867,
+    "se_cell": 0.00018509361801190573,
+    "se_country": 0.0007939721253246932,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "brier_diff_vs_ref": {
+    "mean": -0.0004714405543601501,
+    "se_cell": 5.8746534944133495e-05,
+    "se_country": 0.00018894115857561217,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "residual_moran": {
+    "I": 0.22862468633931116,
+    "p_value": 0.001,
+    "E_I": -7.289692374981776e-05
+   },
+   "residual_border": {
+    "within_country": 0.2531857125992757,
+    "across_border": 0.07703043658630838,
+    "n_within": 24508,
+    "n_across": 2040,
+    "across_border_same_fold": 0.07679487665514621,
+    "across_border_diff_fold": 0.07862941307369445,
+    "n_across_same_fold": 264,
+    "n_across_diff_fold": 1776
+   }
+  },
+  "xgb_crossfit_roll": {
+   "log_score": 0.06945494562387466,
+   "brier": 0.018076200038194656,
+   "auc_pr": 0.5262136544255589,
+   "auc_roc": 0.9441218634526234,
+   "prevalence": 0.02772404357796879,
+   "logscore_diff_vs_ref": {
+    "mean": 0.0035889809116802967,
+    "se_cell": 0.0002522315964982242,
+    "se_country": 0.0011101174576592509,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "brier_diff_vs_ref": {
+    "mean": 0.0007022588664111054,
+    "se_cell": 7.93580480497401e-05,
+    "se_country": 0.00029116486343378796,
+    "n_clusters_cell": 13719,
+    "n_clusters_country": 93
+   },
+   "residual_moran": {
+    "I": 0.23282974306269322,
+    "p_value": 0.001,
+    "E_I": -7.289692374981776e-05
+   },
+   "residual_border": {
+    "within_country": 0.2551240810223602,
+    "across_border": 0.1282895152661508,
+    "n_within": 24508,
+    "n_across": 2040,
+    "across_border_same_fold": 0.1679908068824533,
+    "across_border_diff_fold": 0.12284276265226751,
+    "n_across_same_fold": 264,
+    "n_across_diff_fold": 1776
+   }
+  }
+ },
+ "n_countries": 93,
+ "persistence_auc_pr": 0.4779975327783869,
+ "by_test_year": {
+  "2024": {
+   "n_rows": 713388,
+   "prevalence": 0.02772404357796879,
+   "models": {
+    "xgb": {
+     "log_score": 0.06586597114801407,
+     "brier": 0.017373941838741302,
+     "auc_pr": 0.5526770673075931,
+     "auc_roc": 0.9528850241938629,
+     "prevalence": 0.02772404357796879
+    },
+    "xgb_te": {
+     "log_score": 0.06352442502975464,
+     "brier": 0.017206989228725433,
+     "auc_pr": 0.5617578810506542,
+     "auc_roc": 0.9604190899982001,
+     "prevalence": 0.02772404357796879,
+     "logscore_diff_vs_ref": {
+      "mean": -0.0023415423048009985,
+      "se_cell": 0.00026322567247221774,
+      "se_country": 0.0009562055206297909,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     },
+     "brier_diff_vs_ref": {
+      "mean": -0.00016695112843987788,
+      "se_cell": 6.606714893130837e-05,
+      "se_country": 0.0002444392253915255,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     }
+    },
+    "hybrid_field": {
+     "log_score": 0.06413339823484421,
+     "brier": 0.0172908715903759,
+     "auc_pr": 0.5569520024893956,
+     "auc_roc": 0.9597752045367979,
+     "prevalence": 0.02772404357796879,
+     "logscore_diff_vs_ref": {
+      "mean": -0.0017325737609642595,
+      "se_cell": 0.00020532014946621362,
+      "se_country": 0.0006749634550353111,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     },
+     "brier_diff_vs_ref": {
+      "mean": -8.306829607980664e-05,
+      "se_cell": 6.78579214708039e-05,
+      "se_country": 0.00018479161327330672,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     }
+    },
+    "hybrid_iid": {
+     "log_score": 0.06415124982595444,
+     "brier": 0.01728583499789238,
+     "auc_pr": 0.5571013532884206,
+     "auc_roc": 0.9596854506818916,
+     "prevalence": 0.02772404357796879,
+     "logscore_diff_vs_ref": {
+      "mean": -0.0017147100225975384,
+      "se_cell": 0.00020407039809458257,
+      "se_country": 0.0006774042859362246,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     },
+     "brier_diff_vs_ref": {
+      "mean": -8.810678605147153e-05,
+      "se_cell": 6.753790093108728e-05,
+      "se_country": 0.00018455414288011222,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     }
+    },
+    "xgb_crossfit": {
+     "log_score": 0.0707864835858345,
+     "brier": 0.018358886241912842,
+     "auc_pr": 0.5134369454758272,
+     "auc_roc": 0.9416389746357285,
+     "prevalence": 0.02772404357796879,
+     "logscore_diff_vs_ref": {
+      "mean": 0.0049205224199237434,
+      "se_cell": 0.000301450969127227,
+      "se_country": 0.0014263036690912159,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     },
+     "brier_diff_vs_ref": {
+      "mean": 0.0009849468875724624,
+      "se_cell": 9.398340694914007e-05,
+      "se_country": 0.000364771422612888,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     }
+    },
+    "hybrid_field_roll": {
+     "log_score": 0.0625942051410675,
+     "brier": 0.016904333606362343,
+     "auc_pr": 0.5723669618460664,
+     "auc_roc": 0.962427540646462,
+     "prevalence": 0.02772404357796879,
+     "logscore_diff_vs_ref": {
+      "mean": -0.003271767062675379,
+      "se_cell": 0.00018498884154216256,
+      "se_country": 0.0007924144503071623,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     },
+     "brier_diff_vs_ref": {
+      "mean": -0.0004696067263616207,
+      "se_cell": 5.8743364504809125e-05,
+      "se_country": 0.00018838582057219662,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     }
+    },
+    "hybrid_iid_roll": {
+     "log_score": 0.06262598931789398,
+     "brier": 0.0169025007635355,
+     "auc_pr": 0.5724162091917668,
+     "auc_roc": 0.962337901420142,
+     "prevalence": 0.02772404357796879,
+     "logscore_diff_vs_ref": {
+      "mean": -0.003239976484718867,
+      "se_cell": 0.00018509361801190573,
+      "se_country": 0.0007939721253246932,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     },
+     "brier_diff_vs_ref": {
+      "mean": -0.0004714405543601501,
+      "se_cell": 5.8746534944133495e-05,
+      "se_country": 0.00018894115857561217,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     }
+    },
+    "xgb_crossfit_roll": {
+     "log_score": 0.06945494562387466,
+     "brier": 0.018076200038194656,
+     "auc_pr": 0.5262136544255589,
+     "auc_roc": 0.9441218634526234,
+     "prevalence": 0.02772404357796879,
+     "logscore_diff_vs_ref": {
+      "mean": 0.0035889809116802967,
+      "se_cell": 0.0002522315964982242,
+      "se_country": 0.0011101174576592509,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     },
+     "brier_diff_vs_ref": {
+      "mean": 0.0007022588664111054,
+      "se_cell": 7.93580480497401e-05,
+      "se_country": 0.00029116486343378796,
+      "n_clusters_cell": 13719,
+      "n_clusters_country": 93
+     }
+    }
+   },
+   "persistence_auc_pr": 0.4779975327783869
+  }
+ },
+ "onset": {
+  "n_rows": 566898,
+  "prevalence": 0.0016387427720683438,
+  "models": {
+   "xgb": {
+    "log_score": 0.011609812267124653,
+    "brier": 0.0016734437085688114,
+    "auc_pr": 0.010352407114477243,
+    "auc_roc": 0.8575750775077445,
+    "prevalence": 0.0016387427720683438
+   },
+   "xgb_te": {
+    "log_score": 0.010639089159667492,
+    "brier": 0.0016518206102773547,
+    "auc_pr": 0.012754173840755409,
+    "auc_roc": 0.8700165260071671,
+    "prevalence": 0.0016387427720683438,
+    "logscore_diff_vs_ref": {
+     "mean": -0.0009707223658920844,
+     "se_cell": 8.802037242948448e-05,
+     "se_country": 0.00023592823854690166,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    },
+    "brier_diff_vs_ref": {
+     "mean": -2.1623187651831905e-05,
+     "se_cell": 5.8243423072916924e-06,
+     "se_country": 1.2034543600727947e-05,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    }
+   },
+   "hybrid_field": {
+    "log_score": 0.011149218305945396,
+    "brier": 0.0016666128067299724,
+    "auc_pr": 0.01224205129430762,
+    "auc_roc": 0.8734544479885428,
+    "prevalence": 0.0016387427720683438,
+    "logscore_diff_vs_ref": {
+     "mean": -0.0004605926363442947,
+     "se_cell": 6.43363135483735e-05,
+     "se_country": 0.00016343268330009037,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    },
+    "brier_diff_vs_ref": {
+     "mean": -6.830804477699366e-06,
+     "se_cell": 7.5141575014645195e-06,
+     "se_country": 1.5101996112558393e-05,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    }
+   },
+   "hybrid_iid": {
+    "log_score": 0.011203116737306118,
+    "brier": 0.0016669948818162084,
+    "auc_pr": 0.012131685400389959,
+    "auc_roc": 0.8716497071966847,
+    "prevalence": 0.0016387427720683438,
+    "logscore_diff_vs_ref": {
+     "mean": -0.0004066949654999294,
+     "se_cell": 6.403446899847919e-05,
+     "se_country": 0.00015696996226141917,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    },
+    "brier_diff_vs_ref": {
+     "mean": -6.4488332889752945e-06,
+     "se_cell": 7.470679723947232e-06,
+     "se_country": 1.4794133190193106e-05,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    }
+   },
+   "xgb_crossfit": {
+    "log_score": 0.012674263678491116,
+    "brier": 0.0017446919810026884,
+    "auc_pr": 0.008831036063665027,
+    "auc_roc": 0.8259728377178117,
+    "prevalence": 0.0016387427720683438,
+    "logscore_diff_vs_ref": {
+     "mean": 0.0010644522971256353,
+     "se_cell": 6.595617225282668e-05,
+     "se_country": 0.0003452968433649288,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    },
+    "brier_diff_vs_ref": {
+     "mean": 7.124833416060242e-05,
+     "se_cell": 6.840099052374264e-06,
+     "se_country": 2.031130681295158e-05,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    }
+   },
+   "hybrid_field_roll": {
+    "log_score": 0.01084312703460455,
+    "brier": 0.001644429750740528,
+    "auc_pr": 0.013012046385211718,
+    "auc_roc": 0.8812399961405533,
+    "prevalence": 0.0016387427720683438,
+    "logscore_diff_vs_ref": {
+     "mean": -0.0007666834135533659,
+     "se_cell": 6.233212186914744e-05,
+     "se_country": 0.00019575119607162346,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    },
+    "brier_diff_vs_ref": {
+     "mean": -2.9013913850745847e-05,
+     "se_cell": 4.678351827876321e-06,
+     "se_country": 9.572313897919792e-06,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    }
+   },
+   "hybrid_iid_roll": {
+    "log_score": 0.010893319733440876,
+    "brier": 0.0016445063520222902,
+    "auc_pr": 0.012948944046402188,
+    "auc_roc": 0.8793034391624119,
+    "prevalence": 0.0016387427720683438,
+    "logscore_diff_vs_ref": {
+     "mean": -0.0007164918384578915,
+     "se_cell": 6.219042275705044e-05,
+     "se_country": 0.00018914492662157193,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    },
+    "brier_diff_vs_ref": {
+     "mean": -2.8937463964500057e-05,
+     "se_cell": 4.671779140904978e-06,
+     "se_country": 9.422902022269451e-06,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    }
+   },
+   "xgb_crossfit_roll": {
+    "log_score": 0.01259607169777155,
+    "brier": 0.0017303797649219632,
+    "auc_pr": 0.009316109991223972,
+    "auc_roc": 0.8298997141229922,
+    "prevalence": 0.0016387427720683438,
+    "logscore_diff_vs_ref": {
+     "mean": 0.0009862608824892961,
+     "se_cell": 6.306341221346257e-05,
+     "se_country": 0.0003712231281478987,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    },
+    "brier_diff_vs_ref": {
+     "mean": 5.6936001498333614e-05,
+     "se_cell": 7.075041858630397e-06,
+     "se_country": 2.1593416250944637e-05,
+     "n_clusters_cell": 11925,
+     "n_clusters_country": 87
+    }
+   }
+  },
+  "definition": "no event of the outcome in the cell in the previous 52 weeks",
+  "persistence_auc_pr": 0.0016387427720683438
+ },
+ "continuation": {
+  "n_rows": 146490,
+  "prevalence": 0.12867089903747697,
+  "models": {
+   "xgb": {
+    "log_score": 0.2758305072784424,
+    "brier": 0.07813289761543274,
+    "auc_pr": 0.5808207951908609,
+    "auc_roc": 0.851090290191063,
+    "prevalence": 0.12867089903747697
+   },
+   "xgb_te": {
+    "log_score": 0.26818403601646423,
+    "brier": 0.07740354537963867,
+    "auc_pr": 0.5866199054036905,
+    "auc_roc": 0.8626248576778404,
+    "prevalence": 0.12867089903747697,
+    "logscore_diff_vs_ref": {
+     "mean": -0.007646444221161062,
+     "se_cell": 0.0012166092052835063,
+     "se_country": 0.003937473380639034,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    },
+    "brier_diff_vs_ref": {
+     "mean": -0.0007293521044577746,
+     "se_cell": 0.0003200080536224616,
+     "se_country": 0.001145433992194681,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    }
+   },
+   "hybrid_field": {
+    "log_score": 0.26917552947998047,
+    "brier": 0.07775480300188065,
+    "auc_pr": 0.5823616451781211,
+    "auc_roc": 0.8599347167796085,
+    "prevalence": 0.12867089903747697,
+    "logscore_diff_vs_ref": {
+     "mean": -0.006654981813287345,
+     "se_cell": 0.000958382420979406,
+     "se_country": 0.002494224779420353,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    },
+    "brier_diff_vs_ref": {
+     "mean": -0.00037809786474832604,
+     "se_cell": 0.0003275982956331592,
+     "se_country": 0.0008420848876834232,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    }
+   },
+   "hybrid_iid": {
+    "log_score": 0.26905393600463867,
+    "brier": 0.07772878557443619,
+    "auc_pr": 0.5825525532674581,
+    "auc_roc": 0.8600688326204127,
+    "prevalence": 0.12867089903747697,
+    "logscore_diff_vs_ref": {
+     "mean": -0.006776564892134847,
+     "se_cell": 0.000952009355569509,
+     "se_country": 0.0024821190682220735,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    },
+    "brier_diff_vs_ref": {
+     "mean": -0.00040411286226932656,
+     "se_cell": 0.00032604771142549966,
+     "se_country": 0.0008385808568431875,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    }
+   },
+   "xgb_crossfit": {
+    "log_score": 0.29567354917526245,
+    "brier": 0.08265374600887299,
+    "auc_pr": 0.5458008138150436,
+    "auc_roc": 0.8301808122067207,
+    "prevalence": 0.12867089903747697,
+    "logscore_diff_vs_ref": {
+     "mean": 0.019843032082521885,
+     "se_cell": 0.0014018840651379629,
+     "se_country": 0.005959125212424437,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    },
+    "brier_diff_vs_ref": {
+     "mean": 0.004520846147126539,
+     "se_cell": 0.00044927892594495965,
+     "se_country": 0.0015548142884793375,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    }
+   },
+   "hybrid_field_roll": {
+    "log_score": 0.2628643810749054,
+    "brier": 0.0759582594037056,
+    "auc_pr": 0.597050480788176,
+    "auc_roc": 0.8662563126775291,
+    "prevalence": 0.12867089903747697,
+    "logscore_diff_vs_ref": {
+     "mean": -0.012966127841704466,
+     "se_cell": 0.0008410773985272894,
+     "se_country": 0.0022744601565171463,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    },
+    "brier_diff_vs_ref": {
+     "mean": -0.0021746458705133717,
+     "se_cell": 0.00028278994500406543,
+     "se_country": 0.0007009947117819308,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    }
+   },
+   "hybrid_iid_roll": {
+    "log_score": 0.2628249526023865,
+    "brier": 0.07594902813434601,
+    "auc_pr": 0.5971143354998732,
+    "auc_roc": 0.866307421091751,
+    "prevalence": 0.12867089903747697,
+    "logscore_diff_vs_ref": {
+     "mean": -0.013005546823964239,
+     "se_cell": 0.0008413244020571342,
+     "se_country": 0.0022773806774118647,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    },
+    "brier_diff_vs_ref": {
+     "mean": -0.002183872235287949,
+     "se_cell": 0.0002827813011120857,
+     "se_country": 0.0007028874217590876,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    }
+   },
+   "xgb_crossfit_roll": {
+    "log_score": 0.2894916832447052,
+    "brier": 0.08133247494697571,
+    "auc_pr": 0.5574333685244245,
+    "auc_roc": 0.8361380128255917,
+    "prevalence": 0.12867089903747697,
+    "logscore_diff_vs_ref": {
+     "mean": 0.013661182284527043,
+     "se_cell": 0.0011777169020026441,
+     "se_country": 0.0049469351441477774,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    },
+    "brier_diff_vs_ref": {
+     "mean": 0.0031995777378243115,
+     "se_cell": 0.0003808725624857121,
+     "se_country": 0.001312357382184258,
+     "n_clusters_cell": 3544,
+     "n_clusters_country": 89
+    }
+   }
+  },
+  "definition": "at least one event in the previous 52 weeks",
+  "persistence_auc_pr": 0.5243916603866795
+ }
+}

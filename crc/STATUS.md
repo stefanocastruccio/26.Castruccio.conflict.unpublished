@@ -684,3 +684,36 @@ two files.
   maxvmem was about 21 GB for every task. No task came close to 24 h.
 - `field_test.csv` (from the oracle tasks) is unchanged since the 16:13 commit.
 - 12_dynamic_compare (1694604.1-2) started at 18:27.
+
+## 2026-11-06 18:31 EST: Round 4 dynamic compare done (1694604.1-2, rc 0, about 1 min, no Tracebacks). Round 4 is complete.
+Files in `results_real/compare/`: `compare_{conflict,unrest}_{st,rolling}.json` and their `_variogram.csv` files.
+Δlog is model minus xgb, so negative is better; the SE is clustered by country.
+
+**Space-time comparison (2023-24 test rows, 1,426,776):**
+
+| model | conflict AUC-PR / Δlog (SE) / Moran's I | unrest AUC-PR / Δlog (SE) / Moran's I |
+|---|---|---|
+| xgb_te | 0.533 / -0.00350 (0.00127) / 0.295 | 0.550 / -0.00322 (0.00078) / 0.253 |
+| hybrid_iid | 0.519 / -0.00093 (0.00089) / 0.450 | 0.540 / -0.00204 (0.00067) / 0.292 |
+| hybrid_field | 0.519 / -0.00117 (0.00094) / 0.449 | 0.540 / -0.00207 (0.00066) / 0.287 |
+| hybrid_st13 | 0.519 / -0.00156 (0.00096) / 0.405 | 0.541 / -0.00233 (0.00079) / 0.288 |
+| hybrid_st26 | 0.518 / -0.00152 (0.00095) / 0.412 | 0.540 / -0.00229 (0.00080) / 0.291 |
+
+**Rolling comparison (713,388 rows, the 2024 rows only):**
+
+| model | conflict AUC-PR / Δlog (SE) | unrest AUC-PR / Δlog (SE) |
+|---|---|---|
+| xgb (ref) | 0.522 | 0.553 |
+| xgb_te | 0.533 / -0.00278 (0.00142) | 0.562 / -0.00234 (0.00096) |
+| hybrid_field (static) | 0.520 / -0.00067 (0.00122) | 0.557 / -0.00173 (0.00067) |
+| **hybrid_field_roll** | **0.535 / -0.00217 (0.00078)** | **0.572 / -0.00327 (0.00079)** |
+| hybrid_iid_roll | 0.535 / -0.00185 (0.00076) | 0.572 / -0.00324 (0.00079) |
+| xgb_crossfit_roll | 0.487 / +0.00627 (0.00146) | 0.526 / +0.00359 (0.00111) |
+
+- Refitting through 2023 helps the hybrid on 2024 more than adding time dynamics does.
+  - With the rolling refit, hybrid_field_roll matches or beats xgb_te on 2024 for unrest, and has the highest AUC-PR
+    for conflict.
+  - The space-time variants are within noise of the static field.
+- **Label inconsistency.** In `compare_*_rolling.json`, `period` says "test (2023-2024)", but `n_rows` is 713,388:
+  the 2024 rows only, half of 1,426,776. Please fix the label or the row set.
+- Round 3 glmm (1694071) is still running: wall about 4 h 30 min, maxvmem 38.5 GB.
