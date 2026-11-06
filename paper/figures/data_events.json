@@ -1,0 +1,21 @@
+{
+ "rows": 19365684,
+ "cells": 59344,
+ "weeks": 366,
+ "Conflict": {
+  "overall_share_event_weeks": 0.012553132644320748,
+  "share_cells_any_event": 0.18028781342679967,
+  "share_cells_event_in_half_of_weeks": 0.004263278511728229,
+  "top1pct_cells_share_of_event_weeks": 0.4645043192102016,
+  "weekly_share_min": 0.003560504683616899,
+  "weekly_share_max": 0.01608201108774613
+ },
+ "Unrest": {
+  "overall_share_event_weeks": 0.021250475841700193,
+  "share_cells_any_event": 0.26782825559449985,
+  "share_cells_event_in_half_of_weeks": 0.009975734699379887,
+  "top1pct_cells_share_of_event_weeks": 0.3337666755765072,
+  "weekly_share_min": 0.002580768495507551,
+  "weekly_share_max": 0.04368509483997652
+ }
+}

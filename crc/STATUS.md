@@ -296,3 +296,35 @@ sustainability trio (about 28% in the box) and IPC/pm25 have large gaps.
 - Persistence AUC-PR: 0.446 for conflict and 0.451 for unrest (the fixed baseline).
 - Moran's I of the residuals: 0.620 for conflict, 0.210 for unrest.
 - Within-country vs across-border correlation: 0.644 vs 0.417 for conflict, 0.232 vs 0.109 for unrest.
+
+## 2026-11-06 13:14 EST: Task 2f done (job 1693864: long, 4 cores, mem_free=60G, rc 0, about 2 min)
+Committed `paper/figures/data_events.png` and `paper/figures/data_events.json`. I ran it with qsub rather than qrsh.
+
+`data_events.json`:
+```json
+{
+ "rows": 19365684,
+ "cells": 59344,
+ "weeks": 366,
+ "Conflict": {
+  "overall_share_event_weeks": 0.012553132644320748,
+  "share_cells_any_event": 0.18028781342679967,
+  "share_cells_event_in_half_of_weeks": 0.004263278511728229,
+  "top1pct_cells_share_of_event_weeks": 0.4645043192102016,
+  "weekly_share_min": 0.003560504683616899,
+  "weekly_share_max": 0.01608201108774613
+ },
+ "Unrest": {
+  "overall_share_event_weeks": 0.021250475841700193,
+  "share_cells_any_event": 0.26782825559449985,
+  "share_cells_event_in_half_of_weeks": 0.009975734699379887,
+  "top1pct_cells_share_of_event_weeks": 0.3337666755765072,
+  "weekly_share_min": 0.002580768495507551,
+  "weekly_share_max": 0.04368509483997652
+ }
+}```
+- **Panel (c) has sharp one-week dips.** Both series fall to about 0.3-0.6% in a handful of single weeks:
+  around each new year (late Dec / early Jan), mid-2019, mid-2020, mid-2023, mid-2024 and Nov 2024. The last week
+  (Dec 2024) is also low. That pattern looks like partial or split weeks, for example where a `week_start` straddles a
+  year boundary in the original weekly aggregation, rather than real drops in activity. You may want to check that
+  before the paper text describes the series.
