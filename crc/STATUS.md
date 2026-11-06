@@ -328,3 +328,21 @@ Committed `paper/figures/data_events.png` and `paper/figures/data_events.json`. 
   (Dec 2024) is also low. That pattern looks like partial or split weeks, for example where a `week_start` straddles a
   year boundary in the original weekly aggregation, rather than real drops in activity. You may want to check that
   before the paper text describes the series.
+
+## 2026-11-06 13:16 EST: Task 6 done (job 1693753, 2 tasks, rc 0, no Tracebacks)
+`results_real/compare/compare_{conflict,unrest}.json` is committed. It compares the models like for like on the
+same Africa + ME test rows (AUC-PR / AUC-ROC / log score):
+
+| model | conflict | unrest |
+|---|---|---|
+| xgb (corrected) | 0.514 / 0.951 / 0.0614 | 0.536 / 0.950 / 0.0658 |
+| xgb + target encoding | **0.534 / 0.959 / 0.0585** | **0.550 / 0.960 / 0.0627** |
+| xgb cross-fit (country folds) | 0.444 / 0.916 / 0.0716 | 0.507 / 0.939 / 0.0697 |
+| hybrid, iid cell | 0.521 / 0.958 / 0.0609 | 0.547 / 0.959 / 0.0634 |
+| hybrid, barrier field | 0.521 / 0.959 / 0.0605 | 0.547 / 0.959 / 0.0634 |
+| persistence | 0.446 | 0.451 |
+
+On these rows, the target-encoded XGBoost has the best scores. The hybrid field and iid models are within about
+0.01-0.02 AUC-PR of it, and both beat plain corrected XGB.
+
+Still running: 1693751 `cs_global` (Task 7) and 1693752 `cs_glmm` (Task 8).
