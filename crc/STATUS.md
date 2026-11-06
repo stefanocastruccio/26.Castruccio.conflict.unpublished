@@ -205,3 +205,16 @@ wrote orig.parquet: 55,474,944 rows, 59,344 cells, 366 weeks, 46 columns
 ## 2026-11-06 12:53 EST: Task 2d submitted
 - Pulled 7da60eb. Job **1693835** `cs_load` runs with `-v CLEAN_OUT=/groups/scastruc/conflict_spatial_work/clean_v2.parquet,ONLY_CLEAN=1`.
 - clean.parquet is not touched, and the running jobs (3r, 4r, 7, 8, Task 9) are left alone.
+
+## 2026-11-06 12:55 EST: Task 3r done (job 1693749, 6 tasks, gpu, 12:50-12:53, no Tracebacks; maxvmem about 69 GB)
+The six `metrics_*.json` files replace the old ones in `results_real/xgb/`. They were computed on clean.parquet from 2r, not on clean_v2.
+
+| file | auc_pr | auc_pr_border_cells | auc_pr_interior_cells | persistence_auc_pr | auc_roc | rounds | n_test_rows |
+|---|---|---|---|---|---|---|---|
+| corrected_Conflict | 0.5445 | 0.5881 | 0.5218 | 0.5109 | 0.9651 | 810 | 4787224 |
+| corrected_Unrest | 0.5569 | 0.5468 | 0.5594 | 0.5003 | 0.9587 | 879 | 4787224 |
+| corrected_te_Conflict | 0.5637 | 0.5984 | 0.5461 | 0.5109 | 0.9726 | 195 | 4787224 |
+| corrected_te_Unrest | 0.5827 | 0.5672 | 0.5864 | 0.5003 | 0.9663 | 147 | 4787224 |
+| original_Conflict | 0.9342 | 0.9665 | 0.4976 | 0.8896 | 0.9945 | 1998 | 14425130 |
+| original_Unrest | 0.9175 | 0.9684 | 0.5281 | 0.8519 | 0.9926 | 1474 | 14425130 |
+
