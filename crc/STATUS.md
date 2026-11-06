@@ -125,3 +125,37 @@ The outputs are in `results_real/spatial/{conflict,unrest}/`: `summary.json`, `v
     for unrest (24,508 within-country pairs and 2,040 across-border pairs).
 
 ## 2026-11-06 10:55 EST: Task 5: ready for next tasks
+
+## 2026-11-06 12:40 EST: Round 2 submitted
+
+### Task 1b: ACLED coverage, from the official table
+- Source: ACLED's "Country and Time-Period coverage" PDF, updated February 2022
+  (https://acleddata.com/acleddatanew/wp-content/uploads/dlm_uploads/2019/01/ACLED_Country-and-Time-Period-coverage_updatedFeb2022.pdf).
+  The knowledge-base page itself has no XLSX download. No newer table was available.
+- I transcribed all 243 country rows by hand into `ISO_A3,start`, using the first day of the start month. Examples:
+  Africa 1997-01-01 (South Sudan 2011), Middle East 2015-2017, South and Southeast Asia 2010-2020,
+  Europe and Central Asia 2018 or 2020, the Americas 2018 (USA 2020, Canada 2021), Oceania 2021.
+- The loader drops any country missing from the file, so I checked the codes against Natural Earth
+  (`ISO_A3`, falling back to `ADM0_A3` when it is -99) in a short batch job. Natural Earth has 24 codes that are not in
+  ACLED's table. Each got the coverage start of the country or region ACLED files them under:
+  - ESB, WSB, CYN, CNM -> Cyprus (2018).
+  - SOL -> Somalia (1997).
+  - ESH -> Morocco/Africa (1997).
+  - BRT -> Egypt/Sudan (1997).
+  - USG -> Cuba (2018).
+  - BRI, SPI, BJN, SER -> 2018 (Americas).
+  - HKG, MAC -> China (2018).
+  - KAS -> India (2016, the later of India and Pakistan).
+  - KAB -> Kazakhstan (2018).
+  - PGA, SCR -> Philippines (2016).
+  - ALA -> Finland (2020).
+  - ATF, IOA, CSI, ATC, CLP -> 2021.
+- Caveat: Natural Earth's FRA polygon includes the overseas departments (Guadeloupe, Martinique, French Guiana,
+  Reunion, Mayotte). Those cells therefore get France's start, 2020, rather than ACLED's 2018 (Americas) or 2020 (Africa).
+- The file has 267 rows: `$WORK/inputs/acled_coverage.csv`, committed as `results_real/data/acled_coverage.csv`.
+
+### Jobs
+- Task 9: 1693743 `cs_sims` (array 1-40, all running), then 1693744 `cs_sims_merge` (held on it).
+- Task 2r: 1693748 `cs_load` (long, mem_free=120G; running since 12:38).
+- Held on 2r: 1693749 `cs_xgb` (gpu, 1-6), 1693750 `cs_spatial` (1-2), 1693751 `cs_global` (1-2) and 1693752 `cs_glmm` (1-2).
+- Task 6: 1693753 `cs_compare` (1-2), held on 1693749 and 1693750.
