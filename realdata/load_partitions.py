@@ -28,11 +28,27 @@ original feature_engineering (past 4-week rolling sums of event counts, past
 Usage:
   python load_partitions.py PARTS_DIR OUT.parquet [--countries ne_10m_admin_0_countries.shp]
          [--gdp-csv GDP.csv] [--region LONMIN LONMAX LATMIN LATMAX] [--keep-duplicates]
+         [--coverage-csv coverage.csv]
+
+ACLED coverage (repaired mode only). ACLED added countries at different dates, so
+cell-weeks before a country's coverage start are unobserved, not event free. The
+coverage start of a country is taken from --coverage-csv (columns ISO_A3, start) if
+given (preferably ACLED's official country coverage table). Otherwise it is estimated
+from the data: a country is treated as entering ACLED late only if its first event (of
+any type, including strategic developments) falls after 30 June 2018 and is followed
+by at least 20 events in the next 52 weeks, the signature of coverage being switched
+on; all other countries are covered from the first week. Taking the first event alone
+would condition on the outcome and drop genuine zeros in quiet countries. Earlier
+cell-weeks are dropped, and the 4-week event histories of the first four covered weeks
+are set to missing.
+
+A JSON report (OUT.report.json) records the counts behind every repair step.
 """
 from __future__ import annotations
 
 import argparse
 import glob
+import json
 import os
 
 import numpy as np
@@ -69,7 +85,7 @@ def collapse(df):
     return first.reset_index()
 
 
-def assign_countries(cells, shp):
+def assign_countries(cells, shp, report=None):
     import geopandas as gpd
     world = gpd.read_file(shp)[["ISO_A3", "ADM0_A3", "geometry"]].to_crs(4326)
     iso = world["ISO_A3"].where(world["ISO_A3"] != "-99", world["ADM0_A3"])
@@ -82,6 +98,8 @@ def assign_countries(cells, shp):
         near = gpd.sjoin_nearest(pts[miss].to_crs(6933), world.to_crs(6933)[["ISO_A3", "geometry"]])
         near = near[~near.index.duplicated()]
         j.loc[miss, "ISO_A3"] = near["ISO_A3"]
+    if report is not None:
+        report["cells_centroid_in_sea_nearest_country"] = int(miss.sum())
     return j["ISO_A3"].to_numpy()
 
 
@@ -91,6 +109,7 @@ def main():
     ap.add_argument("--countries"); ap.add_argument("--gdp-csv")
     ap.add_argument("--region", nargs=4, type=float)
     ap.add_argument("--keep-duplicates", action="store_true")
+    ap.add_argument("--coverage-csv")
     a = ap.parse_args()
 
     files = sorted(glob.glob(os.path.join(a.parts, "*.parquet"))) or \
@@ -111,11 +130,13 @@ def main():
     df = pd.concat(pieces, ignore_index=True); del pieces
     print(f"input rows {n_rows:,}; distinct cell-weeks {n_pairs:,}; "
           f"duplicated share of rows {1 - n_pairs / n_rows:.1%}")
+    report = {"input_rows": int(n_rows), "distinct_cell_weeks": int(n_pairs),
+              "duplicated_share_of_rows": float(1 - n_pairs / n_rows)}
 
     df["year"] = df["week_start"].dt.year
     cells = df.groupby("grid_id", as_index=False)[["lon", "lat"]].first()
     if a.countries:
-        cells["ISO_A3"] = assign_countries(cells, a.countries)
+        cells["ISO_A3"] = assign_countries(cells, a.countries, report)
         df = df.merge(cells[["grid_id", "ISO_A3"]], on="grid_id", how="left")
         df["country_is_proxy"] = False
     else:
@@ -134,6 +155,10 @@ def main():
                  .agg(lambda s: s.mode().iat[0] if s.notna().any() else np.nan))
         fill = df[["ISO_A3", "year"]].merge(table, left_on=["ISO_A3", "year"],
                                             right_index=True, how="left")
+        no_interior = fill[nat].isna().all(axis=1).to_numpy()
+        df["nat_source"] = np.where(no_interior, "first_copy", "interior")
+        report["countries_without_interior_cell"] = sorted(df.loc[no_interior, "ISO_A3"].astype(str).unique().tolist())
+        report["cells_nat_from_first_copy"] = int(df.loc[no_interior, "grid_id"].nunique())
         for c in nat:   # countries with no interior cell keep their first copy
             df[c] = fill[c].to_numpy(dtype="float32", na_value=np.nan)
             df[c] = df[c].fillna(df.groupby(["ISO_A3", "year"])[c].transform("first"))
@@ -163,8 +188,39 @@ def main():
         df[f"{c}_rollsum_4"] = g[c].transform(lambda s: s.shift(1).rolling(4).sum()).astype("float32")
     for c in [c for c in CLIMATE if c in df.columns]:
         df[f"{c}_rollmean_4"] = g[c].transform(lambda s: s.shift(1).rolling(4).mean()).astype("float32")
+    if not a.keep_duplicates:
+        allev = EVENT_COLS + [c for c in ["Strategic_developments"] if c in df.columns]
+        if a.coverage_csv:
+            cov = pd.read_csv(a.coverage_csv, parse_dates=["start"]).set_index("ISO_A3")["start"]
+            report["coverage_source"] = os.path.basename(a.coverage_csv)
+        else:
+            n_ev = df[allev].sum(axis=1)
+            first = df[n_ev > 0].groupby("ISO_A3")["week_start"].min()
+            t0 = df["week_start"].min()
+            cov = pd.Series(t0, index=df["ISO_A3"].unique())
+            for iso, f in first.items():
+                if f > pd.Timestamp("2018-06-30"):
+                    nxt = n_ev[(df["ISO_A3"] == iso) & (df["week_start"] >= f)
+                               & (df["week_start"] < f + pd.Timedelta(weeks=52))].sum()
+                    if nxt >= 20:
+                        cov[iso] = f
+            report["coverage_source"] = ("estimated: late entry if first event after 2018-06-30 "
+                                         "with >= 20 events in the following 52 weeks")
+        start = df["ISO_A3"].map(cov)
+        covered = df["week_start"] >= start          # countries never covered: dropped
+        warm = covered & (df["week_start"] < start + pd.Timedelta(weeks=4))
+        lagcols = [f"{c}_rollsum_4" for c in EVENT_COLS]
+        df.loc[warm, lagcols] = np.nan
+        dropped = (~covered).groupby(df["ISO_A3"]).sum()
+        report["cell_weeks_dropped_before_coverage"] = int((~covered).sum())
+        report["countries_with_dropped_weeks"] = {k: int(v) for k, v in dropped[dropped > 0].items()}
+        report["coverage_start"] = {k: str(pd.Timestamp(v).date()) for k, v in cov.items()}
+        df = df[covered.to_numpy()]
     df = df.drop(columns=EVENT_COLS + ["year"], errors="ignore")
     df = df[df["BIOME_NAME"].fillna("N/A") != "N/A"]
+    report.update(rows=int(len(df)), cells=int(df.grid_id.nunique()), weeks=int(df.week_start.nunique()),
+                  gdp=str(df["gdp_flag"].iloc[0]) if "gdp_flag" in df else "not repaired")
+    json.dump(report, open(a.out + ".report.json", "w"), indent=1)
     df.to_parquet(a.out, index=False)
     print(f"wrote {a.out}: {len(df):,} rows, {df.grid_id.nunique():,} cells, "
           f"{df.week_start.nunique()} weeks, {df.shape[1]} columns")

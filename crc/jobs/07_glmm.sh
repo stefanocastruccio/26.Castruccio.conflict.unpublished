@@ -10,11 +10,11 @@
 #$ -t 1-2
 # Parametric models (Africa + Middle East): lags, covariates, national indicators,
 # country effects, field, spatial+, biome-pooled SVC for tmax, and the space-time
-# field on the Sahel / Horn of Africa box (8-week steps).
+# field on the central Sahel box (8-week steps, observed cells only).
 # SGE runs a spooled copy of the script, so $(dirname "$0") is not the repo
 source /users/scastruc/projects/26.Castruccio.conflict.unpublished/crc/jobs/env.sh
 cd "$REPO"
 OUTS=(conflict unrest); OUT=${OUTS[$((SGE_TASK_ID - 1))]}
 python realdata/fit_glmm.py "$WORK/clean.parquet" --outcome "$OUT" --region africa_me \
-    --models glm,country,field,spatialplus,svc,st --st-region sahel_horn --st-step 8 \
+    --models glm,country,field,spatialplus,svc,st --st-region central_sahel --st-step 8 \
     --out "$WORK/glmm"

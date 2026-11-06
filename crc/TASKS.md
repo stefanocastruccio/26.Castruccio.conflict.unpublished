@@ -93,40 +93,55 @@ are received. The next tasks will be added below.
 
 ---
 
-## Round 2 (added 2026-11-06, approved by Stefano): ON HOLD, do not start until this line says READY
+## Round 2, revised after the internal review: ON HOLD, do not start until this line says READY
 
-Run `git pull` first. Same rules as before: summaries only, nothing over a few MB, and no
-parquet or prediction files in git.
+Run `git pull` first. The pipeline changed after an internal review: ACLED coverage,
+country-grouped cross-fitting with the corrected model's features, a sea mask for the
+barrier, a fixed persistence baseline, location-aware baselines and new parametric-model
+covariates. **All Round 1 tables must be recomputed.** The same rules apply as before:
+summaries only, and nothing large or row-level in git.
 
-### Task 6: like-for-like comparison (Africa + Middle East)
+### Task 1b: ACLED coverage dates (front-end, light)
 
-`fit_acled.py` now also writes `test_pred.parquet` (test-period predictions; keep it on the
-CRC). Then:
+Try to obtain ACLED's official "country and time-period coverage" table from acleddata.com
+(it is usually an XLSX on the data-coverage / knowledge-base pages).
 
-1. Rerun `crc/jobs/04_spatial.sh`, which takes about 5 minutes.
-2. Submit `crc/jobs/05_compare.sh` held on that rerun
-   (`qsub -hold_jid <id> crc/jobs/05_compare.sh`).
-3. Copy `$WORK/compare/compare_{conflict,unrest}.json` to `results_real/compare/`.
-4. In STATUS, report for each outcome the log score and AUC-PR of `xgb_corrected`,
-   `xgb_crossfit` and `hybrid`, plus `logscore_diff_hybrid_minus_xgb_corrected` (mean and SE).
+- If you get it, write `$WORK/inputs/acled_coverage.csv` with columns `ISO_A3,start`
+  (ISO alpha-3 code and the date coverage starts, YYYY-MM-DD) for every country, and commit
+  a copy as `results_real/data/acled_coverage.csv`. It is public metadata, not event data.
+- If you can't get it, skip this step. The loader then estimates coverage from the data;
+  record in STATUS that the estimated rule was used.
 
-### Task 7: global hybrid model (`crc/jobs/06_global.sh`)
+### Task 2r: rebuild the tables (`02_load.sh`)
 
-This is the same model as Task 4 on the whole world: about 59k cells, 15M training rows.
-It may take hours. Record maxvmem from `qstat -j` while it runs.
+- Copy `$WORK/clean.parquet.report.json` to `results_real/data/clean_report.json`. It holds
+  the counts for duplicates, the coverage drop, sea-centroid cells and the national-indicator
+  fallbacks.
+- `orig.parquet` is rebuilt the same way as before.
 
-- Copy `summary.json`, `variogram.csv` and `field.csv` to `results_real/spatial_global/<outcome>/`.
-- Do not copy `test_pred.parquet` or `offset.npy`.
+### Task 3r: XGBoost (`03_xgb.sh`, now an array of 6, held on 2r)
 
-### Task 8: parametric models (`crc/jobs/07_glmm.sh`, Africa + Middle East)
+The array covers original, corrected, and corrected with target encoding, for both outcomes.
+Copy the six `metrics_*.json` files to `results_real/xgb/`, replacing the old files.
 
-This fits `realdata/fit_glmm.py`: glm, country, field, spatialplus and svc, plus the
-space-time comparison on the Sahel / Horn of Africa box. It prints progress after each
-model.
+### Task 4r: hybrid models, Africa and Middle East (`04_spatial.sh`, held on 2r)
 
-- Copy `models_<outcome>.json`, `coefficients_<outcome>.csv` and `svc_tmax_<outcome>.csv`
-  to `results_real/glmm/`.
-- If the `st` part runs past 48 h or runs out of memory, rerun with `--models st --st-step 16`
-  and log that you did.
+These now use `--land "$COUNTRIES"`. Copy `summary.json`, `variogram.csv` and `field.csv` to
+`results_real/spatial/<outcome>/`.
 
-Tasks 6, 7 and 8 are independent and can run at the same time.
+### Task 6: like-for-like comparison (`05_compare.sh`, held on 3r and 4r)
+
+Copy `compare_{conflict,unrest}.json` to `results_real/compare/`.
+
+### Task 7: global hybrid models (`06_global.sh`, held on 2r)
+
+This may take hours. Record maxvmem. Copy `summary.json`, `variogram.csv` and `field.csv` to
+`results_real/spatial_global/<outcome>/`.
+
+### Task 8: parametric models (`07_glmm.sh`, held on 2r)
+
+Copy `models_<outcome>.json`, `coefficients_<outcome>.csv` and `svc_tmax_<outcome>.csv` to
+`results_real/glmm/`. If the `st` part goes past 48 h or runs out of memory, rerun it alone
+with `--models st --st-step 16` and record that in STATUS.
+
+Submit order: 2r, then (3r, 4r, 7, 8) held on 2r, then 6 held on 3r and 4r. Log the job ids.

@@ -18,7 +18,10 @@ GDP_CSV=${GDP_CSV:-$WORK/inputs/GDP.csv}
 for f in "$COUNTRIES" "$GDP_CSV"; do
     [ -f "$f" ] || { echo "missing required input: $f"; exit 1; }
 done
+# ACLED coverage: the official table if Task 1b produced it, otherwise the estimated rule
+COV_ARG=()
+[ -f "$WORK/inputs/acled_coverage.csv" ] && COV_ARG=(--coverage-csv "$WORK/inputs/acled_coverage.csv")
 python realdata/load_partitions.py "$DATA/partitions" "$WORK/clean.parquet" \
-    --countries "$COUNTRIES" --gdp-csv "$GDP_CSV"
+    --countries "$COUNTRIES" --gdp-csv "$GDP_CSV" "${COV_ARG[@]}"
 python realdata/load_partitions.py "$DATA/partitions" "$WORK/orig.parquet" \
     --countries "$COUNTRIES" --keep-duplicates

@@ -2,10 +2,13 @@
 
 Linear predictor (logit), training on 2018-2022, test 2023-2024:
   delta * log1p(own-outcome events, past 4 weeks) + log1p(other-outcome events)
-  + cell covariates (population, GDP per capita, electricity, malaria, IPC 3+, rivers, lakes)
-  + climate anomalies (4-week means of tmax, tmin, ppt, standardised within cell and
-    calendar month over 2018-2022)
-  + national indicators (EPI, GHG, material and ecological footprint, V-Dem)
+  + cell covariates (population, malaria, IPC 3+, rivers, lakes)
+  + climate: anomalies of the lagged 4-week means of tmax, tmin, ppt, drought and PM2.5,
+    standardised within cell and calendar month with the 2018-2022 (training-period)
+    climatology, plus each cell's climatology (training-period mean) as a covariate
+  + biome effects and year effects
+  + national indicators (GDP per capita, electricity access, EPI, GHG, material and
+    ecological footprint, V-Dem); missing values are set to the mean after standardising
   [+ country effects u] [+ barrier Matern field w] [+ biome-pooled SVC for tmax]
   [+ AR(1) x Matern space-time field v]
 
@@ -17,13 +20,17 @@ Models (--models, comma separated):
                eigenvectors of the lattice (Dupont et al. 2022)
   svc          as field, tmax effect = biome mean + Matern deviation eta(s)
   st           on --st-region only: glm, field and field + space-time field
-               (time steps of --st-step weeks), to compare delta
+               (time steps of --st-step weeks; the space-time field lives on the
+               observed cells only, so it cannot link cells across the sea), to
+               compare delta
+Rows whose 4-week history is incomplete (the first weeks of each cell, and the first
+weeks after a country's ACLED coverage starts) are dropped.
 
 Outputs in --out: models_<outcome>.json (coefficients with SEs, hyperparameters,
 marginal likelihood, test scores) and coefficients_<outcome>.csv.
 
 Usage: python fit_glmm.py clean.parquet --outcome conflict --region africa_me
-       [--models glm,country,field,spatialplus,svc,st] [--st-region sahel_horn] [--st-step 8]
+       [--models glm,country,field,spatialplus,svc,st] [--st-region central_sahel] [--st-step 8]
 """
 from __future__ import annotations
 
@@ -43,40 +50,60 @@ from sc.gmrf import FixedBlock, IIDBlock, MaternBlock, SpaceTimeAR1Block  # noqa
 from sc.laplace import LatentGaussianModel, prob_from_eta  # noqa: E402
 from fit_acled import REGIONS, build_lattice  # noqa: E402
 
-REGIONS = dict(REGIONS, sahel_horn=(-18, 52, 0, 22))
+REGIONS = dict(REGIONS, sahel_horn=(-18, 52, 0, 22), central_sahel=(-6, 16, 9, 20))
 OWN = {"conflict": ["Battles_rollsum_4", "ExplosionsRemote_violence_rollsum_4",
                     "Violence_against_civilians_rollsum_4"],
        "unrest": ["Riots_rollsum_4", "Protests_rollsum_4"]}
 YCOL = {"conflict": "Conflict", "unrest": "Unrest"}
-NATIONAL = ["EPI_index", "GHG_pc_t", "MF_pc_t", "ECO_pc_gha", "v2x_libdem"]
-CLIM = {"tmax_z": "tmax_rollmean_4", "tmin_z": "tmin_rollmean_4", "ppt_z": "ppt_rollmean_4"}
+NATIONAL = ["log_gdp_pc", "electricity_access", "EPI_index", "GHG_pc_t", "MF_pc_t", "ECO_pc_gha",
+            "v2x_libdem"]
+CLIM = {"tmax_z": "tmax_rollmean_4", "tmin_z": "tmin_rollmean_4", "ppt_z": "ppt_rollmean_4",
+        "drought_z": "drought_rollmean_4", "pm25_z": "pm25_rollmean_4"}
 
 
 def prepare(df, outcome):
     other = "unrest" if outcome == "conflict" else "conflict"
     df = df.copy()
     df["y"] = df[YCOL[outcome]].astype(int)
-    df["lag_own"] = np.log1p(df[OWN[outcome]].sum(axis=1).fillna(0))
-    df["lag_other"] = np.log1p(df[OWN[other]].sum(axis=1).fillna(0))
+    df = df[df[OWN[outcome] + OWN[other]].notna().all(axis=1)].copy()   # complete 4-week history
+    df["lag_own"] = np.log1p(df[OWN[outcome]].sum(axis=1))
+    df["lag_other"] = np.log1p(df[OWN[other]].sum(axis=1))
     df["log_pop"] = np.log1p(df["population"])
     df["log_gdp_pc"] = np.log1p(df["gdp"] / df["population"].clip(lower=1))
     df["log_ipc3p"] = np.log1p(df[[c for c in ["phase_3", "phase_4", "phase_5"] if c in df]].sum(axis=1))
     df["log_river"] = np.log1p(df["river_length"]); df["log_lake"] = np.log1p(df["lake_area"])
     df["train"] = df["week_start"].dt.year <= 2022
     df["month"] = df["week_start"].dt.month
-    for z, c in CLIM.items():   # anomaly within cell x calendar month, 2018-2022 climatology
+    clim = {z: c for z, c in CLIM.items() if c in df.columns}
+    for z, c in clim.items():   # anomaly within cell x calendar month, 2018-2022 climatology
         g = df[df.train].groupby(["grid_id", "month"])[c].agg(["mean", "std"])
         st = df[["grid_id", "month"]].merge(g, left_on=["grid_id", "month"], right_index=True, how="left")
         df[z] = (df[c].to_numpy() - st["mean"].to_numpy()) / st["std"].clip(lower=1e-6).to_numpy()
-    cov = ["lag_own", "lag_other", "log_pop", "log_gdp_pc", "electricity_access", "malaria",
-           "log_ipc3p", "log_river", "log_lake"] + list(CLIM) + NATIONAL
+        df[z.replace("_z", "_clim")] = df["grid_id"].map(df[df.train].groupby("grid_id")[c].mean())
+    cov = (["lag_own", "lag_other", "log_pop", "malaria", "log_ipc3p", "log_river", "log_lake"]
+           + list(clim) + [z.replace("_z", "_clim") for z in clim] + NATIONAL)
     tr = df.train
     for c in cov[2:]:   # standardise (lags kept on their natural log scale); missing -> mean
         mu, sd = df.loc[tr, c].mean(), df.loc[tr, c].std()
         df[c] = ((df[c] - mu) / (sd if sd > 0 else 1)).fillna(0.0)
     df["lag_own"] = df["lag_own"].fillna(0); df["lag_other"] = df["lag_other"].fillna(0)
-    df["biome"] = pd.factorize(df["BIOME_NAME"])[0]
+    # indicators built from the training levels (test years 2023-2024 take the 2022 effect)
+    biomes = sorted(df.loc[df.train, "BIOME_NAME"].unique())
+    df["biome"] = df["BIOME_NAME"].map({b: i for i, b in enumerate(biomes)}).fillna(0).astype(int)
+    for i in range(1, len(biomes)):
+        df[f"biome_{i}"] = (df["biome"] == i).astype(float)
+    yr = df["week_start"].dt.year.clip(upper=2022)
+    years = sorted(yr[df.train].unique())
+    for y in years[1:]:
+        df[f"year_{y}"] = (yr == y).astype(float)
+    for i in range(len(biomes)):
+        df[f"tmax_z_x_biome_{i}"] = df["tmax_z"] * (df["biome"] == i)
+    cov = cov + [f"biome_{i}" for i in range(1, len(biomes))] + [f"year_{y}" for y in years[1:]]
     return df, cov
+
+
+def svc_cols(df):
+    return sorted([c for c in df.columns if c.startswith("tmax_z_x_biome_")], key=lambda c: int(c.rsplit("_", 1)[1]))
 
 
 def spatial_plus(df, cov_nat, L, cell, k=20):
@@ -91,9 +118,8 @@ def spatial_plus(df, cov_nat, L, cell, k=20):
 
 
 def fit(d, L, cell, nC, cov, *, country=False, field=False, svc=False, st=None, barrier=None):
-    factors = [("biome", "tmax_z")] if svc else []
-    cols = [c for c in cov if not (svc and c == "tmax_z")]
-    X, names = de.fixed_design(d, cols, factors=factors)
+    cols = [c for c in cov if not (svc and c == "tmax_z")] + (svc_cols(d) if svc else [])
+    X, names = de.fixed_design(d, cols)
     blocks, D = [FixedBlock(X.shape[1], names)], [X]
     if country:
         blocks.append(IIDBlock(nC, name="country")); D.append(de.index_design(d["country_id"], nC))
@@ -123,9 +149,8 @@ def summarise(m, names, d_te=None, D_te=None):
 
 
 def test_designs(m, d_te, L, cell_te, nC, cov, svc=False):
-    factors = [("biome", "tmax_z")] if svc else []
-    cols = [c for c in cov if not (svc and c == "tmax_z")]
-    X, _ = de.fixed_design(d_te, cols, factors=factors)
+    cols = [c for c in cov if not (svc and c == "tmax_z")] + (svc_cols(d_te) if svc else [])
+    X, _ = de.fixed_design(d_te, cols)
     D = [X]
     names = [b.name for b in m.blocks]
     if "country" in names:
@@ -142,7 +167,7 @@ def main():
     ap.add_argument("table"); ap.add_argument("--outcome", default="conflict")
     ap.add_argument("--region", default="africa_me")
     ap.add_argument("--models", default="glm,country,field,spatialplus,svc,st")
-    ap.add_argument("--st-region", default="sahel_horn"); ap.add_argument("--st-step", type=int, default=8)
+    ap.add_argument("--st-region", default="central_sahel"); ap.add_argument("--st-step", type=int, default=8)
     ap.add_argument("--out", default="results_real/glmm")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
@@ -186,7 +211,7 @@ def main():
     if "st" in models:
         x0, x1, y0, y1 = REGIONS[a.st_region] if a.st_region in REGIONS else (-180, 180, -90, 90)
         ds = tr[tr.lon.between(x0, x1) & tr.lat.between(y0, y1)].copy()
-        Ls, cs, obs_s = build_lattice(ds.lon.to_numpy(), ds.lat.to_numpy())
+        Ls, cs, obs_s = build_lattice(ds.lon.to_numpy(), ds.lat.to_numpy(), buffer=0)
         wk = (ds["week_start"] - ds["week_start"].min()).dt.days // 7
         ds["tstep"] = (wk // a.st_step).to_numpy()
         T = int(ds["tstep"].max() + 1)
@@ -195,7 +220,7 @@ def main():
                   "time_steps": T, "step_weeks": a.st_step}
         for name, kw in [("glm", {}), ("field", dict(country=True, field=True)),
                          ("field+st", dict(country=True, field=True, st=(a.st_step, T)))]:
-            m, names = fit(ds, Ls, cs, nCs, cov, barrier=~obs_s, **kw)
+            m, names = fit(ds, Ls, cs, nCs, cov, barrier=None, **kw)
             st_res[name] = summarise(m, names)
             print("st/" + name, "delta", st_res[name]["coef"]["lag_own"], flush=True)
         res["models"]["st"] = st_res

@@ -14,4 +14,4 @@ source /users/scastruc/projects/26.Castruccio.conflict.unpublished/crc/jobs/env.
 cd "$REPO"
 OUTS=(conflict unrest); OUT=${OUTS[$((SGE_TASK_ID - 1))]}
 python realdata/fit_acled.py "$WORK/clean.parquet" --outcome "$OUT" \
-    --nthread 4 --out "$WORK/spatial_global/$OUT"
+    --land "$COUNTRIES" --nthread 4 --out "$WORK/spatial_global/$OUT"

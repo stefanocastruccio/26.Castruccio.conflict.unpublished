@@ -16,8 +16,13 @@ scale_pos_weight = sqrt(n0/n1) and the global calendar-month precipitation anoma
 Outputs (to --out): metrics_<mode>_<outcome>.json and
 pred_<mode>_<outcome>.parquet (test-period grid_id, week_start, y, logit).
 
+--target-encode   (corrected mode) adds a location-aware feature: the cell's event
+                  rate over the training years, leaving out the row's own year for
+                  training rows (no leakage of the row's outcome) and using all of
+                  2018-2022 for test rows. Output names get the suffix _te.
+
 Usage: python reproduce_xgb.py TABLE.parquet --mode corrected --outcome Conflict
-       [--device cuda] [--nthread 4] [--n-train 5000000] [--out results_real]
+       [--target-encode] [--device cuda] [--nthread 4] [--n-train 5000000] [--out results_real]
 """
 from __future__ import annotations
 
@@ -66,6 +71,7 @@ def main():
     ap.add_argument("--outcome", choices=["Conflict", "Unrest"], required=True)
     ap.add_argument("--device", default="cpu"); ap.add_argument("--nthread", type=int, default=4)
     ap.add_argument("--n-train", type=int, default=5_000_000); ap.add_argument("--out", default="results_real")
+    ap.add_argument("--target-encode", action="store_true")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     rng = np.random.default_rng(1)
@@ -73,6 +79,18 @@ def main():
     df, feats = features(pd.read_parquet(a.table))
     y = a.outcome
     yr = df.week_start.dt.year
+    if a.target_encode:
+        if a.mode != "corrected":
+            raise SystemExit("--target-encode is only for --mode corrected")
+        trn = df[yr <= 2022]
+        tot = trn.groupby("grid_id")[y].agg(["sum", "count"])
+        by_y = trn.groupby(["grid_id", trn.week_start.dt.year])[y].agg(["sum", "count"])
+        key_cell = df["grid_id"].to_numpy()
+        s_all = tot["sum"].reindex(key_cell).to_numpy(); n_all = tot["count"].reindex(key_cell).to_numpy()
+        idx = pd.MultiIndex.from_arrays([key_cell, yr.to_numpy()])
+        s_y = by_y["sum"].reindex(idx).fillna(0).to_numpy(); n_y = by_y["count"].reindex(idx).fillna(0).to_numpy()
+        df["cell_rate_train"] = (s_all - s_y) / np.maximum(n_all - n_y, 1)
+        feats = feats + ["cell_rate_train"]
     train, test = df[yr <= 2022], df[yr > 2022]
     ppt = [c for c in feats if c.startswith("ppt")]
     month_mean = train.groupby("month")[ppt].mean()
@@ -130,11 +148,13 @@ def main():
             m["auc_pr_border_cells"] = float(average_precision_score(yt[dup], p[dup]))
     imp = model.get_score(importance_type="total_gain")
     m["top_gain"] = dict(sorted(imp.items(), key=lambda kv: -kv[1])[:15])
-    json.dump(m, open(os.path.join(a.out, f"metrics_{a.mode}_{y}.json"), "w"), indent=1)
+    tag = f"{a.mode}{'_te' if a.target_encode else ''}"
+    m["mode"] = tag
+    json.dump(m, open(os.path.join(a.out, f"metrics_{tag}_{y}.json"), "w"), indent=1)
     pd.DataFrame({"grid_id": test.grid_id.to_numpy(), "week_start": test.week_start.to_numpy(),
                   "y": yt.astype("int8"), "logit": logit.astype("float32"),
                   "logit_cal": dg.prior_correction(logit, params["scale_pos_weight"]).astype("float32")}
-                 ).to_parquet(os.path.join(a.out, f"pred_{a.mode}_{y}.parquet"), index=False)
+                 ).to_parquet(os.path.join(a.out, f"pred_{tag}_{y}.parquet"), index=False)
     print(json.dumps({k: v for k, v in m.items() if k not in ("features",)}, indent=1))
 
 

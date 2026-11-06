@@ -190,13 +190,16 @@ class MaternBlock(Block):
     `barrier` (boolean per cell) marks cells (e.g. sea) whose range is
     `barrier_frac` times the land range: the barrier model. Such cells carry no
     data; they remove the variance inflation of a reflecting coastline while
-    preventing correlation from leaking across straits.
+    preventing correlation from leaking across straits. The diffusion coefficient
+    on an edge between cells i and j is the harmonic mean of (r_i/r)^2 and (r_j/r)^2,
+    the usual two-point flux choice for a discontinuous coefficient (it equals the
+    arithmetic mean when neither cell is a barrier).
     """
     n_theta = 2
 
     def __init__(self, lattice: SphereLattice, name="field", range_init=500.0,
                  sd_init=0.5, pc_range=(100.0, 0.05), pc_sd=(1.0, 0.01),
-                 barrier=None, barrier_frac=0.1):
+                 barrier=None, barrier_frac=0.5):
         self.lat, self.name, self.size = lattice, name, lattice.n
         self._t0 = np.log([range_init, sd_init])
         self.pc_range, self.pc_sd = pc_range, pc_sd
@@ -206,8 +209,8 @@ class MaternBlock(Block):
         self._m = m
         W = sp.diags(lattice.G.diagonal()) - lattice.G          # edge weights l/d
         W = sp.coo_matrix(W)
-        Wm = sp.csr_matrix((W.data * 0.5 * (m[W.row] + m[W.col]), (W.row, W.col)),
-                           shape=W.shape)
+        mij = 2.0 * m[W.row] * m[W.col] / (m[W.row] + m[W.col])   # harmonic mean
+        Wm = sp.csr_matrix((W.data * mij, (W.row, W.col)), shape=W.shape)
         self._Gm = (sp.diags(np.asarray(Wm.sum(axis=1)).ravel()) - Wm).tocsc()
         self._dfac = np.sqrt(m * lattice.area * np.pi / 2)      # D / (r sd)
 
@@ -249,9 +252,11 @@ class SpaceTimeAR1Block(Block):
     n_theta = 3
 
     def __init__(self, lattice: SphereLattice, T: int, name="st", range_init=300.0,
-                 sd_init=0.3, rho_init=0.7, pc_range=(100.0, 0.05), pc_sd=(1.0, 0.01)):
+                 sd_init=0.3, rho_init=0.7, pc_range=(100.0, 0.05), pc_sd=(1.0, 0.01),
+                 barrier=None, barrier_frac=0.5):
         self.space = MaternBlock(lattice, name=name, range_init=range_init,
-                                 sd_init=sd_init, pc_range=pc_range, pc_sd=pc_sd)
+                                 sd_init=sd_init, pc_range=pc_range, pc_sd=pc_sd,
+                                 barrier=barrier, barrier_frac=barrier_frac)
         self.T, self.name = T, name
         self.size = lattice.n * T
         self._t0 = np.r_[self.space.theta0(), np.arctanh(rho_init)]

@@ -15,5 +15,11 @@ cd "$REPO"
 OUTS=(conflict unrest); OUT=${OUTS[$((SGE_TASK_ID - 1))]}
 OUTC=${OUT^}   # Conflict / Unrest
 mkdir -p "$WORK/compare"
-python realdata/compare.py --xgb "$WORK/xgb/pred_corrected_${OUTC}.parquet" \
-    --hybrid "$WORK/spatial/$OUT/test_pred.parquet" --out "$WORK/compare/compare_$OUT.json"
+S=$WORK/spatial/$OUT; XG=$WORK/xgb
+python realdata/compare.py \
+    --pred xgb=$XG/pred_corrected_${OUTC}.parquet:logit_cal \
+    --pred xgb_te=$XG/pred_corrected_te_${OUTC}.parquet:logit_cal \
+    --pred xgb_crossfit=$S/test_pred.parquet:p_xgb_crossfit \
+    --pred hybrid_iid=$S/test_pred.parquet:p_iid \
+    --pred hybrid_field=$S/test_pred.parquet:p_field \
+    --lag $S/test_pred.parquet --ref xgb --out "$WORK/compare/compare_$OUT.json"
