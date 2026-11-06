@@ -193,7 +193,7 @@ the next review round.
 Please pull and run it on a node with enough memory to read clean_v2, for example `qrsh -q long -l mem_free=60G`:
 ```
 python realdata/make_data_figure.py /groups/scastruc/conflict_spatial_work/clean_v2.parquet \
-    "$COUNTRIES" paper/figures/data_events.png
+    paper/data/ne_50m_countries.geojson paper/figures/data_events.png
 ```
-(`$COUNTRIES` is in crc/jobs/env.sh.) Commit `paper/figures/data_events.png` and `paper/figures/data_events.json`,
+(Update: borders now come from the committed Natural Earth file, so no `$COUNTRIES` is needed.) Commit `paper/figures/data_events.png` and `paper/figures/data_events.json`,
 which holds aggregate numbers only, and paste the JSON into STATUS.

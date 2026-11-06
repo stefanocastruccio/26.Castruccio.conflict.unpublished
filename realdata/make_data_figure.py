@@ -7,7 +7,9 @@
 
 Also writes OUT.json with the summary numbers quoted in the text.
 
-Usage: python make_data_figure.py CLEAN.parquet COUNTRIES.shp OUT.png
+Usage: python make_data_figure.py CLEAN.parquet BORDERS OUT.png
+BORDERS: any country polygon file readable by geopandas, e.g. the repository's
+paper/data/ne_50m_countries.geojson (Natural Earth 1:50m, public domain).
 """
 from __future__ import annotations
 
@@ -53,12 +55,8 @@ def main(path, shp, out):
                           / (s * cells.weeks).sum()),
                       "weekly_share_min": float(weekly[o].min()), "weekly_share_max": float(weekly[o].max())}
 
-    world = None
-    try:
-        import geopandas as gpd
-        world = gpd.read_file(shp)
-    except Exception as e:  # figure still useful without borders
-        print("no borders:", e)
+    import geopandas as gpd
+    world = gpd.read_file(shp)          # borders are required: they give the maps their context
 
     fig = plt.figure(figsize=(12, 9.2))
     gs = fig.add_gridspec(3, 2, height_ratios=[1, 1, 0.62], width_ratios=[1, 0.025], hspace=0.28, wspace=0.03)
@@ -66,15 +64,15 @@ def main(path, shp, out):
     lat_lo = max(-58, cells.lat.min() - 2)
     for k, (o, lab, _) in enumerate(OUTCOMES):
         ax = fig.add_subplot(gs[k, 0])
+        world.plot(ax=ax, color="#F2F1EE", edgecolor="none", zorder=0)   # land without data
         g = grid(cells, o)
         zero = np.where(g == 0, 1.0, np.nan)
         ax.imshow(zero, origin="lower", extent=ext, cmap=matplotlib.colors.ListedColormap(["#D9D9D9"]),
-                  interpolation="nearest")
+                  interpolation="nearest", zorder=1)
         pos = np.where(g > 0, g, np.nan)
-        im = ax.imshow(pos, origin="lower", extent=ext, cmap="magma_r", interpolation="nearest",
+        im = ax.imshow(pos, origin="lower", extent=ext, cmap="magma_r", interpolation="nearest", zorder=2,
                        norm=LogNorm(vmin=1 / 400, vmax=1))
-        if world is not None:
-            world.boundary.plot(ax=ax, color="#4D4D4D", linewidth=0.15)
+        world.boundary.plot(ax=ax, color="#3D3D3D", linewidth=0.3, zorder=3)
         ax.set_xlim(max(-180, cells.lon.min() - 2), min(180, cells.lon.max() + 2))
         ax.set_ylim(lat_lo, min(84, cells.lat.max() + 2))
         ax.set_xticks([]); ax.set_yticks([]); ax.set_xlabel(""); ax.set_ylabel("")

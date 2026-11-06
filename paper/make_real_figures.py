@@ -23,14 +23,27 @@ plt.rcParams.update({"font.size": 9, "axes.edgecolor": MUTED, "axes.labelcolor":
                      "xtick.color": MUTED, "ytick.color": MUTED, "axes.titlesize": 10})
 
 
+BORDERS = os.path.join(os.path.dirname(__file__), "data", "ne_50m_countries.geojson")
+
+
 def field_maps():
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5.2), constrained_layout=True)
+    import geopandas as gpd
+    fig, axes = plt.subplots(1, 2, figsize=(11, 5.6), constrained_layout=True)
     fields = {o: pd.read_csv(os.path.join(RES, "spatial", o, "field.csv")) for o in ("conflict", "unrest")}
     vmax = max(np.nanpercentile(np.abs(f.loc[f.observed, "field"]), 99) for f in fields.values())
+    w = gpd.read_file(BORDERS)
     for ax, (o, f) in zip(axes, fields.items()):
         f = f[f.observed]
-        im = ax.scatter(f.lon, f.lat, c=f.field, s=2.6, marker="s", linewidths=0,
-                        cmap=DIVERGING, norm=TwoSlopeNorm(0, -vmax, vmax), rasterized=True)
+        xlim = (f.lon.min() - 1, f.lon.max() + 1); ylim = (f.lat.min() - 1, f.lat.max() + 1)
+        w.plot(ax=ax, color="#ecebe7", edgecolor="none", zorder=0)
+        lon0, lat0 = f.lon.min(), f.lat.min()
+        nx = int(round((f.lon.max() - lon0) / 0.5)) + 1; ny = int(round((f.lat.max() - lat0) / 0.5)) + 1
+        g = np.full((ny, nx), np.nan)
+        g[np.round((f.lat - lat0) / 0.5).astype(int), np.round((f.lon - lon0) / 0.5).astype(int)] = f.field
+        im = ax.imshow(g, origin="lower", extent=[lon0 - .25, lon0 + nx * .5 - .25, lat0 - .25, lat0 + ny * .5 - .25],
+                       cmap=DIVERGING, norm=TwoSlopeNorm(0, -vmax, vmax), interpolation="nearest", zorder=1)
+        w.boundary.plot(ax=ax, color="#3d3d3d", linewidth=0.35, zorder=2)
+        ax.set_xlim(*xlim); ax.set_ylim(*ylim)
         ax.set_title(f"{o.capitalize()}: residual field $\\hat w(s)$", loc="left", color=INK)
         ax.set_aspect("equal"); ax.set_xlabel("longitude"); ax.set_ylabel("latitude")
         for s in ("top", "right"):
