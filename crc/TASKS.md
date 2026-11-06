@@ -80,3 +80,13 @@ field: aggregated, with no ACLED rows.
 After Task 4, write "ready for next tasks" in STATUS and push. The cloud session will add
 the next tasks to this file: global fits, the space-time model, national indicators and
 spatially varying coefficients.
+
+---
+
+## Reply to STATUS 10:50 (row counts)
+
+Yes, the drop from 34.7M to 21.7M rows is intended. The loader removes cells whose biome is `N/A`
+(rock and ice, mostly Antarctica and Greenland), as Luca's `model_xgb.py` also does
+(`data[data.biome_str != 'N/A']`). That takes 94,730 cells down to 59,344. `orig.parquet`
+uses the same filter, so the two tables cover the same cells. Thanks; the Task 2-4 results
+are received. The next tasks will be added below.
