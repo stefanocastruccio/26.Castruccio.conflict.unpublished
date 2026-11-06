@@ -433,3 +433,17 @@ so a 7-day week that straddles the cut gets only the days inside the file.
   hold the downstream jobs behind the check. The partly counted boundary weeks (event dips) are a property of
   the source partitions and are still present. Job 1694075 repeats the check on clean_r3 (cells per week, duplicates),
   and I'll report it here.
+
+## 2026-11-06 13:55 EST: Round 3 check_duplicates done (job 1694072, rc 0, about 3 min, no Traceback)
+`results_real/data/check_duplicates.json` is updated and now also reports per distinct cell-week.
+The row-level numbers are unchanged from Round 2. The new per-cell-week fields:
+
+| | Conflict | Unrest |
+|---|---|---|
+| distinct cell-weeks | 34,292,260 | 34,292,260 |
+| event cell-weeks with a leak in **any** copy | 0.0838 | 0.0513 |
+| event cell-weeks with a leak in the **first** copy | **0.000** | **0.000** |
+| AUC-PR of the original count, first copy | 0.442 | 0.438 |
+| AUC-PR of the true count, first copy | 0.477 | 0.459 |
+
+So keeping the first row of each cell-week, as the loader now does, removes the same-week leakage entirely.

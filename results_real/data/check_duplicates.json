@@ -25,13 +25,23 @@
   "share_event_weeks_with_leak": 0.22441025939644002,
   "auc_pr_original_count": 0.8827004667789895,
   "auc_pr_true_count": 0.4945821053067067,
-  "rows": 69418532
+  "rows": 69418532,
+  "cell_weeks": 34292260,
+  "share_event_cell_weeks_with_leak_in_any_copy": 0.08377846063002832,
+  "share_event_cell_weeks_with_leak_in_first_copy": 0.0,
+  "auc_pr_original_count_first_copy": 0.4422373621288213,
+  "auc_pr_true_count_first_copy": 0.4774011147095377
  },
  "Unrest": {
   "share_rows_original_count_differs": 0.048707123337036286,
   "share_event_weeks_with_leak": 0.22064461257974177,
   "auc_pr_original_count": 0.8330850465880384,
   "auc_pr_true_count": 0.4500892839196191,
-  "rows": 69418532
+  "rows": 69418532,
+  "cell_weeks": 34292260,
+  "share_event_cell_weeks_with_leak_in_any_copy": 0.05127838601734836,
+  "share_event_cell_weeks_with_leak_in_first_copy": 0.0,
+  "auc_pr_original_count_first_copy": 0.4376274082313162,
+  "auc_pr_true_count_first_copy": 0.4594488750225148
  }
 }
