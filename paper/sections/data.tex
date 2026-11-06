@@ -17,18 +17,18 @@ Y_{st} = \mathbf{1}\Bigl\{\textstyle\sum_{j \in \mathcal{J}} N^{(j)}_{st} > 0\Bi
 \]
 where $\mathcal{J}$ is the set of event types of the outcome being modelled; the
 two outcomes are analysed separately. Event weeks are rare: in the
-2023--2024 period, 2.9\% of grid-cell weeks contain at least one conflict event
-and 3.7\% at least one unrest event.
+2023--2024 period, 1.62\% of grid-cell weeks contain at least one conflict event
+and 2.73\% at least one unrest event.
 
 The grid consists of all $0.5^\circ$ cells that intersect a country polygon of
 Natural Earth (1:10m), excluding cells whose biome is rock and ice. Each cell is
 assigned to the single country that covers its centroid. National indicators
 are attached through that country only, so every cell-week appears exactly once.
-\todo{Report the number of cells and cell-weeks after this step. The row counts
-of the boosting analysis (about 146{,}000 rows per week, twice the number of land
-cells) are consistent with border cells being replicated once for each country
-they intersect, at every join of a national indicator; confirm on the partition
-files with \texttt{groupby(['grid\_id','week\_start']).size()}.}
+The result is 59{,}344 cells observed for 366 weeks, or 21{,}719{,}904
+cell-weeks. The table produced by the earlier pipeline replicated every cell once for
+each country and IPC region it intersects, at every join of a national indicator, and
+has 70.0 million rows for 34.7 million distinct cell-weeks (before excluding rock and
+ice). Section~\ref{sec:app-data} describes the reconstruction and its consequences.
 
 Two features of ACLED matter for modelling. First, geographic coverage
 expanded during the study period, with some countries entering the dataset
@@ -113,8 +113,13 @@ GHG emissions, material and ecological footprint p.c. & country--year & OWID, GF
 
 \subsection{Exploratory evidence of residual spatial dependence}\label{sec:data-eda}
 
-\todo{Once data are available: maps of event-week frequencies by outcome;
-Moran's $I$, great-circle variogram and within- versus across-border
-correlation of the cell residuals of the cross-fitted XGBoost model
-(Section~\ref{sec:methods-diagnostics}); residual temporal autocorrelation.
-These motivate the latent fields of Section~\ref{sec:methods}.}
+Residuals of a spatially cross-fitted XGBoost model with the covariates above and
+recent event history are strongly spatially dependent for conflict. In Africa and the
+Middle East, Moran's $I$ of the standardised cell residuals is 0.45, the semivariogram
+rises over the first 300--400\,km, and the residual correlation between neighbouring cells
+is larger within countries (0.48) than across borders (0.31). For unrest the dependence is
+weaker (Moran's $I$ 0.11) and local. These diagnostics, described in
+Section~\ref{sec:methods-diagnostics} and reported in Section~\ref{sec:app-hybrid},
+motivate the latent fields of Section~\ref{sec:methods}.
+\todo{Add a map of event-week frequencies by outcome and the residual temporal
+autocorrelation.}

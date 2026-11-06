@@ -1,0 +1,12 @@
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+Outcome & Model & Log score & Brier & AUC-PR & AUC-ROC \\
+\midrule
+Conflict & Cross-fitted XGBoost & 0.0630 & 0.01608 & 0.508 & 0.942 \\
+Conflict & Cross-fitted XGBoost + $u + w$ & 0.0600 & 0.01595 & 0.527 & 0.958 \\
+Conflict & Persistence & -- & -- & 0.228 & -- \\
+Unrest & Cross-fitted XGBoost & 0.0672 & 0.01747 & 0.522 & 0.946 \\
+Unrest & Cross-fitted XGBoost + $u + w$ & 0.0633 & 0.01698 & 0.548 & 0.959 \\
+Unrest & Persistence & -- & -- & 0.233 & -- \\
+\bottomrule
+\end{tabular}
