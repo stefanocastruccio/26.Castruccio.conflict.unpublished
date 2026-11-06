@@ -2,47 +2,56 @@
 
 All models are trained on 2018--2022 and evaluated on 2023--2024. The boosting models
 use the features and hyperparameters of \citet{menicali2026conflicts}. The computations
-were run on the Notre Dame Center for Research Computing.
+were run at the Notre Dame Center for Research Computing.
 
 \subsection{Reconstructing the cell-week table}\label{sec:app-data}
 
 The table built by the original pipeline has 70{,}033{,}444 rows but only 34{,}671{,}180
-distinct cell-weeks, so 50.5\% of its rows are copies. One partition shows the pattern:
-613{,}459 cell-weeks appear once, while others appear 2, 3, 8, 16, 32, 48 and up to 648
-times. These multiplicities are products of small integers. The national indicators and
-IPC regions are attached by spatial intersection and then merged on cell and year, so a
-cell that touches several countries is multiplied at every join, and each copy combines
-indicators from different countries. We rebuilt the table with one row per cell-week, as
-described in Section~\ref{sec:data-acled}. Excluding rock-and-ice cells leaves 59{,}344
-cells and 366 weeks, or 21{,}719{,}904 cell-weeks. Of these, 4{,}787{,}224 fall in the
-test period, in 46{,}031 cells with complete climate records. The prevalence of event
-weeks in the test period is 1.62\% for conflict and 2.73\% for unrest. In the duplicated
-table it is 2.98\% and 3.58\%, because the copied border cells have more events than
-average.
+distinct cell-weeks (Section~\ref{sec:data-acled}). In one partition, 613{,}459
+cell-weeks appear once, while others appear 2, 3, 8, 16, 32, 48 and up to 648 times.
+The national indicators and IPC regions are attached by spatial intersection and then
+merged on cell and year. A cell that touches several countries or IPC regions is
+therefore multiplied at every join, and each copy combines indicators from different
+units.
+
+The duplication matters for more than the covariates. The four-week event counts of
+the original pipeline are computed row by row within each cell, after sorting by cell
+and week. When a cell-week has copies, the rows immediately before a given row are
+copies of the same week, so the ``past'' count contains the current week's events,
+which are the outcome. We recomputed the original counts exactly and compared them
+with the true counts over the four previous weeks. In 22\% of event weeks, for both
+outcomes, the original count includes the current week's events while the true past
+count is zero. Used directly as a predictor of the outcome, without any model, the
+original count reaches an AUC-PR of 0.883 for conflict and 0.833 for unrest. The true
+count reaches 0.495 and 0.450. The leak is concentrated in the duplicated cells, which
+lie mostly along borders and coasts.
+
+The repaired table has one row per cell-week (Section~\ref{sec:data-acled}). After the
+biome exclusion it has 59{,}344 cells and 366 weeks. ACLED coverage removes \todo{x}
+further cell-weeks. The test period has \todo{x} cell-weeks in \todo{x} cells with
+complete climate records.
 
 \subsection{The boosting analysis before and after the repair}\label{sec:app-xgb}
 
-Table~\ref{tab:app-xgb} reproduces the XGBoost analysis on the duplicated table, then
-repeats it on the repaired table. In the corrected version the number of trees is chosen
-on 2022 rather than on the test years. On the duplicated table we recover the published
-performance: AUC-PR is 0.934 for conflict and 0.917 for unrest, against 0.93 and 0.91
-reported. Split by cell type, however, nearly all of it comes from the duplicated border
-cells, with AUC-PR 0.97. On interior cells AUC-PR is 0.50--0.53.
-
-The reason is a feature-construction artefact. The four-week event counts are computed
-row by row within each cell. When a cell-week has copies, the rows just before a given
-row are copies of the same week, so for duplicated cells the ``past'' counts contain the
-current week's events, which is the outcome. On the repaired table AUC-PR falls to 0.549
-for conflict and 0.553 for unrest, with no difference between border and interior cells.
-A persistence baseline that ranks cell-weeks by their past four-week event count reaches
-0.511 and 0.500. The covariates therefore add about 0.04--0.05 AUC-PR to recent event
-history. They are not the dominant source of skill implied by the published ranking.
+Table~\ref{tab:app-xgb} reproduces the XGBoost analysis on the duplicated table and then
+repeats it on the repaired table. In the corrected version, the number of trees is
+chosen by early stopping on 2022 after training on 2018--2021, rather than on the test
+years, and the class weight is removed. On the duplicated table we recover the published
+performance, with AUC-PR \todo{0.934} for conflict and \todo{0.917} for unrest, against
+0.93 and 0.91 reported. Split by cell type, nearly all of it comes from the duplicated
+cells (AUC-PR \todo{0.97}), and on the other cells AUC-PR is \todo{0.50--0.53}. On the
+repaired table AUC-PR falls to \todo{x} for conflict and \todo{x} for unrest. The
+persistence baseline reaches \todo{x} and \todo{x}. The location-aware boosting model,
+which adds each cell's training event rate, reaches \todo{x} and \todo{x}.
+\todo{Interpretation: how much the covariates add to recent history, and how much a
+cell intercept adds to the covariates.}
 
 \begin{table}
-\caption{XGBoost on the 2023--2024 test period, as published (duplicated table, early
-stopping on the test years) and corrected (one row per cell-week, early stopping on
-2022). AUC-PR is also reported separately for cells that were duplicated in the
-original table (``border'') and for the others (``interior'').}\label{tab:app-xgb}
+\caption{XGBoost on the 2023--2024 test period: as published (duplicated table, early
+stopping on the test years), corrected (one row per cell-week, ACLED coverage, early
+stopping on 2022) and corrected with a cell event-rate feature. AUC-PR is also reported
+separately for cells that were duplicated in the original table and for the
+others.}\label{tab:app-xgb}
 \centering\small
 \input{tables/real_xgb}
 \end{table}
@@ -50,46 +59,54 @@ original table (``border'') and for the others (``interior'').}\label{tab:app-xg
 \subsection{Residual spatial structure and the hybrid model}\label{sec:app-hybrid}
 
 We fit the hybrid model~\eqref{eq:hybrid} to Africa and the Middle East (longitude
-$20^\circ$W to $65^\circ$E, latitude $36^\circ$S to $45^\circ$N; 13{,}719 cells). It
-combines a spatially cross-fitted XGBoost offset, country effects and a Mat\'ern field
-with sea cells as barriers (Remark~\ref{rem:boundary}). The offset's residuals have
-strong spatial structure for conflict (Table~\ref{tab:app-field}): Moran's $I$ of the
-cell residuals is 0.45 ($p = 0.005$), and the semivariogram rises over the first
-$300$--$400$\,km before levelling off (Figure~\ref{fig:app-variogram}). Neighbouring
-cells in the same country have more strongly correlated residuals (0.48) than
-neighbours across a border (0.31), which points to country-level effects in addition to
-the smooth field. Unrest residuals are much less structured: Moran's $I$ is 0.11, and
-the within-country and across-border correlations are equal.
+$20^\circ$W to $65^\circ$E, latitude $36^\circ$S to $45^\circ$N; \todo{x} cells). It
+combines the XGBoost offset cross-fitted by country, country effects, and either a
+Mat\'ern field with sea barriers (Remark~\ref{rem:boundary}) or independent cell
+effects. Table~\ref{tab:app-field} reports the test-period residual diagnostics of
+every model, and Figure~\ref{fig:app-variogram} the semivariograms of the
+cross-fitted offset's residuals.
 
-The estimated fields (Figure~\ref{fig:app-field}) are consistent with this. For
-conflict, the field has a range of 277\,km and a standard deviation of 1.24 on the logit
-scale. Its positive values form contiguous regions. Averaging $\hat w$ over boxes, the
-highest values are in eastern Democratic Republic of the Congo (1.85), northern
-Mozambique (1.65), Syria and Iraq (1.55), Yemen (1.36), the Lake Chad basin (1.35) and
-the central Sahel (0.76); the Horn of Africa is weaker (0.33). In these regions conflict
-is more frequent than the covariates and recent history predict. The clearest negative
-regions are the Arabian interior ($-0.73$) and the western Congo basin ($-0.84$). The
-unrest field has a range of only 72\,km and consists mainly of isolated cells rather
-than regional patterns.
+\todo{Residual structure of the cross-fitted offset (Moran's $I$, within-country and
+across-border correlations, semivariogram) for conflict and unrest; and how much of it
+remains after the hybrid models.}
 
-Adding the latent effects improves out-of-sample prediction for both outcomes
-(Table~\ref{tab:app-hybrid}). For conflict, the log score falls from 0.0630 to 0.0600,
-AUC-PR rises from 0.508 to 0.527 and AUC-ROC from 0.942 to 0.958. For unrest, the
-corresponding figures are 0.0672 to 0.0633, 0.522 to 0.548 and 0.946 to 0.959.
-\todo{Add the like-for-like comparison with the corrected XGBoost model on the same
-Africa and Middle East test rows, with the cell-clustered standard error of the log-score
-difference (CRC Task 6). The global fit (Task 7) follows.}
+\todo{Fitted hyperparameters: range and standard deviation of the fields; whether the
+range is resolved by the $0.5^\circ$ grid (Section~\ref{sec:methods-spde}).}
+
+The estimated fields are shown in Figure~\ref{fig:app-field}, and
+Table~\ref{tab:app-boxes} summarises the posterior of the field averaged over regions.
+\todo{Regions with posterior probability of a positive regional average close to one;
+the clearest negative regions. Interpretation as persistent \emph{recorded} risk,
+mixing occurrence and reporting (Section~\ref{sec:data-acled}).}
+
+Table~\ref{tab:app-hybrid} compares out-of-sample scores on identical test rows, with
+log-score differences against the corrected XGBoost model and their cell-clustered
+standard errors. \todo{Results: hybrid\_field against hybrid\_iid (does the spatial
+smoothing matter beyond a cell intercept?), against the location-aware boosting
+baseline, and against persistence. Global fit.}
 
 \begin{table}
-\caption{Residual diagnostics of the spatially cross-fitted XGBoost model and
-hyperparameters of the hybrid model, Africa and the Middle East.}\label{tab:app-field}
+\caption{Test-period residual diagnostics, Africa and the Middle East: Moran's $I$ of
+the standardised cell residuals (permutation $p$-value, bounded below by 0.001) and the
+residual correlation between neighbouring cells in the same country and across a
+border; and the hyperparameters of the hybrid model.}\label{tab:app-field}
 \centering\small
 \input{tables/real_field}
 \end{table}
 
 \begin{table}
-\caption{Out-of-sample scores, Africa and the Middle East, 2023--2024. Lower is better
-for the log and Brier scores.}\label{tab:app-hybrid}
+\caption{Posterior summaries of the field of the hybrid model averaged over regions:
+mean, standard deviation and posterior probability that the regional average is
+positive.}\label{tab:app-boxes}
+\centering\small
+\todo{table from summary.json (boxes)}
+\end{table}
+
+\begin{table}
+\caption{Out-of-sample scores, Africa and the Middle East, 2023--2024, on identical
+test rows. Lower is better for the log and Brier scores. Differences in mean log score
+against the corrected XGBoost model, with standard errors clustered by
+cell.}\label{tab:app-hybrid}
 \centering\small
 \input{tables/real_hybrid}
 \end{table}
@@ -99,23 +116,26 @@ for the log and Brier scores.}\label{tab:app-hybrid}
 \includegraphics[width=\textwidth]{figures/real_field.png}
 \caption{Posterior mean of the residual field $w(s)$ of the hybrid model for conflict
 (left) and unrest (right), on the logit scale. Positive values mark persistently higher
-risk than predicted by the covariates, recent event history and country
+recorded risk than predicted by the covariates, recent event history and country
 effects.}\label{fig:app-field}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[width=0.6\textwidth]{figures/real_variogram.png}
-\caption{Empirical semivariograms of the standardised cell residuals of the spatially
-cross-fitted XGBoost model, against great-circle distance.}\label{fig:app-variogram}
+\caption{Empirical semivariograms of the standardised test-period cell residuals of the
+XGBoost model cross-fitted by country, against great-circle
+distance.}\label{fig:app-variogram}
 \end{figure}
 
 \subsection{State dependence, climate and national indicators}\label{sec:app-glmm}
 
-\todo{Results of the parametric models (CRC Task 8):
+\todo{Results of the parametric models:
 (i) the state-dependence coefficient $\delta$ with lags only, with $u + w$, and with the
-space-time field $v$ (Sahel and Horn of Africa);
-(ii) biome means and within-biome variation of the temperature effect from the SVC model;
-(iii) national indicators (EPI, footprints, GHG, V-Dem) without latent effects, with
-$u + w$, and with spatial+, interpreted in the light of the confounding results of
-Section~\ref{sec:sim-confounding}.}
+space-time field $v$ in the central Sahel, read as conditional dependence of recorded
+events (Section~\ref{sec:methods-persistence});
+(ii) biome means and within-biome variation of the maximum-temperature effect from the
+SVC model, against fixed biome slopes;
+(iii) the between- and within-country coefficients of the national indicators without
+latent effects, with $u$, with $u + w$, and with spatial+ for $m = 10$, 20 and $m^*$,
+read in the light of Section~\ref{sec:sim-confounding}.}

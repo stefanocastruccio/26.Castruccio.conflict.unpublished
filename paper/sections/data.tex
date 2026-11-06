@@ -3,53 +3,71 @@
 \subsection{Conflict and unrest events}\label{sec:data-acled}
 
 Event data come from the Armed Conflict Location \& Event Data Project
-\citep[ACLED;][]{raleigh2010acled}, which records the date, location, actors and
-type of individual political violence and demonstration events from news,
-local partners and other sources. We use events from 1 January 2018 to
+\citep[ACLED;][]{raleigh2010acled}. ACLED records the date, location, actors and type
+of individual events of political violence and demonstrations, compiled from news
+media, local partners and other sources. We use events from 1 January 2018 to
 31 December 2024 and group ACLED event types into two outcomes:
-\emph{violent conflict} (battles, explosions/remote violence and violence
-against civilians) and \emph{social unrest} (riots and protests). Events are
-aggregated to a regular $0.5^\circ \times 0.5^\circ$ longitude--latitude grid
-and to calendar weeks. For cell $s$ and week $t$ let $N^{(j)}_{st}$ be the
-number of events of type $j$ and let
+\emph{violent conflict} (battles, explosions/remote violence and violence against
+civilians) and \emph{social unrest} (riots and protests). Events are aggregated to a
+regular $0.5^\circ \times 0.5^\circ$ longitude--latitude grid, the resolution of
+PRIO-GRID \citep{tollefsen2012priogrid}, and to calendar weeks. For cell $s$ and week
+$t$, let $N^{(j)}_{st}$ be the number of events of type $j$, and let
 \[
 Y_{st} = \mathbf{1}\Bigl\{\textstyle\sum_{j \in \mathcal{J}} N^{(j)}_{st} > 0\Bigr\},
 \]
-where $\mathcal{J}$ is the set of event types of the outcome being modelled; the
-two outcomes are analysed separately. Event weeks are rare: in the
-2023--2024 period, 1.62\% of grid-cell weeks contain at least one conflict event
-and 2.73\% at least one unrest event.
+where $\mathcal{J}$ is the set of event types of the outcome being modelled. The two
+outcomes are analysed separately. Event weeks are rare. In 2023--2024, over the
+covered cell-weeks of Africa and the Middle East with complete history,
+\todo{x}\% of cell-weeks contain at least one conflict event and \todo{x}\% at least
+one unrest event. Over all covered cell-weeks worldwide the shares are \todo{x}\%
+and \todo{x}\%.
 
 The grid consists of all $0.5^\circ$ cells that intersect a country polygon of
-Natural Earth (1:10m), excluding cells whose biome is rock and ice. Each cell is
-assigned to the single country that covers its centroid. National indicators
-are attached through that country only, so every cell-week appears exactly once.
-The result is 59{,}344 cells observed for 366 weeks, or 21{,}719{,}904
-cell-weeks. The table produced by the earlier pipeline replicated every cell once for
-each country and IPC region it intersects, at every join of a national indicator, and
-has 70.0 million rows for 34.7 million distinct cell-weeks (before excluding rock and
-ice). Section~\ref{sec:app-data} describes the reconstruction and its consequences.
+Natural Earth (1:10m), excluding cells without a terrestrial biome (rock and ice, and
+large lakes). Each cell is assigned to the country that contains its centroid. A
+coastal cell whose centroid falls in the sea is assigned to the nearest country.
+National indicators are attached through that country only, so every cell-week
+appears exactly once. The result is 59{,}344 cells observed for up to 366 weeks.
 
-Two features of ACLED matter for modelling. First, geographic coverage
-expanded during the study period, with some countries entering the dataset
-after 2018; cell weeks in a country before its coverage start are
-\emph{unobserved}, not event free, and are removed rather than coded as zeros.
-\todo{Add the coverage start date by country and the number of cell weeks
-removed.} Second, the probability that an event is recorded depends on media
-and partner density, so the outcome is the product of event occurrence and
-reporting. Neither is separately identified without auxiliary information; the
-latent fields introduced in Section~\ref{sec:methods} absorb spatially smooth
-reporting differences together with unmeasured drivers of risk, and we
-interpret them accordingly.
+The table built by the original pipeline differs in one important respect.
+About 9\% of its cell-weeks occur more than once, with multiplicities such as
+$2^k$, $3^k$ and $2\cdot 3^k$, the signature of many-to-many joins between the grid
+and polygons of countries, IPC regions and national indicators. These copies make up
+50.5\% of its 70.0 million rows, for 34.7 million distinct cell-weeks before the
+biome exclusion. The copies of a cell-week share its events but often disagree on
+the covariates. Among duplicated cell-weeks, the copies differ in the EPI and the
+liberal democracy index in 62\% of cases, in GDP in 49\%, in the IPC phases in about
+25\% and in the climate variables in 7--11\%. We keep one copy of each cell-week.
+IPC phase populations are averaged over the copies. National indicators are
+re-attached for each country and year from the cells of that country that were not
+duplicated. GDP per capita is taken from the World Bank and is a national quantity.
+Section~\ref{sec:app-data} describes the consequences of the duplication for the
+original analysis.
+
+Two features of ACLED matter for modelling. First, geographic coverage expanded over
+time, and several countries entered the dataset after 2018. Cell-weeks in a country
+before its coverage start are \emph{unobserved}, not event free, so they are removed
+rather than coded as zeros. Coverage start dates are taken from ACLED's country
+coverage table. Territories not listed there take the date of the country or region
+that contains them. Coverage removes \todo{x} cell-weeks in \todo{x} countries, and
+the event history is treated as incomplete in the first four covered weeks.
+Second, the probability that an event is recorded depends on media and partner
+density, so the outcome combines occurrence and reporting
+\citep{weidmann2016closer}. The two are not separately identified
+without auxiliary information. The latent fields of Section~\ref{sec:methods}
+absorb spatially smooth reporting differences together with unmeasured drivers of
+risk, and we interpret them accordingly.
 
 \subsection{Recent event history}\label{sec:data-history}
 
 For each cell and week we compute the number of events of each type in the four
-preceding weeks, $L^{(j)}_{st} = \sum_{l=1}^{4} N^{(j)}_{s,t-l}$, using only
-past weeks. In the models of Section~\ref{sec:methods} the history enters
+preceding weeks, $L^{(j)}_{st} = \sum_{l=1}^{4} N^{(j)}_{s,t-l}$, using only past
+weeks of the same cell. In the models of Section~\ref{sec:methods} the history enters
 through $h_{st} = \log\bigl(1 + \sum_{j \in \mathcal{J}} L^{(j)}_{st}\bigr)$ for the
-outcome being modelled and, as additional covariates, the corresponding
-quantities for the other outcome.
+outcome being modelled, and through the corresponding quantity for the other outcome
+as an additional covariate. Cell-weeks whose four-week history is incomplete, at the
+start of the series and of each country's coverage, are dropped from the latent
+models.
 
 \subsection{Environmental, socioeconomic and national covariates}\label{sec:data-cov}
 
@@ -57,31 +75,40 @@ Covariates are listed in Table~\ref{tab:covariates}. They vary at three
 resolutions, which is central to the identification arguments of
 Section~\ref{sec:methods-confounding}:
 \begin{enumerate}
-\item \emph{cell--week}: four-week averages of daily minimum and maximum
-temperature, heat index and wet-bulb globe temperature (CHIRTS), precipitation
-(CHIRPS), PM$_{2.5}$ (CAMS) and a drought index (Global Drought Observatory);
-\item \emph{cell}: population (GHSL), river length and lake area (Natural
-Earth), malaria risk (Malaria Atlas Project), terrestrial biome (RESOLVE
-Ecoregions) and distance from the equator;
-\item \emph{country--year}: GDP per capita (apportioned to cells by population
-share), access to electricity, the Environmental Performance Index (EPI),
-the V-Dem liberal democracy index, and per-capita greenhouse gas emissions,
-material footprint and ecological footprint.
+\item \emph{cell--week}: daily minimum and maximum temperature, heat index and
+wet-bulb globe temperature (CHIRTS), precipitation (CHIRPS), PM$_{2.5}$ (CAMS) and a
+drought index (Global Drought Observatory);
+\item \emph{cell}: population (GHSL), river length and lake area (Natural Earth),
+malaria risk (Malaria Atlas Project), terrestrial biome (RESOLVE Ecoregions) and
+distance from the equator;
+\item \emph{country--year}: GDP per capita, access to electricity, the
+Environmental Performance Index (EPI), the V-Dem liberal democracy index, and
+per-capita greenhouse gas emissions, material footprint and ecological footprint.
 \end{enumerate}
-Food insecurity (IPC phases) is available at the subnational level and is
-apportioned to cells by population share.
+Food insecurity, the population in each IPC phase, is available for subnational
+regions and periods and is apportioned to cells by population share.
 
-Because a raw temperature means different things in different climates, the
-climate covariates enter the statistical models as standardised anomalies
-with respect to the cell- and calendar-week-specific 2018--2024 climatology,
+The climate variables enter all models through their means over the four weeks
+before the current week, so that they precede the outcome. The boosting models use
+these means on their original scale, as in the original analysis. A raw temperature
+means different things in different climates. In the latent models, the five
+climate variables (maximum and minimum temperature, precipitation, drought and
+PM$_{2.5}$) therefore enter as standardised anomalies with respect to a cell- and
+calendar-month-specific climatology estimated from the training years 2018--2022,
 \[
-z_{st} = \bigl(x_{st} - \bar{x}_{s,\mathrm{wk}(t)}\bigr) / \mathrm{sd}_{s,\mathrm{wk}(t)},
+z_{st} = \bigl(x_{st} - \bar{x}_{s,\mathrm{m}(t)}\bigr) / \mathrm{sd}_{s,\mathrm{m}(t)},
 \]
-so that their coefficients are identified from within-cell variation over
-time and are not confounded by the persistent spatial pattern of the
-climatology itself. The climatology enters separately as a cell-level covariate.
-\todo{Decide whether climatology uses a longer reference period (e.g.\ 1991--2020)
-from CHIRTS/CHIRPS.}
+where $\mathrm{m}(t)$ is the calendar month of week $t$. Their coefficients are then
+identified from variation over time within cells and are not confounded by the
+persistent spatial pattern of the climatology. The cell's mean over the training
+years enters separately as a cell-level covariate. A five-year climatology is noisy,
+especially for precipitation, and a longer reference period would be preferable
+where available; the anomalies are therefore best read as departures from recent
+conditions.
+
+All covariates of the latent models other than the event histories are standardised
+with training-period means and standard deviations. Missing values are set to zero,
+the training mean.
 
 \begin{table}
 \caption{Covariates, resolution and source.}\label{tab:covariates}
@@ -90,9 +117,9 @@ from CHIRTS/CHIRPS.}
 \toprule
 Covariate & Resolution & Source \\
 \midrule
-Minimum / maximum temperature (4-week mean) & cell--week & CHIRTS \\
+Minimum / maximum temperature & cell--week & CHIRTS \\
 Heat index, wet-bulb globe temperature & cell--week & CHIRTS \\
-Precipitation (4-week mean) & cell--week & CHIRPS \\
+Precipitation & cell--week & CHIRPS \\
 PM$_{2.5}$ & cell--week & CAMS \\
 Drought index & cell--week & Global Drought Observatory \\
 Events of each type in previous 4 weeks & cell--week & ACLED \\
@@ -113,13 +140,13 @@ GHG emissions, material and ecological footprint p.c. & country--year & OWID, GF
 
 \subsection{Exploratory evidence of residual spatial dependence}\label{sec:data-eda}
 
-Residuals of a spatially cross-fitted XGBoost model with the covariates above and
-recent event history are strongly spatially dependent for conflict. In Africa and the
-Middle East, Moran's $I$ of the standardised cell residuals is 0.45, the semivariogram
-rises over the first 300--400\,km, and the residual correlation between neighbouring cells
-is larger within countries (0.48) than across borders (0.31). For unrest the dependence is
-weaker (Moran's $I$ 0.11) and local. These diagnostics, described in
-Section~\ref{sec:methods-diagnostics} and reported in Section~\ref{sec:app-hybrid},
-motivate the latent fields of Section~\ref{sec:methods}.
-\todo{Add a map of event-week frequencies by outcome and the residual temporal
-autocorrelation.}
+Before introducing the latent models, we check whether a flexible model of the
+covariates and recent history leaves spatial structure in its residuals. We take the
+XGBoost offset of Section~\ref{sec:methods-hybrid}, cross-fitted by country so that a
+cell's prediction never uses data from its own country, and compute the standardised
+cell residuals of Section~\ref{sec:methods-diagnostics} on the test years. In Africa
+and the Middle East, Moran's $I$ of these residuals is \todo{x} for conflict and
+\todo{x} for unrest. The residual correlation between neighbouring cells is
+\todo{x} within countries and \todo{x} across borders for conflict. The
+semivariogram is reported in Section~\ref{sec:app-hybrid}. This residual structure
+motivates the latent fields of Section~\ref{sec:methods}.
