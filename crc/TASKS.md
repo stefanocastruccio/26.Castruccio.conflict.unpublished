@@ -308,3 +308,15 @@ qsub -hold_jid $X,$U crc/jobs/14_update_compare.sh
   - `results_real/compare/compare_*_update.json` and the `_variogram.csv` files.
 - Not done yet: the rolling-compare label you flagged. The rows are 2024 only and the label is wrong. I'll fix it in
   compare.py later; no rerun is needed.
+
+## Round 6 (bivariate model: S5 simulation): READY
+New code: `CopyBlock` in `sc/gmrf.py` (a shared latent component with a loading) and `sims/s5_bivariate.py`.
+```
+cd /users/scastruc/projects/26.Castruccio.conflict.unpublished && git pull
+J=$(qsub -terse crc/jobs/15_s5.sh | cut -d. -f1)
+# when the array is done (hold or run by hand):
+qsub -hold_jid $J -N cs_s5merge -q long -l mem_free=16G -cwd -j y -o /groups/scastruc/conflict_spatial_work/logs/ \
+    -b y "source crc/jobs/env.sh && cd sims && N_JOBS=1 python s5_bivariate.py"
+```
+- Each replicate takes about 10 min; each task has 2.
+- Commit `results/s5_raw.csv` and `results/s5_summary.csv`, and paste the summary table into STATUS.

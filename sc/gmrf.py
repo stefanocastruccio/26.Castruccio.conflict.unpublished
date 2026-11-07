@@ -308,3 +308,49 @@ class SpaceTimeAR1Block(Block):
         d = self.space.describe(th[:2])
         d[f"{self.name}.rho"] = float(np.tanh(th[2]))
         return d
+
+
+class CopyBlock(Block):
+    """Shared latent component entering two linear predictors with a loading.
+
+    Latent vector [a; b] with a ~ base GMRF (e.g. MaternBlock or SpaceTimeAR1Block)
+    and b = lam * a + e, e ~ N(0, I / tau) with a large fixed tau (the "copy"
+    construction of INLA). The design maps outcome-1 rows to a and outcome-2 rows
+    to b, so outcome 2 receives lam times the shared component. The joint precision is
+
+        Q = [[Q_a + lam^2 tau I, -lam tau I], [-lam tau I, tau I]] = R'R,
+        R = [[R_a, 0], [-lam sqrt(tau) I, sqrt(tau) I]],
+
+    with log|Q| = log|Q_a| + m log tau, so lam does not enter the determinant.
+    theta = [theta_base..., lam]; lam has a N(0, 2^2) prior and is bounded to [-5, 5].
+    """
+
+    def __init__(self, base: Block, name="shared", tau=1e4, lam_init=1.0):
+        self.base, self.name, self.tau = base, name, float(tau)
+        self.m = base.size
+        self.size = 2 * base.size
+        self.n_theta = base.n_theta + 1
+        self._lam0 = float(lam_init)
+
+    def theta0(self):
+        return np.r_[self.base.theta0(), self._lam0]
+
+    def R(self, th):
+        Ra = self.base.R(th[:-1])
+        lam, st = th[-1], np.sqrt(self.tau)
+        I = sp.identity(self.m, format="csc")
+        return sp.bmat([[Ra, None], [-lam * st * I, st * I]], format="csc")
+
+    def logdet(self, th):
+        return self.base.logdet(th[:-1]) + self.m * np.log(self.tau)
+
+    def log_prior(self, th):
+        return self.base.log_prior(th[:-1]) - 0.5 * (th[-1] / 2.0) ** 2
+
+    def bounds(self):
+        return list(self.base.bounds()) + [(-5.0, 5.0)]
+
+    def describe(self, th):
+        d = {k.replace(self.base.name, self.name, 1): v for k, v in self.base.describe(th[:-1]).items()}
+        d[f"{self.name}.loading"] = float(th[-1])
+        return d
