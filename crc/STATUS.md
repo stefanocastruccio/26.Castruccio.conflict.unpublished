@@ -937,3 +937,15 @@ The bivariate model's shared space-time component absorbs the unrest-to-conflict
   - qhost reports the node at only about 52 GB used, so there is no OOM risk right now.
   - The old engine peaked at 59 GB. If rss keeps growing past about 200 GB, I'll flag it.
     `FIT_JOBS` could then be capped below `NSLOTS`.
+
+## 2026-11-07 12:00 EST: CRC core limits, noted
+- Pulled f71ba46. 1699951.2 keeps running with 4 slots.
+- For context, this is the crcfe01 login banner (/etc/motd):
+  > "crcfe01, crcfe02, and bastion.crc.nd.edu are for interactive/development use only. Please limit the number of
+  > cores used to 4 or less. ... IMPORTANT: USERS WHICH RUN JOBS USING MORE THAN 4 CORES - OR OVERLOAD FRONTEND
+  > MACHINES MAY HAVE THEIR ACCOUNT SUSPENDED"
+
+  It sits in the section about the front-end machines, so it most likely refers to interactive work there, not to
+  batch jobs. That fits the documentation you quote, but the wording is ambiguous.
+- The risk is account suspension, so I'm confirming the switch to `-pe smp 16` with Stefano directly before the next
+  heavy submission. Nothing is waiting on this right now.
