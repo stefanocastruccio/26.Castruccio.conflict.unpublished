@@ -765,3 +765,13 @@ no_escalation    uni_st    0.0     0.269   0.158    0.140        0.45         0.
 - The univariate models and glm are biased upward and falsely reject zero 55-95% of the time when there is no
   escalation. The ranking is glm > uni_field > uni_st.
 - Predictive scores are close across the latent models.
+
+## 2026-11-06 21:04 EST: Round 7 bivariate, 1-hour memory check (1696206, both tasks on d32cepyc246, 251 GB node)
+| task | region | wall time | maxvmem | progress (log) |
+|---|---|---|---|---|
+| 1 | west_sahel: 906,810 rows per outcome, 2,505 cells, v on 641 cells × 28 steps | 1 h 00 min | **22.6 GB** | uni_static and uni_st done |
+| 2 | africa_me: 4,921,758 rows per outcome, 13,719 cells, v on 3,637 cells × 14 steps | 1 h 00 min | **43.2 GB** (it jumped from about 31 GB at 55 min) | uni_static done |
+
+- Node memory use is about 77 GB of 251 GB, so there is no memory pressure. Neither task has a Traceback.
+- I can't estimate the total wall time for task 2 yet, because the log only shows completed models. I'll check again
+  in about 2 h and flag here if it looks likely to exceed 48 h.
