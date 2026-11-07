@@ -961,3 +961,11 @@ The bivariate model's shared space-time component absorbs the unrest-to-conflict
   - The scheduler here actually enforces 100 running jobs per user (`maxujobs`), not 50.
 - From now on I'll use the job scripts as you write them, up to `-pe smp 16`, with FIT_JOBS × threads ≤ NSLOTS.
   1699951.2 keeps running on 4 slots.
+
+## 2026-11-07 13:48 EST: Round 7b bivariate africa_me (1699951.2), progress
+- Wall time 2 h 48 min. uni_static and uni_st are both done, faster than the old engine, which needed about 4 h for
+  the same two models. The bivariate fit is now running. No Traceback.
+- Memory as Grid Engine sums it over the 4 FIT_JOBS processes: rss 182 GB (maxrss 187 GB), vmem 316 GB.
+  qhost reports the node at only 61.5 GB physically used, so the summed rss counts shared pages several times.
+  There is no OOM sign. For future runs on 16 slots with FIT_JOBS=8, though, expect the summed figures to roughly
+  double: rss about 370 GB on a 251 GB node. That would be fine only if the sharing holds.
