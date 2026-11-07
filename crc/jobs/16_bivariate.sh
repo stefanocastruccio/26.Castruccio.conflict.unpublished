@@ -15,8 +15,8 @@ source /users/scastruc/projects/26.Castruccio.conflict.unpublished/crc/jobs/env.
 cd "$REPO"
 REG=(west_sahel africa_me); STEP=(13 26)
 i=$((SGE_TASK_ID - 1))
-# parallel finite-difference gradients (one forked process per hyperparameter), one BLAS
-# thread each to avoid oversubscription
-export FIT_JOBS=8 OMP_NUM_THREADS=2 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
+# parallel finite-difference gradients: 8 forked workers x 2 BLAS threads = 16 slots;
+# fewer workers than hyperparameters keeps memory within a 256 GB node
+export FIT_JOBS=8 OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2
 python realdata/fit_bivariate.py "$CLEAN" --region "${REG[$i]}" --land "$COUNTRIES" \
     --st-step "${STEP[$i]}" --st-res 1.0 --out "$WORK/bivariate/${REG[$i]}"
