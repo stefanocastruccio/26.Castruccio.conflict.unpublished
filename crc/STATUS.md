@@ -975,3 +975,37 @@ The bivariate model's shared space-time component absorbs the unrest-to-conflict
 - S5 v2: **1701826** (40 tasks × 4 slots), with merge **1701827** held on it. The merge uses the same wrapper as Round 6:
   `cd sims && N_JOBS=1 python s5_bivariate.py`. The new checkpoints (`s5v2_ckpt*`) are separate from Round 6's `s5_ckpt*`.
 - 1699951.2 (africa_me biv) keeps running. `17_biv2.sh -t 2` waits until it finishes.
+
+## 2026-11-07 16:55 EST: Round 8 S5 v2 done (1701826, 40 tasks, about 1-1.7 h each, no Tracebacks; merge 1701827 rc 0)
+`results/s5_raw.csv` and `results/s5_summary.csv` are committed: 4 scenarios × 5 models × 20 replicates.
+```
+         scenario     model  truth  mean_est  emp_sd  mean_se  coverage95  reject_zero   d_c  log_score  auc_pr  onset_auc_pr  loading  seconds  n  mc_se_coverage
+       escalation    biv_st    0.4     0.434   0.111    0.126        0.95         0.95 0.358      0.140   0.103         0.042    0.832  187.833 20           0.049
+       escalation   biv_st2    0.4     0.450   0.109    0.126        0.95         0.95 0.347      0.140   0.104         0.044    0.780 1411.987 20           0.049
+       escalation       glm    0.4     1.026   0.163    0.116        0.00         1.00 1.516      0.143   0.077         0.025      NaN    0.096 20           0.000
+       escalation uni_field    0.4     0.794   0.128    0.122        0.10         1.00 0.805      0.139   0.105         0.044      NaN    0.628 20           0.067
+       escalation    uni_st    0.4     0.659   0.108    0.127        0.50         1.00 0.375      0.140   0.105         0.045      NaN   60.461 20           0.112
+   escalation_uST    biv_st    0.4     0.385   0.125    0.118        0.90         0.90 0.444      0.141   0.105         0.043    1.172  182.167 20           0.067
+   escalation_uST   biv_st2    0.4     0.467   0.137    0.120        0.85         1.00 0.350      0.141   0.106         0.045    0.806  998.065 20           0.080
+   escalation_uST       glm    0.4     1.017   0.175    0.108        0.00         1.00 1.505      0.143   0.078         0.031      NaN    0.037 20           0.000
+   escalation_uST uni_field    0.4     0.786   0.140    0.115        0.15         1.00 0.804      0.140   0.107         0.048      NaN    0.699 20           0.080
+   escalation_uST    uni_st    0.4     0.679   0.136    0.122        0.35         1.00 0.372      0.140   0.107         0.046      NaN   65.750 20           0.107
+    no_escalation    biv_st    0.0     0.042   0.166    0.138        0.90         0.10 0.376      0.134   0.088         0.033    0.827  287.443 20           0.067
+    no_escalation   biv_st2    0.0     0.058   0.165    0.139        0.85         0.15 0.363      0.134   0.089         0.035    0.772 2010.460 20           0.080
+    no_escalation       glm    0.0     0.695   0.193    0.129        0.05         0.95 1.539      0.137   0.063         0.022      NaN    0.216 20           0.049
+    no_escalation uni_field    0.0     0.426   0.161    0.135        0.15         0.85 0.821      0.133   0.090         0.037      NaN    0.950 20           0.080
+    no_escalation    uni_st    0.0     0.269   0.158    0.140        0.45         0.55 0.384      0.134   0.090         0.034      NaN   99.399 20           0.111
+no_escalation_uST    biv_st    0.0    -0.012   0.166    0.131        0.85         0.15 0.467      0.134   0.088         0.038    1.191  278.204 20           0.080
+no_escalation_uST   biv_st2    0.0     0.064   0.169    0.133        0.85         0.15 0.366      0.134   0.089         0.036    0.806 1486.684 20           0.080
+no_escalation_uST       glm    0.0     0.683   0.201    0.121        0.10         0.90 1.526      0.137   0.063         0.025      NaN    0.056 20           0.067
+no_escalation_uST uni_field    0.0     0.411   0.164    0.128        0.20         0.80 0.819      0.134   0.089         0.037      NaN    0.942 20           0.089
+no_escalation_uST    uni_st    0.0     0.281   0.158    0.135        0.45         0.55 0.383      0.134   0.090         0.035      NaN  100.693 20           0.111
+```
+- When unrest has episodes of its own (`_uST` scenarios), **biv_st still recovers the escalation effect, with a small
+  downward bias**: escalation_uST 0.385 against a truth of 0.4, coverage 0.90, power 0.90. Its loading rises to about
+  1.17, which absorbs part of the unrest-specific signal.
+- **biv_st2** (with an unrest-specific space-time field) is close to unbiased in the escalation scenarios (0.450 and
+  0.467) but slightly over-covers. With no escalation, its false-rejection rate is 0.15, against 0.10-0.15 for biv_st.
+- The univariate models and glm stay strongly biased upward in every scenario.
+- biv_st2 costs about 5-7× biv_st in fit time: about 1,000-2,000 s per replicate against about 180-290 s.
+- West Africa biv2 (1701825) is still running: about 1 h 45 min wall time, maxrss 65 GB, on an ACMS 24-core node.
