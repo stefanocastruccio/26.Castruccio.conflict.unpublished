@@ -36,9 +36,13 @@ from sc.gmrf import CopyBlock, SphereLattice
 from sc.laplace import prob_from_eta
 from sc.simulate import matern_gp
 
-CKPT = "s5_ckpt.jsonl"
+CKPT = os.environ.get("S5_CKPT", "s5v2_ckpt.jsonl")
 N_REPS = int(os.environ.get("N_REPS", 20))
-SCEN = {"no_escalation": 0.0, "escalation": 0.4}
+# (kappa, sd of an UNREST-ONLY space-time episode field). The *_uST scenarios add unrest
+# episodes that do not touch conflict: a joint model with a single shared space-time field
+# must then absorb them into v, which can bias kappa towards zero (review round 3).
+SCEN = {"no_escalation": (0.0, 0.0), "escalation": (0.4, 0.0),
+        "no_escalation_uST": (0.0, 0.6), "escalation_uST": (0.4, 0.6)}
 NX, NY, BURN, T_TR, T_TE, STEP = 16, 14, 12, 104, 26, 4
 PAR = dict(b_c=-3.9, b_u=-3.6, d_c=0.3, d_u=0.3, l_s=0.8, l=0.8, phi=0.95, e_sd=0.8)
 
@@ -47,7 +51,7 @@ def lattice():
     return SphereLattice(10.25 + 0.5 * np.arange(NX), -1.75 + 0.5 * np.arange(NY))
 
 
-def simulate5(kappa, seed):
+def simulate5(kappa, seed, u_sd=0.0):
     rng = np.random.default_rng(seed)
     L = lattice(); n = L.n
     s = matern_gp(L, 400.0, 0.6, rng).ravel()
@@ -57,11 +61,17 @@ def simulate5(kappa, seed):
     e = np.zeros((Ttot, n)); e[0] = matern_gp(L, 300.0, PAR["e_sd"], rng).ravel()
     for t in range(1, Ttot):
         e[t] = PAR["phi"] * e[t - 1] + np.sqrt(1 - PAR["phi"] ** 2) * matern_gp(L, 300.0, PAR["e_sd"], rng).ravel()
+    eu = np.zeros((Ttot, n))
+    if u_sd > 0:   # unrest-only episodes: AR(1) (same phi) of Matern innovations, range 200 km
+        rng_u = np.random.default_rng(seed + 777)
+        eu[0] = matern_gp(L, 200.0, u_sd, rng_u).ravel()
+        for t in range(1, Ttot):
+            eu[t] = PAR["phi"] * eu[t - 1] + np.sqrt(1 - PAR["phi"] ** 2) * matern_gp(L, 200.0, u_sd, rng_u).ravel()
     yc = np.zeros((Ttot, n), int); yu = np.zeros((Ttot, n), int)
     for t in range(Ttot):
         lc = np.log1p(yc[max(0, t - 4):t].sum(0)); lu = np.log1p(yu[max(0, t - 4):t].sum(0))
         pc = expit(PAR["b_c"] + PAR["d_c"] * lc + kappa * lu + s + wc + e[t])
-        pu = expit(PAR["b_u"] + PAR["d_u"] * lu + PAR["l_s"] * s + wu + PAR["l"] * e[t])
+        pu = expit(PAR["b_u"] + PAR["d_u"] * lu + PAR["l_s"] * s + wu + PAR["l"] * e[t] + eu[t])
         yc[t] = rng.random(n) < pc; yu[t] = rng.random(n) < pu
     rows = []
     for t in range(BURN + 4, Ttot):
@@ -100,6 +110,23 @@ def biv_designs(L, d, T):
             sp.bmat([[Dst, Zst], [Zst, Dst]], format="csr")]
 
 
+def fit_biv2(L, d, T):
+    """Joint model with the shared space-time field AND an unrest-specific space-time field."""
+    blocks = [FixedBlock(5, ["int_c", "Lc", "Lu", "int_u", "Lu_u"]),
+              MaternBlock(L, name="field_c"), MaternBlock(L, name="field_u"),
+              CopyBlock(SpaceTimeAR1Block(L, T, name="st", sd_init=0.5, rho_init=0.8), name="shared_st"),
+              SpaceTimeAR1Block(L, T, name="st_u", sd_init=0.3, rho_init=0.8)]
+    y = np.r_[d["yc"].to_numpy(), d["yu"].to_numpy()]
+    return LatentGaussianModel(y, blocks, biv2_designs(L, d, T)).fit(), blocks
+
+
+def biv2_designs(L, d, T):
+    D = biv_designs(L, d, T)
+    m = len(d)
+    Dst = de.spacetime_design(d["cell"], d["tstep"], L.n, T)
+    return D + [sp.vstack([sp.csr_matrix((m, L.n * T)), Dst], format="csr")]
+
+
 def fit_biv(L, d, T):
     blocks = [FixedBlock(5, ["int_c", "Lc", "Lu", "int_u", "Lu_u"]),
               MaternBlock(L, name="field_c"), MaternBlock(L, name="field_u"),
@@ -110,17 +137,17 @@ def fit_biv(L, d, T):
 
 def one(arg):
     scen, seed = arg
-    kappa = SCEN[scen]
-    L, df = simulate5(kappa, seed)
+    kappa, u_sd = SCEN[scen]
+    L, df = simulate5(kappa, seed, u_sd)
     T = int(df["tstep"].max() + 1)
     d_tr, d_te = df[df.train], df[~df.train]
     out = []
     yte = d_te["yc"].to_numpy(); onset = (d_te["ev52_c"] == 0).to_numpy()
-    for kind in ["glm", "uni_field", "uni_st", "biv_st"]:
-        if kind == "biv_st":
-            m, _ = fit_biv(L, d_tr, T)
+    for kind in ["glm", "uni_field", "uni_st", "biv_st", "biv_st2"]:
+        if kind in ("biv_st", "biv_st2"):
+            m, _ = (fit_biv if kind == "biv_st" else fit_biv2)(L, d_tr, T)
             n_te = len(d_te)
-            Dte = biv_designs(L, d_te, T)
+            Dte = (biv_designs if kind == "biv_st" else biv2_designs)(L, d_te, T)
             Dte = [D[:n_te] for D in Dte]                       # conflict rows only
         else:
             m, _ = fit_uni(L, d_tr, kind, T)
@@ -139,7 +166,7 @@ def one(arg):
                  log_score=sc["log_score"], auc_pr=sc["auc_pr"],
                  onset_auc_pr=float(average_precision_score(yte[onset], p[onset])) if yte[onset].sum() else np.nan,
                  prevalence_c=float(df["yc"].mean()), prevalence_u=float(df["yu"].mean()))
-        if kind == "biv_st":
+        if kind in ("biv_st", "biv_st2"):
             h = m.hyper()
             r["loading"] = h.get("shared_st.loading"); r["st_rho"] = h.get("shared_st.rho")
             r["st_sd"] = h.get("shared_st.sd"); r["st_range"] = h.get("shared_st.range_km")

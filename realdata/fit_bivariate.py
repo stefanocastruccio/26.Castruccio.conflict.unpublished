@@ -79,7 +79,8 @@ def main():
     ap.add_argument("table"); ap.add_argument("--region", default="west_sahel")
     ap.add_argument("--land", required=True); ap.add_argument("--out", required=True)
     ap.add_argument("--st-step", type=int, default=13); ap.add_argument("--st-res", type=float, default=1.0)
-    ap.add_argument("--models", default="uni_static,uni_st,biv")
+    ap.add_argument("--models", default="uni_static,uni_st,biv")   # also: biv2
+    ap.add_argument("--summary-name", default="summary_biv.json")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
@@ -146,6 +147,12 @@ def main():
                 MaternBlock(L, name="field_unrest", range_init=100.0, barrier=barrier),
                 CopyBlock(SpaceTimeAR1Block(Lv, T, name="st", sd_init=0.5, rho_init=0.8), name="shared_st")]
 
+    def biv2_blocks():
+        return biv_blocks() + [SpaceTimeAR1Block(Lv, T, name="st_unrest", sd_init=0.3, rho_init=0.8)]
+
+    def biv2_designs(Pc, Pu):
+        return biv_designs(Pc, Pu) + [stack(None, Pu["V"])]
+
     def biv_designs(Pc, Pu):
         Xc, Xu = sp.csr_matrix(Pc["X"]), sp.csr_matrix(Pu["X"])
         X = sp.bmat([[Xc, None], [None, Xu]], format="csr")
@@ -170,26 +177,27 @@ def main():
             m = LatentGaussianModel(P["y"], uni_blocks("conflict", st), uni_designs(P, st)).fit()
             eta, sd = m.predict_eta(uni_designs(parts_te["conflict"], st), None, n_samples=50)
             preds[f"p_conflict_{model}"] = prob_from_eta(eta, sd).astype("float32")
-        else:
+        else:   # biv: shared v only; biv2: shared v + unrest-specific space-time field
+            bl, dz = (biv_blocks, biv_designs) if model == "biv" else (biv2_blocks, biv2_designs)
             y = np.r_[parts_tr["conflict"]["y"], parts_tr["unrest"]["y"]]
-            m = LatentGaussianModel(y, biv_blocks(), biv_designs(parts_tr["conflict"], parts_tr["unrest"])).fit()
-            Dte = biv_designs(parts_te["conflict"], parts_te["unrest"])
+            m = LatentGaussianModel(y, bl(), dz(parts_tr["conflict"], parts_tr["unrest"])).fit()
+            Dte = dz(parts_te["conflict"], parts_te["unrest"])
             eta, sd = m.predict_eta(Dte, None, n_samples=50)
             p = prob_from_eta(eta, sd); nte = int(te.sum())
-            preds["p_conflict_biv"] = p[:nte].astype("float32"); preds["p_unrest_biv"] = p[nte:].astype("float32")
+            preds[f"p_conflict_{model}"] = p[:nte].astype("float32"); preds[f"p_unrest_{model}"] = p[nte:].astype("float32")
         fs = m.fixed_summary()
         res["models"][model] = {"hyper": m.hyper(), "log_ml": float(m.log_ml), "seconds": float(m.fit_seconds),
                                 "lag_coefficients": {k: list(map(float, fs[k])) for k in keys if k in fs},
                                 "fixed": {k: list(map(float, v)) for k, v in fs.items()}}
         sc = {"conflict": dg.scores(parts_te["conflict"]["y"], preds[f"p_conflict_{model}"])}
-        if model == "biv":
-            sc["unrest"] = dg.scores(parts_te["unrest"]["y"], preds["p_unrest_biv"])
+        if model in ("biv", "biv2"):
+            sc["unrest"] = dg.scores(parts_te["unrest"]["y"], preds[f"p_unrest_{model}"])
         res["models"][model]["test_scores"] = sc
         print(model, json.dumps({k: res["models"][model][k] for k in ("hyper", "lag_coefficients", "test_scores")},
                                 default=float), flush=True)
-        json.dump(res, open(os.path.join(a.out, "summary_biv.json"), "w"), indent=1, default=float)
+        json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
     pd.DataFrame(preds).drop(columns=["events_52w_conflict"]).to_parquet(
-        os.path.join(a.out, "test_pred_biv.parquet"), index=False)
+        os.path.join(a.out, a.summary_name.replace("summary", "test_pred").replace(".json", ".parquet")), index=False)
 
 
 if __name__ == "__main__":

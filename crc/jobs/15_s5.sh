@@ -2,13 +2,16 @@
 #$ -N cs_s5
 #$ -q long
 #$ -l mem_free=16G
+#$ -pe smp 4
 #$ -l h_rt=48:00:00
 #$ -cwd
 #$ -j y
 #$ -o /groups/scastruc/conflict_spatial_work/logs/
-#$ -t 1-20
-# S5 (bivariate: escalation vs shared episodes), 2 scenarios x 20 replicates sharded over 20 tasks.
+#$ -t 1-40
+# S5 v2 (bivariate: escalation vs shared episodes): 4 scenarios (incl. unrest-only episodes) x 20
+# replicates, 5 estimators (incl. biv_st2), sharded over 40 tasks; checkpoint s5v2_ckpt.jsonl.
 # Afterwards run the merge once without SHARD:  cd sims && N_JOBS=1 python s5_bivariate.py
 source /users/scastruc/projects/26.Castruccio.conflict.unpublished/crc/jobs/env.sh
 cd "$REPO/sims"
-SHARD="$((SGE_TASK_ID - 1))/20" N_JOBS=1 python s5_bivariate.py
+export FIT_JOBS=4 OMP_NUM_THREADS=1
+SHARD="$((SGE_TASK_ID - 1))/40" N_JOBS=1 python s5_bivariate.py

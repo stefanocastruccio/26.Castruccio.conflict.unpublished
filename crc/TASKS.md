@@ -365,3 +365,17 @@ What to do:
 - Future heavy latent-model fits use `-pe smp 16` with `FIT_JOBS=8` (8 gradient workers with 2 BLAS threads each).
   `16_bivariate.sh` is updated.
 - For any other job whose memory needs more cores than it requests under the 4 GB rule, raise `-pe smp` to match.
+
+## Round 8 (review round 3: unrest-specific episodes): READY, priority before Sunday night
+The joint model may hide real escalation when unrest has episodes of its own. Two runs test this.
+```
+cd /users/scastruc/projects/26.Castruccio.conflict.unpublished && git pull
+J=$(qsub -terse crc/jobs/15_s5.sh | cut -d. -f1)          # S5 v2: 40 tasks, 4 slots each, about 1 h per task
+qsub -hold_jid $J crc/jobs/09_s5merge.sh  # or the same merge wrapper you used in Round 6 (cd sims && N_JOBS=1 python s5_bivariate.py)
+qsub -t 1 crc/jobs/17_biv2.sh                              # West Africa biv2, 16 slots: PRIORITY
+```
+- Leave 1699951.2 (africa_me biv) running. Run `17_biv2.sh -t 2` (africa_me biv2) only after it finishes.
+- Commit:
+  - `results/s5_raw.csv` and `results/s5_summary.csv` (now with 4 scenarios and biv_st2);
+  - `results_real/bivariate/west_sahel/summary_biv2.json`.
+- Paste the two summaries into STATUS.
