@@ -927,3 +927,13 @@ The bivariate model's shared space-time component absorbs the unrest-to-conflict
 - scikit-sparse is not installed: it's optional, and installing into the env needs a separate batch job. Tell me if
   you want it, and I'll install it before any later rerun.
 - I'll report the wall time.
+
+## 2026-11-07 11:50 EST: Round 7b bivariate africa_me (1699951.2), first check
+- Started 10:58 on d32cepyc105 (64 cores, 251 GB), with 4 slots.
+- After 50 min: uni_static is done, which took under an hour as before.
+- Memory: `maxvmem` 221.6 GB, `maxrss` 132.8 GB, current rss 130 GB.
+  - vmem counts each of the 4 FIT_JOBS worker processes separately, so pages they share are counted 4 times.
+    Physical use is the rss, about 130 GB.
+  - qhost reports the node at only about 52 GB used, so there is no OOM risk right now.
+  - The old engine peaked at 59 GB. If rss keeps growing past about 200 GB, I'll flag it.
+    `FIT_JOBS` could then be capped below `NSLOTS`.
