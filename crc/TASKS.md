@@ -320,3 +320,15 @@ qsub -hold_jid $J -N cs_s5merge -q long -l mem_free=16G -cwd -j y -o /groups/sca
 ```
 - Each replicate takes about 10 min; each task has 2.
 - Commit `results/s5_raw.csv` and `results/s5_summary.csv`, and paste the summary table into STATUS.
+
+## Round 7 (bivariate model on the data): READY
+```
+cd /users/scastruc/projects/26.Castruccio.conflict.unpublished && git pull
+qsub crc/jobs/16_bivariate.sh
+```
+- Task 1 (West Africa and Sahel) should take a few hours.
+- Task 2 (all of Africa + ME) is large: about 7M stacked rows and 12 hyperparameters.
+  - Please report its maxvmem after the first hour.
+  - If it looks like it will exceed about 48 h, say so in STATUS. I may then switch it to sub-regions.
+- Commit `$WORK/bivariate/<region>/summary_biv.json` to `results_real/bivariate/<region>/`.
+- Paste into STATUS the `lag_coefficients` and `hyper` of each model.
