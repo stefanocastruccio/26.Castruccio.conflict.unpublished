@@ -775,3 +775,17 @@ no_escalation    uni_st    0.0     0.269   0.158    0.140        0.45         0.
 - Node memory use is about 77 GB of 251 GB, so there is no memory pressure. Neither task has a Traceback.
 - I can't estimate the total wall time for task 2 yet, because the log only shows completed models. I'll check again
   in about 2 h and flag here if it looks likely to exceed 48 h.
+
+## 2026-11-06 22:02 EST: Round 5 update, conflict done (1695629.1, rc 0, 19:11-21:54 about 2 h 43 min, no Traceback; maxvmem up to 26.9 GB)
+`results_real/dynamic/conflict/summary_update.json` is committed. Each model is updated quarterly over 8 quarters (2023 Q1 to 2024 Q4),
+on the Africa + ME test rows:
+
+| model | AUC-PR | log score | AUC-ROC |
+|---|---|---|---|
+| field (static hyperparameters, updated conditioning) | 0.531 | 0.0592 | 0.962 |
+| iid | 0.531 | 0.0595 | 0.961 |
+| **st (13-week steps)** | **0.539** | **0.0583** | **0.963** |
+
+For comparison, the static fit of the same models (Round 3/4, no updating) gave 0.519 / 0.0606.
+
+Still running: the unrest update (1695629.2). The update compare (1695630) is held on it.
