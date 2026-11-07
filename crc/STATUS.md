@@ -824,3 +824,65 @@ and the `_variogram.csv` files are committed. Test rows 2023-24: 1,426,776. Δlo
 - The log only reports finished models, so I can't project task 2's total. If it hasn't finished the bivariate fit by
   about 12 h of wall time (around 08:00 EST), I'll flag that the 48 h limit is at risk.
 - Round 3 glmm 1694071 is still running: about 10 h 20 min wall, maxvmem 39.9 GB.
+
+## 2026-11-07 02:30 EST: Round 7 bivariate west_sahel done (1696206.1, rc 0, about 5 h 23 min wall, maxvmem 22.6 GB, no Traceback)
+`results_real/bivariate/west_sahel/summary_biv.json` is committed. Data: 906,810 rows per outcome, 2,505 cells and 22 countries;
+v on 641 cells x 28 steps.
+
+| model | fit time | log-ML | conflict test AUC-PR / log | unrest test AUC-PR / log |
+|---|---|---|---|---|
+| uni_static | 493 s | -49,530 | 0.470 / 0.1020 | |
+| uni_st | 2,606 s | -49,081 | 0.471 / 0.1026 | |
+| biv | **16,253 s** | -76,592 (both outcomes) | 0.466 / 0.1031 | 0.289 / 0.0490 |
+
+**Lag coefficients** (estimate, SE):
+
+| term | uni_static | uni_st | biv |
+|---|---|---|---|
+| conflict:lag_own | 0.575 (0.016) | 0.444 (0.017) | 0.459 (0.017) |
+| conflict:lag_other | 0.138 (0.031) | 0.131 (0.032) | **0.044 (0.032)** |
+| conflict:lag_own_nb | 0.129 (0.007) | 0.051 (0.008) | 0.061 (0.008) |
+| conflict:lag_other_nb | 0.005 (0.008) | 0.003 (0.008) | -0.020 (0.008) |
+| unrest:lag_own | | | 0.351 (0.029) |
+| unrest:lag_other | | | 0.066 (0.031) |
+| unrest:lag_own_nb | | | 0.017 (0.009) |
+| unrest:lag_other_nb | | | -0.042 (0.013) |
+
+**Hyperparameters:**
+- uni_static: country sd 0.688, cell sd 0.646, field range 514 km, field sd 1.698.
+- uni_st: country 0.666, cell 0.638, field 508 km / 1.744; st range 423 km, sd 0.686, rho 0.905.
+- biv:
+  - country sd: conflict 0.691, unrest 0.528;
+  - cell sd: conflict 0.661, unrest 1.335;
+  - field_conflict: 453 km, sd 1.387;
+  - field_unrest: 369 km, **sd 0.213**;
+  - shared_st: range 499 km, sd 1.010, rho 0.952, **loading 0.868**.
+
+The bivariate model's shared space-time component absorbs the unrest-to-conflict lag. lag_other drops from 0.138 to
+0.044, within 1.4 SE of 0, which matches the S5 pattern. The predictive scores for conflict are about the same.
+
+## 2026-11-07 02:30 EST: Round 3 glmm, unrest done (1694071.2, rc 0, 13:57-02:12 about 12 h 15 min; seconds_total 44,113; maxvmem 39.9 GB; no Traceback)
+`results_real/glmm/{models_unrest.json, coefficients_unrest.csv, svc_tmax_unrest.csv}` is committed.
+
+| model | test AUC-PR | log score | hyperparameters | fit time |
+|---|---|---|---|---|
+| glm | 0.518 | 0.0687 | | 147 s |
+| country | 0.522 | 0.0676 | country 0.92 | 867 s |
+| field | 0.535 | 0.0642 | country 0.92, range 465 km, sd 0.86, cell 1.28 | 6,427 s |
+| svc | 0.534 | 0.0642 | as field, plus svc range 972 km, **svc sd 0.072** | 6,828 s |
+| spatialplus m = 10 / 20 / 176 | 0.535 / 0.535 / 0.535 | 0.0642 | range 464 / 480 / 492 km | 6,183 / 7,569 / 6,561 s |
+
+- **st part** (central_sahel: 249,744 rows, 968 cells, 33 steps of 8 weeks; it completed, with no `--st-step 16` rerun
+  needed):
+  - field: country 0.43, range 333 km, sd 0.30, cell 1.38;
+  - field+st: st range 485 km, sd 0.51, **rho 0.49**.
+- `prep.climate.*.cell_months_sd_zero`: tmax_z 0, tmin_z 0, ppt_z 2, **drought_z 138,600**, pm25_z 0.
+- `prep.missing_indicators`:
+  - kept: ipc_missing, log_gdp_pc_missing, electricity_access_missing, GHG_pc_t_missing;
+  - EPI_index_missing was dropped because it is constant in training;
+  - MF and ECO were merged into GHG_pc_t_missing because they are identical.
+- **Please check `drought_z`.** 138,600 cell-months have SD 0, so the drought anomaly is degenerate in many cells.
+  The floored SD presumably handles it, but it may be worth confirming.
+- Still running: glmm conflict (1694071.1, about 12.5 h) and bivariate africa_me (1696206.2). That task has run
+  about 6 h 20 min at 59 GB maxvmem. Given west_sahel's 4.5 h bivariate fit, africa_me (5.4x the rows) could take well
+  over a day. I'll flag at 12 h of wall time (08:00 EST) if it hasn't finished.
