@@ -112,5 +112,12 @@
   "Protests_rollsum_4": 4842.22119140625,
   "equatorial": 3771.099609375,
   "Riots_rollsum_4": 3101.724609375
+ },
+ "quarterly_update": {
+  "n_rows": 4787224,
+  "prevalence": 0.016150696102793603,
+  "auc_pr": 0.5778025064662061,
+  "auc_roc": 0.9752312664238354,
+  "persistence_auc_pr": 0.4813471361607356
  }
 }

@@ -112,5 +112,12 @@
   "Violence_against_civilians_rollsum_4": 4104.20556640625,
   "biome": 1855.1103515625,
   "tmax_rollmean_4": 1635.4693603515625
+ },
+ "quarterly_update": {
+  "n_rows": 4787224,
+  "prevalence": 0.02728073722892432,
+  "auc_pr": 0.5882653445383841,
+  "auc_roc": 0.9678458939284552,
+  "persistence_auc_pr": 0.4676133315744231
  }
 }

@@ -721,3 +721,16 @@ Files in `results_real/compare/`: `compare_{conflict,unrest}_{st,rolling}.json` 
 ## 2026-11-06 19:11 EST: Round 5 submitted (repo at 5f72419)
 - Jobs: xgb tasks 7-8 **1695628**; 13_update **1695629** (array 1-2); 14_update_compare **1695630** (array 1-2), held on both.
 - Round 3 glmm 1694071 is still running.
+
+## 2026-11-06 19:14 EST: Round 5 xgb tasks 7-8 done (1695628, rc 0, about 2 min, no Tracebacks)
+`results_real/xgb/metrics_corrected_te_{Conflict,Unrest}.json` is committed. The main metrics are unchanged:
+AUC-PR 0.566 / 0.583, with 381 and 135 rounds.
+
+New `quarterly_update` block, on the global test set (4,787,224 rows):
+
+| outcome | static te | quarterly-updated te (`logit_upd`) | persistence |
+|---|---|---|---|
+| Conflict | 0.566 | **0.578** (ROC 0.975) | 0.481 |
+| Unrest | 0.583 | **0.588** (ROC 0.968) | 0.468 |
+
+13_update (1695629.1-2) is running, at maxvmem 16.5 GB so far.
