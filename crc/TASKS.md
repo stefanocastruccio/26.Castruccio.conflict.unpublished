@@ -350,3 +350,18 @@ qdel 1696206.2            # africa_me bivariate on the old engine
 qsub -t 2 crc/jobs/16_bivariate.sh   # 12 slots now
 ```
 Report the wall time.
+
+## CRC resource limits (from the CRC documentation; replaces the "4 cores per job" rule)
+The PI asked to follow the documented limits. From https://docs.crc.nd.edu/infrastructure/crc_uge_env.html
+and https://docs.crc.nd.edu/new_user/quick_start.html:
+- long queue: 15 days (the quick start says 14), **no limit on the number of cores**;
+- `-pe smp`: up to 64 cores on a single machine; general-access long nodes have 64 cores and 256 GB;
+- per user: at most **50 running jobs** across all queues, and at most 2,000 tasks per array job;
+- rule of thumb: request **1 core per 4 GB of RAM** the job needs, so the memory is reserved for it;
+- requests of 4-8 cores may start sooner; that is about queue wait, not a limit.
+
+What to do:
+- **Leave 1699951.2 running** (africa_me bivariate, 4 slots). It is several hours in.
+- Future heavy latent-model fits use `-pe smp 16` with `FIT_JOBS=8` (8 gradient workers with 2 BLAS threads each).
+  `16_bivariate.sh` is updated.
+- For any other job whose memory needs more cores than it requests under the 4 GB rule, raise `-pe smp` to match.
