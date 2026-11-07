@@ -173,9 +173,14 @@ $\bQ_{\mathrm{AR}}(\phi) \otimes \bQ_s(\rho_v,\sigma_v)$, where
 $\bQ_{\mathrm{AR}}$ is the tridiagonal precision of a unit-variance AR(1) process.
 To control cost, $\tau$ indexes blocks of $\Delta$ weeks, and
 $v(s,t) = v_{s,\lceil t/\Delta \rceil}$. We use $\Delta = 1$ and $\Delta = 4$ in the
-simulations and $\Delta = 8$ in the application. The field $v$ is defined on the
-observed land cells only, so it cannot link cells across the sea, and it has
-reflecting boundaries at the edges of the observed region. In the models with $v$,
+simulations. In the application we use $\Delta = 8$ for the regional fits of the
+state-dependence analysis, and $\Delta = 13$ and $\Delta = 26$ for the space-time
+forecasting models and the joint model of Section~\ref{sec:methods-joint}. In the
+last two, $v$ is also coarsened in space: it is defined on the $1^\circ$ cells that
+contain observed $0.5^\circ$ cells, and each $0.5^\circ$ cell takes the value of its
+$1^\circ$ cell. The field $v$ is defined on observed land cells only, so it cannot link
+cells across the sea, and it has reflecting boundaries at the edges of the observed
+region. In the models with $v$,
 the static field $w$ uses the same lattice as elsewhere: the observed cells, a
 buffer of six rings and sea barriers with $f = 0.5$ (Remark~\ref{rem:boundary}). The
 prior on
@@ -229,6 +234,151 @@ four-week window is a noisy proxy for a cell's initial state, and its coefficien
 does not vary in time, whereas under the AR(1) form of $v$ the dependence of later
 weeks on the initial state decays with time. The device therefore only partly
 removes the initial-conditions bias.
+
+\subsection{A joint model of conflict and unrest}\label{sec:methods-joint}
+
+Recent unrest is associated with later conflict in the same and in neighbouring
+places. This association has two readings. Unrest may escalate into armed conflict,
+for example through repression \citep{ritter2016preventing, rod2023protest, ryckman2020turn,
+chenoweth2017violent}. Alternatively, both outcomes may be driven by the same latent
+episodes, such as a period of political crisis in a region, or a period of intense
+media attention to it, without any effect of one on the other. Forecasting studies
+use unrest histories and their spatial lags as predictors of conflict
+\citep{rod2025predicting}, and diffusion models add spatial lags of past events to the
+linear predictor \citep{racek2025diffusion}. Neither separates the two readings. We do
+so by modelling both outcomes jointly, with a space-time field that is common to them.
+
+Let $j \in \{\mathrm{C}, \mathrm{U}\}$ index conflict and unrest, and let $Y_{jst}$ be the
+indicator of a recorded event of type $j$ in cell $s$ and week $t$. The histories are
+$h_{jst} = \log(1 + \text{number of events of type } j \text{ in cell } s \text{ in weeks }
+t-4, \dots, t-1)$, and $\bar h_{jst}$ is the mean of $h_{js't}$ over the rook neighbours
+$s'$ of $s$, standardised on the training rows. Conditionally on the latent effects, the
+$Y_{jst}$ are independent Bernoulli variables with
+\begin{equation}\label{eq:joint}
+\begin{aligned}
+\logit \pi_{\mathrm{C}st} &= \bx_{st}^\top \bbeta_{\mathrm{C}}
++ \delta_{\mathrm{C}}\, h_{\mathrm{C}st} + \kappa\, h_{\mathrm{U}st}
++ \delta^{\mathrm{nb}}_{\mathrm{C}}\, \bar h_{\mathrm{C}st} + \kappa^{\mathrm{nb}}\, \bar h_{\mathrm{U}st}
++ u_{\mathrm{C},c(s)} + e_{\mathrm{C}}(s) + w_{\mathrm{C}}(s) + v(s,t),\\
+\logit \pi_{\mathrm{U}st} &= \bx_{st}^\top \bbeta_{\mathrm{U}}
++ \delta_{\mathrm{U}}\, h_{\mathrm{U}st} + \kappa_{\mathrm{U}}\, h_{\mathrm{C}st}
++ \delta^{\mathrm{nb}}_{\mathrm{U}}\, \bar h_{\mathrm{U}st} + \kappa^{\mathrm{nb}}_{\mathrm{U}}\, \bar h_{\mathrm{C}st}
++ u_{\mathrm{U},c(s)} + e_{\mathrm{U}}(s) + w_{\mathrm{U}}(s) + \lambda\, v(s,t).
+\end{aligned}
+\end{equation}
+The vector $\bx_{st}$ holds the covariates of model~\eqref{eq:model} that have fixed
+effects, including the initial-conditions term, the national indicators and the
+missingness indicators. All fixed effects are specific to the outcome. There are no
+spatially varying coefficients. For each outcome, $u_{j,c}$ are independent country
+effects, $e_j$ independent cell effects and $w_j$ a static Mat\'ern field with sea
+barriers (Remark~\ref{rem:boundary}). The two sets of these terms are independent of
+each other, with their own hyperparameters. The space-time field $v$ is the AR(1)
+$\otimes$ Mat\'ern field of Section~\ref{sec:methods-st}. It enters the conflict
+predictor with loading one and the unrest predictor with loading $\lambda$. The
+symbol $\kappa$ here denotes the escalation coefficient. It is unrelated to the SPDE
+parameter of Section~\ref{sec:methods-spde}.
+
+\paragraph{The copy construction.} A loading in the design matrix would make $\bA$
+depend on $\btheta$. We instead keep $\bA$ fixed and put $\lambda$ in the prior
+precision, as in the copy construction of R-INLA. Let $\bm{a}$ be the vector of the
+$m$ values of $v$ and introduce a second vector
+\[
+\bm{b} = \lambda\bm{a} + \bm{\varepsilon}, \qquad \bm{\varepsilon} \sim \Normal(\bm{0}, \tau_c^{-1}\bm{I}),
+\qquad \tau_c = 10^4 .
+\]
+Conflict rows of the design load on $\bm{a}$ and unrest rows on $\bm{b}$. The standard
+deviation of $\bm{\varepsilon}$ is $0.01$, small compared with that of $v$, so the
+unrest predictor receives $\lambda v$ up to a negligible perturbation. If
+$\bQ_a = \bQ_{\mathrm{AR}}(\phi) \otimes \bQ_s(\rho_v, \sigma_v)$ is the precision of
+$\bm{a}$, the precision of $(\bm{a}, \bm{b})$ is
+\[
+\bQ_{ab} =
+\begin{pmatrix}
+\bQ_a + \lambda^2\tau_c\bm{I} & -\lambda\tau_c\bm{I}\\
+-\lambda\tau_c\bm{I} & \tau_c\bm{I}
+\end{pmatrix}
+= \bm{R}_{ab}^\top\bm{R}_{ab},
+\qquad
+\bm{R}_{ab} =
+\begin{pmatrix}
+\bm{R}_a & \bm{0}\\
+-\lambda\tau_c^{1/2}\bm{I} & \tau_c^{1/2}\bm{I}
+\end{pmatrix},
+\]
+with $\bm{R}_a^\top\bm{R}_a = \bQ_a$, and
+$\log|\bQ_{ab}| = \log|\bQ_a| + m\log\tau_c$. The loading therefore does not enter the
+log-determinant, and the explicit factor $\bm{R}_{ab}$ is used for posterior sampling
+(Section~\ref{sec:methods-inference}). The sparsity pattern of $\bQ_{ab}$ does not
+depend on $\lambda$. The loading has a $\Normal(0, 2^2)$ prior. The loading of conflict
+is fixed at one, which fixes the scale and the sign of $v$, so $\lambda$ and its sign
+are identified. With $\lambda = 0$, the conflict equation of~\eqref{eq:joint} is the
+univariate conflict model with its own space-time field, and the two outcomes are
+independent given their histories. The comparison of the joint fit with that
+univariate fit therefore isolates the effect of letting unrest inform $v$. In the
+application $v$ uses $\Delta = 13$ weeks on the $1^\circ$ lattice of
+Section~\ref{sec:methods-st}.
+
+\paragraph{The estimand.} The coefficient $\kappa$ is the association between recent
+unrest in a cell and conflict in the same cell, conditional on the shared episode
+$v(s,t)$ and on the other terms of~\eqref{eq:joint}; $\kappa^{\mathrm{nb}}$ is the same
+for unrest in the neighbouring cells. We call $\kappa$ escalation conditional on
+shared episodes. Like $\delta$ (Section~\ref{sec:methods-persistence}), it is a
+conditional association of recorded events, not a causal effect.
+
+Univariate models of conflict estimate a different quantity, even when they include
+their own space-time field. Suppose shared episodes drive both outcomes. Unrest in
+the previous four weeks was then generated in part by the episode at that time, and
+the episode persists, so $h_{\mathrm{U}st}$ is correlated with $v(s,t)$. A univariate
+conflict model treats its latent field as independent of the covariates. It estimates
+the field from conflict outcomes alone, and each latent value is informed by few
+Bernoulli observations, so the estimate is noisy and shrunk towards zero. The part of
+the episode that the field does not capture is still visible in $h_{\mathrm{U}st}$,
+which is an observed, if noisy, proxy of the episode. The coefficient of
+$h_{\mathrm{U}st}$ then absorbs it, and $\hat\kappa$ is biased upward. This is the
+random-effects exogeneity problem of Sections~\ref{sec:methods-persistence}
+and~\ref{sec:methods-confounding} in another form. In the joint model the unrest
+outcomes enter the likelihood of $v$. The episode is estimated from both outcomes,
+and the dependence of $h_{\mathrm{U}st}$ on it is part of the model, because
+$h_{\mathrm{U}st}$ is built from earlier values of a modelled outcome.
+Section~\ref{sec:sim-joint} checks this argument by simulation.
+
+\paragraph{Identification and limits.} The shared field is identified from the joint
+movement of the two outcomes at its own resolution, beyond what the fixed effects
+and the outcome-specific static terms explain. The coefficient $\kappa$ is identified
+from variation in four-week unrest histories within that resolution. Two consequences
+follow. First, escalation that unfolds over several months and over a region the size
+of the range of $v$ cannot be told apart from a shared episode, and is attributed to
+$v$. The estimate $\hat\kappa$ is therefore the short-run, local part of escalation,
+and it can understate escalation at longer time scales. Second, shared episodes that
+are shorter than $\Delta$ weeks or finer than the lattice of $v$ remain in $\kappa$.
+
+The shared component mixes common shocks to occurrence with common shocks to
+reporting. Reporting rates vary in space \citep{weidmann2016closer}, reporting of
+protest clusters in space and time through sequential attention
+\citep{hellmeier2018spotlight}, and non-fatal events are under-reported selectively
+\citep{croicu2022reporting}. A period of attention to a place raises the recorded
+counts of both event types, and the joint model treats it as a shared episode. The
+two sources of co-movement could be separated with several independent sources of
+event data \citep{cook2017twowrongs}. With a single source they cannot. We therefore
+read $\kappa$ as conditional on shared episodes of either kind, and we do not
+interpret $v$ as occurrence or as reporting. The loading $\lambda$ also mixes the two.
+It reflects how strongly unrest follows the shared episodes and how differently the
+two event types are reported.
+
+Model~\eqref{eq:joint} is a linear model of coregionalisation with a single
+space-time component and fixed loading one for conflict
+\citep{gelfand2004nonstationary}. Outcome-specific persistent variation enters
+through $u_j$, $e_j$ and $w_j$, but there is no outcome-specific space-time field.
+Space-time variation of conflict that is not shared with unrest therefore also loads
+on $v$, and $\lambda$ is estimated against it. A second space-time component would
+relax this, at the cost of a second latent block of the size of $v$. Multivariate Hawkes
+models of event data \citep{jun2024hawkes} and discrete-time Hawkes models of ACLED
+\citep{browning2026hawkes} explain co-occurrence by triggering, with a background rate
+that does not contain a shared time-varying latent component. In such models a shared
+episode can only appear as cross-excitation. Model~\eqref{eq:joint} can be read as
+adding a shared stochastic background to cross-lagged terms. Spatio-temporal SPDE
+models of political violence \citep{python2019bayesian, egbon2024spatio} have so far
+modelled one outcome at a time.
 
 \subsection{Spatially varying climate effects}\label{sec:methods-svc}
 
@@ -334,7 +484,7 @@ fragile the national-level conclusions are:
 with $\bw$ and $\bm{e}$ but \emph{without} $\bu$, in which each between component is
 replaced by its residual after an area-weighted projection, over the observed land
 cells, on the $m$ smoothest eigenvectors $\bm{\psi}$ of
-$\bG\bm{\psi} = \lambda\bC\bm{\psi}$.
+$\bG\bm{\psi} = \mu\bC\bm{\psi}$.
 \end{enumerate}
 These eigenvectors are the lattice analogue of the thin-plate eigenvectors of
 \citet{dupont2022spatial}. A country-constant indicator varies only by steps at
@@ -434,11 +584,13 @@ For fixed hyperparameters $\btheta$, the posterior mode
 $\bm{\xi}^* = \arg\max_{\bm{\xi}}\{\log p(\bm{y}\mid\bm{\xi}) - \tfrac12 \bm{\xi}^\top \bQ \bm{\xi}\}$
 is found by damped Newton iterations,
 \[
-\bm{\xi} \leftarrow \bm{\xi} + \lambda\,(\bQ + \bA^\top \bm{W} \bA)^{-1}
+\bm{\xi} \leftarrow \bm{\xi} + \ell\,(\bQ + \bA^\top \bm{W} \bA)^{-1}
 \{\bA^\top(\bm{y} - \bm{\pi}) - \bQ\bm{\xi}\},
 \qquad \bm{W} = \mathrm{diag}\{\pi_{st}(1-\pi_{st})\},
 \]
-with step halving. The Laplace approximation to the marginal likelihood is
+with step length $\ell$ halved until the objective does not decrease. For the joint
+model~\eqref{eq:joint} the rows of both outcomes are stacked, so $\bm{y}$, $\bm{\pi}$
+and $\bm{W}$ run over the cell-weeks of both. The Laplace approximation to the marginal likelihood is
 \begin{equation}\label{eq:laplace}
 \log \tilde p(\bm{y}\mid\btheta) = \log p(\bm{y}\mid\bm{\xi}^*)
 - \tfrac12 \bm{\xi}^{*\top}\bQ\bm{\xi}^* + \tfrac12\log|\bQ| - \tfrac12\log|\bQ + \bH|,
@@ -446,8 +598,13 @@ with step halving. The Laplace approximation to the marginal likelihood is
 \end{equation}
 The hyperparameters are set to
 $\hat\btheta = \arg\max\{\log\tilde p(\bm{y}\mid\btheta) + \log p(\btheta)\}$ by
-L-BFGS-B with finite-difference gradients on the internal scale (logarithms of ranges
-and standard deviations, $\operatorname{atanh}\phi$). Each evaluation warm-starts
+L-BFGS-B on the internal scale: logarithms of ranges and standard deviations,
+$\operatorname{atanh}\phi$, and the loading $\lambda$ itself. The internal parameters
+are bounded: standard deviations to $[0.005, 20]$, ranges to $[10, 2\times10^4]$\,km,
+$\operatorname{atanh}\phi$ to $[-3, 3]$ and $\lambda$ to $[-5, 5]$. The bounds keep the
+inner problem well conditioned; an estimate at a bound would indicate a poorly
+identified hyperparameter. Gradients are forward differences with step $10^{-4}$ on
+the internal scale, taken inwards at an upper bound. Each evaluation warm-starts
 Newton at the previous mode. Given $\hat\btheta$, the latent posterior is approximated
 by $\Normal\{\bm{\xi}^*, (\bQ + \bH)^{-1}\}$. Samples reuse the factorisation of
 $\bQ + \bH$ already computed at the mode, through the perturbation identity
@@ -456,7 +613,8 @@ $\bQ + \bH$ already computed at the mode, through the perturbation identity
 \]
 where $\bm{R}^\top\bm{R} = \bQ$ is block-wise explicit, for instance
 $\bm{R} = \bm{D}^{-1}\bK$ for a Mat\'ern block and a Kronecker product of a
-bidiagonal AR(1) factor with that matrix for $\bv$. This is an empirical Bayes
+bidiagonal AR(1) factor with that matrix for $\bv$, and $\bm{R}_{ab}$ of
+Section~\ref{sec:methods-joint} for the shared field of the joint model. This is an empirical Bayes
 version of INLA \citep{rue2009inla} and is similar in spirit to TMB
 \citep{kristensen2016tmb}. Laplace approximations are generally accurate for
 binary GLMMs but can understate uncertainty when there are few observations per
@@ -466,27 +624,53 @@ Section~\ref{sec:sim-engine} therefore checks coverage at the event prevalence o
 the data, and Section~\ref{sec:sim-persistence} checks it for the space-time model,
 where each latent value is informed by only $\Delta$ Bernoulli observations.
 
-\paragraph{Computation.} All matrices are sparse. Every Newton step and every
-log-determinant requires a sparse factorisation of $\bQ + \bH$, whose sparsity
-pattern does not depend on $\btheta$. We use a sparse LU factorisation in symmetric
-mode (SuperLU). For matrices of dimension above 2{,}000, the fill-reducing ordering
-is a nested dissection computed by METIS \citep{karypis1998metis}; it is computed
-once and reused, but the factorisation itself is recomputed at every Newton step and
-every evaluation of~\eqref{eq:laplace}. If METIS is not available, the code falls
-back to multiple minimum degree on $\bm{A}^\top + \bm{A}$. For the space-time model
-the nested-dissection ordering reduced factorisation time by a factor of 7 to 14
-compared with that fallback. An LU factorisation stores both triangular factors, so
-it needs about twice the memory of a Cholesky factor of the same matrix. Newton
-iterations stop after at most 50 steps, and a value of $\btheta$ at which the
-factorisation fails is given a very low objective value. Both events can make the
-optimiser stop at a poor point, so they should be recorded for each fit
-\todo{report Newton non-convergence and failed evaluations for the real-data
-fits}. Since $\bH = \bA^\top\bm{W}\bA$ aggregates over weeks, the
-cost of the spatial and SVC blocks is driven by the number of cells, not by the
-number of cell-weeks. A global $0.5^\circ$ land grid gives about $6\times10^4$
-latent values per spatial field. The space-time block has $nT_v$ latent values,
-which is why it is fitted on a regional subset. The fixed-effect and country columns
-add dense rows to $\bQ + \bH$; with tens of fixed effects their cost is small.
+\paragraph{Computation.} All prior precisions are sparse. Every Newton step and every
+log-determinant requires a factorisation of $\bQ + \bH$, whose sparsity pattern does
+not depend on $\btheta$. The design $\bA$ has a few dense columns, those of the fixed
+effects, and many sparse ones. Writing $\bA = (\bm{X}_d, \bm{S})$, we store
+$\bm{X}_d$ as a dense array and assemble $\bH = \bA^\top\bm{W}\bA$ by blocks. The blocks
+$\bm{X}_d^\top\bm{W}\bm{X}_d$ and $\bm{S}^\top\bm{W}\bm{X}_d$ are accumulated over chunks
+of 250{,}000 rows by dense matrix products (BLAS), which bounds the memory used by
+each process. Only $\bm{S}^\top\bm{W}\bm{S}$ is computed as a sparse product. The dense
+blocks are stored with their explicit zeros, so the sparsity pattern of $\bQ + \bH$
+is the same at every evaluation.
+
+Two factorisations are implemented. The first is the supernodal Cholesky
+factorisation of CHOLMOD, through scikit-sparse. Its symbolic analysis, which includes
+the fill-reducing ordering, is computed once per model and reused for every numerical
+factorisation. The second, used when CHOLMOD is not available, is a sparse LU
+factorisation in symmetric mode (SuperLU). For matrices of dimension above 2{,}000
+its fill-reducing ordering is a nested dissection computed once by METIS
+\citep{karypis1998metis}. If METIS is not available, the code falls back to multiple
+minimum degree on $\bm{M}^\top + \bm{M}$, with $\bm{M} = \bQ + \bH$. For the space-time model the nested-dissection
+ordering reduced factorisation time by a factor of 7 to 14 compared with that
+fallback. An LU factorisation stores both triangular factors, so it needs about twice
+the memory of a Cholesky factor of the same matrix. scikit-sparse was not installed on
+the computing cluster, so the fits run there used SuperLU \todo{confirm the backend
+of the Africa and Middle East joint fit}.
+
+The $n_\theta$ perturbed evaluations of a finite-difference gradient are independent.
+They run in parallel in forked worker processes, which share the data, the design and
+the symbolic analysis without copying them and start Newton from the current mode.
+The joint model~\eqref{eq:joint} has $n_\theta = 12$ hyperparameters: two for the
+country effects, two for the cell effects, four for the static fields and four for
+the shared field. Newton iterations stop when the relative change of the objective is
+below $10^{-8}$ and the largest step is below $10^{-5}$, or after 50 steps. An inner
+solve that stops at 50 steps without converging gives a Laplace value that is
+meaningless and often spuriously high. Such evaluations are rejected, as are those at
+which the factorisation fails: the objective is set to a very large value, and in a
+parallel gradient the corresponding component is set to zero. Rejected evaluations
+can still make the optimiser stop at a poor point, so they should be recorded for each
+fit \todo{report the number of rejected evaluations for the real-data fits}.
+
+Since $\bH = \bA^\top\bm{W}\bA$ aggregates over weeks, the cost of the spatial and SVC
+blocks is driven by the number of cells, not by the number of cell-weeks. A global
+$0.5^\circ$ land grid gives about $6\times10^4$ latent values per spatial field. The
+space-time block has $nT_v$ latent values, and twice as many in the joint model,
+which is why it is fitted on regional subsets or on a coarser lattice. The cost of
+forming $\bH$ grows with the number of cell-weeks and the number of fixed effects. For
+the joint model both are doubled, since each outcome has its own rows and its own
+fixed effects.
 
 \paragraph{Prediction.} For a new cell-week with design row $\bm{a}$ and
 offset $o$, the posterior predictive probability is

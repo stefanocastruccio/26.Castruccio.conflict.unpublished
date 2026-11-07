@@ -1,5 +1,5 @@
-"""Dot-and-interval figures for S2 (national indicators) and S4 (biome climate effects),
-replacing the corresponding tables in the main text (the full tables go to the
+"""Dot-and-interval figures for S2 (national indicators), S4 (biome climate effects) and
+S5 (escalation or shared episodes), replacing the corresponding tables in the main text (the full tables go to the
 supplement). Run from the repository root:  python paper/make_sim_figures.py"""
 import os
 
@@ -77,5 +77,32 @@ def s4():
     fig.savefig(os.path.join(FIG, "s4_estimates.png"), dpi=200)
 
 
+def s5():
+    r = pd.read_csv(os.path.join(RES, "s5_raw.csv"))
+    r["covers"] = (r.est - 1.96 * r.se <= r.truth) & (r.truth <= r.est + 1.96 * r.se)
+    labels = [("glm", "Logistic regression", MUTED), ("uni_field", "+ static field", MUTED),
+              ("uni_st", "+ static + space-time field", MUTED),
+              ("biv_st", "Joint model, shared space-time field", LATENT)]
+    scen = [("no_escalation", r"(a) No escalation, $\kappa = 0$"),
+            ("escalation", r"(b) Escalation, $\kappa = 0.4$")]
+    fig, axes = plt.subplots(1, 3, figsize=(11, 2.5), constrained_layout=True,
+                             gridspec_kw={"width_ratios": [1, 1, 0.8]})
+    for ax, (s, title) in zip(axes[:2], scen):
+        d = r[r.scenario == s]
+        rows = [(lab, d[d.model == m].est.to_numpy(), d[d.model == m].covers.mean(), col)
+                for m, lab, col in labels]
+        dots(ax, rows, d.truth.iloc[0], xlim=(-0.35, 1.35))
+        ax.set_title(title, loc="left")
+        ax.set_xlabel(r"estimate of $\kappa$")
+    axes[1].set_yticklabels([])
+    b = r[r.model == "biv_st"]
+    rows = [(lab, b[b.scenario == s].loading.to_numpy(), None, LATENT)
+            for s, lab in [("no_escalation", r"$\kappa = 0$"), ("escalation", r"$\kappa = 0.4$")]]
+    dots(axes[2], rows, 0.8, xlim=(0.4, 1.2))
+    axes[2].set_title(r"(c) Loading $\lambda$, joint model", loc="left")
+    axes[2].set_xlabel(r"estimate of $\lambda$")
+    fig.savefig(os.path.join(FIG, "s5_estimates.png"), dpi=200)
+
+
 if __name__ == "__main__":
-    s2(); s4()
+    s2(); s4(); s5()

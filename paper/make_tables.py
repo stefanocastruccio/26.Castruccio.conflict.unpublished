@@ -198,6 +198,51 @@ def s4():
     write("s4_extra.tex", body)
 
 
+def s5():
+    """S11 of the supplement: full S5 results by scenario and estimator."""
+    p = os.path.join(RES, "s5_summary.csv")
+    if not os.path.exists(p):
+        return placeholder("s5.tex")
+    t = pd.read_csv(p)
+    rp = os.path.join(RES, "s5_raw.csv")
+    raw = pd.read_csv(rp) if os.path.exists(rp) else None
+    lab = {"glm": "Logistic regression", "uni_field": "Static field $w_c$",
+           "uni_st": "Static field $w_c$ + space-time field", "biv_st": "Joint model, shared space-time field"}
+    scen = {"no_escalation": r"No escalation, $\kappa = 0$", "escalation": r"Escalation, $\kappa = 0.4$"}
+    fm = lambda x, d=3: (lambda v: f"${v}$" if v.startswith("-") and v != "--" else v)(f(x, d))
+    rows = []
+    for s_, sl in scen.items():
+        sub = t[t.scenario == s_]
+        if rows:
+            rows.append(r"\addlinespace")
+        rows.append(r"\multicolumn{11}{@{}l}{\emph{" + sl + r"}} \\")
+        if len(sub) == 0:
+            rows.append(r"\multicolumn{11}{@{}l}{\todo{missing}} \\")
+            continue
+        for m, ml in lab.items():
+            r = sub[sub.model == m]
+            if len(r) == 0:
+                continue
+            r = r.iloc[0]
+            lam = "--"
+            if pd.notna(r.loading):
+                sd = None
+                if raw is not None and "loading" in raw:
+                    sd = raw[(raw.scenario == s_) & (raw.model == m)].loading.std()
+                lam = f"{r.loading:.2f}" + ("" if sd is None or pd.isna(sd) else f" ({sd:.2f})")
+            cov = f"{r.coverage95:.2f}" + ("" if "mc_se_coverage" not in r or pd.isna(r.mc_se_coverage)
+                                           else f" ({r.mc_se_coverage:.2f})")
+            rows.append(f"\\quad {ml} & {fm(r.mean_est)} & {f(r.emp_sd)} & {f(r.mean_se)} & {cov} & "
+                        f"{f(r.reject_zero, 2)} & {f(r.d_c, 2)} & {lam} & {f(r.log_score, 4)} & "
+                        f"{f(r.auc_pr)} & {f(r.onset_auc_pr)} \\\\")
+    body = (r"\begin{tabular}{@{}lcccccccccc@{}}" "\n" r"\toprule" "\n"
+            r"Estimator & Mean $\hat\kappa$ & Emp.\ SD & Mean SE & Coverage & Reject & Mean & Mean $\hat\lambda$ & "
+            r"Log & AUC-PR & Onset \\" "\n"
+            r" & & & & (MC SE) & $\kappa = 0$ & $\hat d_c$ & (SD) & score & & AUC-PR \\" "\n"
+            r"\midrule" "\n" + "\n".join(rows) + "\n" r"\bottomrule" "\n" r"\end{tabular}" "\n")
+    write("s5.tex", body)
+
+
 def barrier():
     r = pd.read_csv(os.path.join(RES, "barrier_check.csv"))
     tr = ["land only", "sea = land", "barrier 0.1", "barrier 0.2", "barrier 0.5"]
@@ -216,4 +261,4 @@ def barrier():
 
 
 if __name__ == "__main__":
-    s0(); s1(); s2(); s3(); s4(); barrier()
+    s0(); s1(); s2(); s3(); s4(); s5(); barrier()

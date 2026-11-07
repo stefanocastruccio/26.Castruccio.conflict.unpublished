@@ -18,9 +18,9 @@ Y_{st} = \mathbf{1}\Bigl\{\textstyle\sum_{j \in \mathcal{J}} N^{(j)}_{st} > 0\Bi
 where $\mathcal{J}$ is the set of event types of the outcome being modelled. The two
 outcomes are analysed separately. Event weeks are rare. In 2023--2024, over the
 covered cell-weeks of Africa and the Middle East with complete history,
-\todo{x}\% of cell-weeks contain at least one conflict event and \todo{x}\% at least
-one unrest event. Over all covered cell-weeks worldwide the shares are \todo{x}\%
-and \todo{x}\%.
+2.4\% of cell-weeks contain at least one conflict event and 2.7\% at least
+one unrest event. Over all covered cell-weeks worldwide with complete climate records
+the shares are 1.6\% and 2.7\%.
 
 Figure~\ref{fig:data} shows where and when events are recorded in Africa and the
 Middle East, the region of the main analysis. Over 2018--2024, 2.3\% of covered
@@ -45,8 +45,12 @@ coverage are high. The weekly share of cells with an event rises over the period
 conflict it goes from about 2\% in 2018 to about 2.5\% in 2024, and for unrest from
 about 1.3\% to between 2\% and 4\%. The test period is therefore not exchangeable with
 the early training years. The series also has isolated weeks with far fewer events
-than the neighbouring weeks. \todo{Explain these weeks once the check of partition
-boundaries is complete; if they are an artefact of the event table, correct them.}
+than the neighbouring weeks. We checked whether they arise in our construction of the
+table. No week is split between the partitions of the source table, every cell-week
+appears once, and the number of cells is constant in the weeks around each of them.
+The dips are therefore present in the weekly counts of the source partitions, and we
+keep them as recorded. \todo{Sensitivity of the main results to excluding these
+weeks.}
 
 \begin{figure}
 \centering
@@ -63,7 +67,7 @@ Natural Earth (1:10m), excluding cells without a terrestrial biome (rock and ice
 large lakes). Each cell is assigned to the country that contains its centroid. A
 coastal cell whose centroid falls in the sea is assigned to the nearest country.
 National indicators are attached through that country only, so every cell-week
-appears exactly once. The result is 59{,}344 cells observed for up to 366 weeks.
+appears exactly once. The result is 59{,}339 cells observed for up to 366 weeks.
 
 The table built by the original pipeline differs in one important respect.
 About 8.5\% of its 34.7 million distinct cell-weeks (before the biome exclusion)
@@ -92,7 +96,7 @@ that contains them. Before the biome exclusion, coverage removes 7{,}078{,}822
 cell-weeks in 79 countries and territories; 3{,}998{,}319 of them are in Antarctica,
 which the biome exclusion would remove in any case. The event history is treated as
 incomplete in the first four covered weeks. After both exclusions the table has
-19{,}365{,}684 cell-weeks.
+19{,}364{,}639 cell-weeks.
 Second, the probability that an event is recorded depends on media and partner
 density, so the outcome combines occurrence and reporting
 \citep{weidmann2016closer}. The two are not separately identified
@@ -158,8 +162,12 @@ cells the training-period standard deviation can be zero or close to zero, and a
 later rain would then give an extreme anomaly. We therefore floor
 $\mathrm{sd}_{s,\mathrm{m}}$ at the 10th percentile of the positive cell-month
 standard deviations of the same variable, and set $z_{st} = 0$ where the
-climatological standard deviation is zero. The floor applies to \todo{x}\% of the
-cell-months in Africa and the Middle East. The anomaly coefficients are identified
+climatological standard deviation is zero. In Africa and the Middle East the floor
+applies, by construction, to 10\% of the 164{,}628 cell-months for temperature and
+precipitation. The drought index is constant over the training years in 138{,}600
+cell-months (84\%), so its anomaly is zero there, and the floor applies to a further
+1.3\%. The drought anomaly is therefore informative only in a minority of
+cell-months. The anomaly coefficients are identified
 from variation over time within cells. They are therefore not confounded by the
 time-invariant spatial pattern of the climatology. They can still be confounded by
 regional shocks that vary over time, since the year effects are global. The cell's
@@ -171,16 +179,15 @@ as departures from recent conditions.
 \paragraph{Missing covariates.} Table~\ref{tab:covariates} hides substantial
 missingness. In the repaired table over Africa and the Middle East
 (4{,}976{,}634 cell-weeks), the IPC phase populations are missing in 62.7\% of rows,
-PM$_{2.5}$ in 55.5\%, and per-capita greenhouse gas emissions, material footprint and
-ecological footprint in 27.9\%. The latter are missing for whole countries, most of
-them in the Democratic Republic of the Congo, Iran, Libya, Saudi Arabia, Turkey,
-South Sudan and Sudan. GDP is missing in 3.6\% of rows, mainly in South Sudan, Yemen,
-Somaliland, Eritrea, Western Sahara and Syria. The EPI and the liberal democracy index
-are missing in 0.4\% of rows, the climate means over the previous four weeks in
-1.1\%, and the event histories in 1.1\%. Over all cell-weeks worldwide the IPC phases
+PM$_{2.5}$ in 55.5\%, and GDP in 3.6\%, mainly in South Sudan, Yemen,
+Somaliland, Eritrea, Western Sahara and Syria. The other national indicators (EPI,
+liberal democracy index, greenhouse gas emissions, material and ecological footprint)
+are missing in 0.3\% of rows, at most a few hundred cell-weeks in each country. The
+climate means over the previous four weeks are missing in 1.1\% of rows, and the event
+histories in 1.1\%. Over all cell-weeks worldwide the IPC phases
 are missing in 89.6\% of rows and precipitation in 20.8\%. IPC analyses are carried
-out mainly where food crises are expected, and several of the countries without
-footprint data are among the most conflict-affected in the region. Missingness is
+out mainly where food crises are expected, and several of the countries without GDP
+data are among the most conflict-affected in the region. Missingness is
 therefore unlikely to be at random with respect to the outcome.
 
 We keep missing values as missing through the construction of the features. In
@@ -227,9 +234,9 @@ covariates and recent history leaves spatial structure in its residuals. We take
 corrected XGBoost model of Section~\ref{sec:app-xgb}, trained on all locations, and
 compute the standardised cell residuals of Section~\ref{sec:methods-diagnostics} over
 the test period 2023--2024. In Africa and the Middle East, Moran's $I$ of these
-residuals is \todo{x} for conflict and \todo{x} for unrest. The residual correlation
-between neighbouring cells is \todo{x} within countries and \todo{x} across borders
-for conflict, and \todo{x} and \todo{x} for unrest. Table~S7 of the Supplementary Material gives the
+residuals is 0.42 for conflict and 0.15 for unrest. The residual correlation
+between neighbouring cells is 0.45 within countries and 0.21 across borders
+for conflict, and 0.16 and 0.08 for unrest. Table~S7 of the Supplementary Material gives the
 same diagnostics for every model, and the semivariogram is reported in
 Section~\ref{sec:app-hybrid}.
 
@@ -241,6 +248,8 @@ across a border are usually predicted by different fold models. This design crea
 a country-level residual component. We therefore base the motivation for the latent
 effects on the corrected model, which has no such component, and report the
 cross-fitted offset's across-border pairs separately for countries in the same fold
-and in different folds (\todo{x} and \todo{x} for conflict). Residual structure that
+and in different folds (0.25 and 0.28 for conflict, on 264 and 1{,}776 pairs of
+cells). The two are similar, so the fold design does not appear to drive the
+across-border correlation of the offset. Residual structure that
 remains after the corrected model motivates the latent effects of
 Section~\ref{sec:methods}.

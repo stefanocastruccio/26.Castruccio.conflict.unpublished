@@ -204,4 +204,58 @@ posterior probability of $w(s) > 0$ is above 0.95 or below 0.05.}\label{tab:app-
 against great-circle distance.}\label{fig:app-variogram}
 \end{figure}
 
+\section{Additional results}\label{supp:additional}
+
+\begin{table}
+\caption{Dynamic experiments for the hybrid models, Africa and the Middle East. In
+all of them the offset is the country cross-fitted XGBoost prediction. (a) Oracle:
+the latent terms are fitted to the 2023--2024 test weeks themselves, with the offset
+fixed, to show how much residual structure the test period contains and whether it is
+smooth in space; the correlation compares this field with the field fitted on
+2018--2022, and Moran's $I$ is computed on the in-sample cell residuals. (b) Scores on
+the 2024 test weeks only (713{,}388 rows per outcome), for models fitted on 2018--2022
+and for models whose offset and latent terms are retrained on 2018--2023 (training
+years in parentheses); differences in log score are
+relative to the corrected XGBoost model, with SEs clustered by country. (c, d)
+Hyperparameters of the space-time hybrids, in which an AR(1) $\otimes$ Mat\'ern field
+$v$ on $1^\circ$ cells replaces the static field $w$; $\phi$ is the AR(1) coefficient
+per time step, and the number of steps in parentheses is the number that falls in the
+training period. (e) Quarterly update: the latent terms are re-estimated at the start
+of each quarter of the test period with all data observed so far, and the
+hyperparameters are kept at their 2018--2022 values. Out-of-sample scores of the
+models in (c), (d) and (e) are in the forecasting comparison of Section~5 of the
+main paper.}\label{tab:app-dynamic}
+\centering\small
+\input{tables/real_dynamic}
+\end{table}
+
+\begin{table}
+\caption{S5: full results for the escalation effect $\kappa$ of recent unrest on
+conflict, by scenario and estimator, over 20 replicates per scenario. Mean
+$\hat\kappa$, its empirical SD across replicates and the mean of the estimated SEs;
+coverage of the nominal 95\% intervals for $\kappa$ with its Monte Carlo SE;
+proportion of replicates whose interval excludes zero; mean estimate of the own-lag
+coefficient $d_c$ (truth 0.3); mean and SD of the estimated loading $\lambda$ of the
+shared space-time field (truth 0.8, joint model only); and mean log score, AUC-PR and
+onset AUC-PR of the conflict forecasts over the 26 test weeks. Onset rows are those of
+cells without a conflict event in the previous 52 weeks.}\label{tab:s5}
+\centering\small
+\resizebox{\textwidth}{!}{\input{tables/s5}}
+\end{table}
+
+\begin{table}
+\caption{Joint model of conflict and unrest, by region (Section~5 of the
+main paper): all hyperparameters and lag coefficients (posterior mean, with SE in
+parentheses) of the two univariate conflict models and of the joint model, fitted on
+2018--2022. Subscripts C and U denote conflict and unrest. In the univariate model with
+$u + e + w + v$, the space-time field $v$ belongs to conflict alone; in the joint model
+it is shared, with loading $\lambda$ for unrest. Histories are $\log(1 + \text{events
+in the previous four weeks})$; neighbour histories are means over the rook neighbours,
+standardised on the training rows. The log marginal likelihood of the joint model
+includes the unrest data and is not comparable with those of the univariate models.
+Test scores are for 2023--2024 in the same region.}\label{tab:app-joint-full}
+\centering\small
+\input{tables/real_joint_full}
+\end{table}
+
 \end{document}

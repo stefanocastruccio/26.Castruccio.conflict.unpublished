@@ -1,6 +1,6 @@
 \section{Simulation studies}\label{sec:simulation}
 
-The simulations address five questions that the application raises but cannot
+The simulations address six questions that the application raises but cannot
 settle on its own:
 \begin{itemize}
 \item[(S0)] whether the finite-volume SPDE and the empirical Bayes Laplace
@@ -12,7 +12,10 @@ baseline;
 \item[(S2)] how national indicators behave under spatial confounding;
 \item[(S3)] whether state dependence can be separated from persistent heterogeneity;
 \item[(S4)] whether biome-specific climate effects are recovered better by spatially
-varying coefficients than by SHAP summaries.
+varying coefficients than by SHAP summaries;
+\item[(S5)] whether an association between recent unrest and conflict reflects
+escalation or shared latent episodes, and whether a joint model of the two outcomes
+separates them.
 \end{itemize}
 All code is in the supplementary material.
 
@@ -51,12 +54,11 @@ setting $Z_{0,c} = \varrho\,\tilde\ell_c + (1-\varrho^2)^{1/2}\epsilon_c$, where
 $\tilde\ell_c$ is the standardised country average of $u_c + w(s)$ and
 $\epsilon_c \sim \Normal(0,1)$.
 
-The default parameters are not calibrated to the application. A first fit of the hybrid
-model to the conflict outcome, before the revisions of Section~\ref{sec:app-hybrid}, gave
-a field standard deviation of about 1.5, a range of about 260\,km and a country standard
-deviation of about 0.8, and there persistence was about as accurate as cross-fitted
-boosting (AUC-PR 0.45 and 0.44). \todo{Check these against the final fit in
-Section~\ref{sec:app-hybrid}.} S1 is therefore repeated with $\sigma_w = 1.5$,
+The default parameters are not calibrated to the application. The hybrid model fitted
+to the conflict outcome in Africa and the Middle East (Section~\ref{sec:app-hybrid}) has
+a field standard deviation of 1.48, a range of 263\,km and a country standard deviation
+of 0.76, and there persistence is about as accurate as cross-fitted boosting (AUC-PR
+0.45 and 0.46). S1 is therefore repeated with $\sigma_w = 1.5$,
 $\rho_w = 260$\,km and $\sigma_u = 0.8$, other parameters at their defaults. All
 covariate effects in \eqref{eq:sim} are linear on the logit scale, and the only
 interaction is between biome and temperature. This setting does not reward the
@@ -187,10 +189,28 @@ or in AUC-PR, so these results do not show whether it comes from calibration or 
 ranking. The persistence baseline reaches an AUC-PR of 0.095, against 0.20 for the true
 probabilities. In the data, persistence is much stronger, because some cells record
 events almost every week. S1 does not reproduce that regime, which is one reason to repeat it with the calibrated
-parameters. With those parameters, \todo{S1 calibrated: paired differences of
-hybrid\_field, hybrid\_iid and glmm against xgb\_te (log score, Brier, AUC-PR, AUC-ROC),
-prevalence and persistence AUC-PR, from results/s1\_paired\_calibrated.csv and
-results/s1\_scores\_calibrated.csv}.
+parameters. With those parameters the prevalence of event weeks in the test period is
+6.9\% (SD 2.8\% across replicates), and persistence reaches an AUC-PR of 0.30 against
+0.47 for the true probabilities. The field is recovered about as well as before
+(correlation between $\hat w$ and $w$ 0.84). The comparison with the location-aware
+baseline changes, however (paired differences, SE over 20 replicates):
+\begin{itemize}
+\item the hybrid model with the field is now worse than the baseline: log score
+$+0.0011$ (SE $0.0008$; better in 5 of 20), Brier score $+0.0006$ (SE $0.0002$), AUC-PR
+$-0.013$ (SE $0.001$; lower in all 20) and AUC-ROC $-0.0013$ (SE $0.0005$). With
+independent cell effects it is worse again (log score $+0.0021$, SE $0.0008$; AUC-PR
+$-0.014$, SE $0.001$). The offset cross-fitted by country is much weaker here than the
+baseline (AUC-PR 0.26 against 0.45), and the latent effects do not make up the
+difference;
+\item the parametric model still beats the baseline: log score $-0.0026$ (SE $0.0007$;
+better in all 20), Brier score $-0.0005$ (SE $0.0002$; 17 of 20), AUC-PR $+0.003$ (SE
+$0.001$; 15 of 20) and AUC-ROC $+0.004$ (SE $0.0005$; all 20). It closes about 40\% of
+the log-score gap between the baseline and the true probabilities ($0.0064$).
+\end{itemize}
+The gain from a latent field on top of boosting therefore depends on the setting, and
+with a stronger field and stronger country effects it disappears. The model that
+benefits in both settings is the parametric one, whose functional form matches the
+truth up to the omitted biome slopes.
 
 \begin{table}
 \caption{S1: out-of-sample scores on the 52 test weeks (mean over 20 replicates,
@@ -227,8 +247,9 @@ refitted with the same number of trees and class weight. The reported estimate i
 median over bootstrap replicates, as in the original analysis. A single fit to the same
 subsample gives nearly the same estimates (means $-0.01$, $0.34$ and $0.15$ in the three
 scenarios below, against bootstrap medians of $-0.01$, $0.33$ and $0.14$). The estimate
-from a single fit to all training rows is \todo{S2: mean est\_full by scenario from
-results/s2\_summary.csv (mean\_est\_full) after the rerun}.
+from a single fit to all training rows is not closer to the truth: its means are
+$-0.01$, $0.40$ and $0.17$ (empirical SD 0.08--0.10). The bias under confounding is
+therefore not an artefact of the subsample or of the bootstrap.
 
 \begin{figure}
 \centering
@@ -314,7 +335,7 @@ Results are in Table~\ref{tab:s3}.
 
 Under state dependence, ignoring the latent field inflates $\hat\delta$ by about a
 quarter (1.26; coverage 0.60), and all latent specifications are approximately unbiased
-(0.99--1.03) with coverage of 0.90--0.95. Under heterogeneity the contrast is much
+(0.98--1.03) with coverage of 0.90--0.95. Under heterogeneity the contrast is much
 sharper. With lags only, $\hat\delta = 1.61$ although the true value is zero. Adding the
 static field reduces the estimate to 0.46, but no interval covers zero: slowly varying
 episodes act as state dependence. Only the models with the space-time field bring the
@@ -327,9 +348,10 @@ The standard errors of $\hat\delta$ are too small when $v$ is fitted. In the
 heterogeneity and mixed scenarios the empirical SD exceeds the mean standard error by
 27--43\% (ratios 1.27--1.43), and coverage is 0.80--0.90 (Monte Carlo SE 0.07--0.09).
 In the state-dependence scenario, where the truth has no $v$, the ratio is
-0.94--1.02 for the three latent models. With 20
+0.92--1.02 for the four latent models. With 20
 replicates each ratio has a Monte Carlo SE of about 0.2, so the size of the shortfall is
-imprecise, but it appears in all four cells with $v$. Intervals for $\delta$ from the
+imprecise, but it appears in all twelve cells with $v$ in the truth and in the fitted
+model (ratios 1.19--1.66, including the $\phi = 0.97$ truths and $\Delta = 8$). Intervals for $\delta$ from the
 space-time model should therefore be read as somewhat too narrow.
 
 Resolving $v$ at four-week steps instead of weekly steps changes $\hat\delta$ little in
@@ -338,9 +360,19 @@ estimate is larger by 0.034 (SE 0.006) under heterogeneity and by 0.010 (SE 0.00
 the mixed scenario. The space-time field has an AR(1) coefficient of 0.9 per week, so it
 changes slowly relative to the four-week history window. This argument is weaker at the
 eight-week steps used in the application, since $0.9^8 \approx 0.43$. With
-$\Delta = 8$, \todo{S3: mean, emp.\ SD, mean SE and coverage of $\hat\delta$ for
-lag+field+st8 in all five truths, and the $\phi = 0.97$ rows, from
-results/s3\_summary.csv after the rerun}. Faster space-time dynamics ($\phi < 0.9$) are
+$\Delta = 8$ the estimate is still unbiased under state dependence (0.98, coverage
+0.95), but under heterogeneity it is 0.10 (empirical SD 0.14, mean SE 0.12, coverage
+0.80), about three Monte Carlo SE above zero. Paired by replicate, it exceeds the weekly
+estimate by 0.086 (SE 0.012). In the mixed scenario it is 0.57 against 0.5 (coverage
+0.85; 0.031 above the weekly estimate, SE 0.011). Coarse steps therefore leave part of
+the episodes to be absorbed by the lag. The bias is smaller when the episodes are more
+persistent. With $\phi = 0.97$, $\hat\delta$ at $\Delta = 8$ is 0.04 under
+heterogeneity (coverage 0.90) and 0.50 in the mixed scenario (coverage 0.85), and it
+exceeds the weekly estimate by 0.050 (SE 0.007) and 0.024 (SE 0.006). In these slow
+truths the static field alone leaves less bias than before (0.38 and 0.71, against 0.46
+and 0.78), and the four-week and weekly estimates are within 0.03 of the truth. A fit
+at $\Delta = 8$ takes about 25 seconds, against 85--100 at $\Delta = 4$ and 350--475
+at $\Delta = 1$. Faster space-time dynamics ($\phi < 0.9$) are
 not covered.
 
 Finally, the XGBoost importance of the lag feature is about the same under all three
@@ -424,18 +456,133 @@ interactions. Crediting the interaction values to temperature raises them to bet
 configuration of boosting (a 30\% subsample of about 37{,}000 rows, a minimum child
 weight of 30 and early stopping) rather than from boosting in general. We have not
 separated these causes. With a single fit to all
-training rows, \todo{S4: mean est\_full / truth for xgb\_slope and xgb\_slope\_full by
-biome, from results/s4\_summary.csv after the rerun}. With the asymmetric
-$\bgamma$, \todo{S4 asym: mean xgb\_slope against shap\_target and against $\gamma_b$,
-and mean xgb\_slope\_full against $\gamma_b$, from results/s4\_summary\_asym.csv}.
+training rows, the slopes are between 0.19 and 0.53 times $\gamma_b$ for the ordinary
+SHAP values and between 0.53 and 0.88 times $\gamma_b$ with the interactions credited,
+so more data do not remove the attenuation. With the asymmetric
+$\bgamma = (0, 0.1, 0.2, 0.4)$ the targets $(\bar\gamma + \gamma_b)/2$ are 0.09, 0.14,
+0.19 and 0.29. The ordinary SHAP slopes are 0.11, 0.15, 0.19 and 0.23 (Monte Carlo SE
+about 0.012), so they follow this target in the first three biomes and fall short in the
+fourth. In biome 1, where temperature has no effect, the slope is positive and its
+interval excludes zero in 70\% of replicates. With the interactions credited the slopes
+are 0.05, 0.12, 0.20 and 0.29, close to $\gamma_b$ except in biome 4 (0.71 times
+$\gamma_b$).
 \item \emph{Median SHAP values.} The median SHAP value of raw temperature within a biome,
 the statistic of the original analysis, is negative in \emph{every} biome ($-0.04$ to
 $-0.15$), whatever the true effect. Its bootstrap interquartile range excludes zero
 with a negative sign in every replicate in biome 3 and in 53\% of replicates in
 biome 4, where the true effects are positive.
+With the asymmetric $\bgamma$ it is negative in the first three biomes ($-0.23$,
+$-0.17$ and $-0.08$, for true effects of 0, 0.1 and 0.2), and its interquartile range
+excludes zero with a negative sign in 97\%, 100\% and 77\% of replicates.
 Applying the original criterion would therefore report a ``negative contribution of
 temperature'' where the effect is positive.
 \end{itemize}
 As argued in Section~\ref{sec:methods-svc}, the median SHAP value describes where a
 biome's covariate values lie relative to the model baseline, not the strength of the
 effect.
+
+\subsection{S5: escalation or shared episodes?}\label{sec:sim-joint}
+
+In the data, recent unrest in a cell predicts conflict there
+(Section~\ref{sec:app-joint}). This can mean that unrest escalates into violence. It can
+also mean that both outcomes respond to the same latent episodes, such as a local
+political crisis, so that recent unrest is only a proxy for the current state of the
+episode. S5 asks whether the models of the previous sections can tell the two apart,
+and whether the joint model of Section~\ref{sec:methods-joint} can.
+
+\paragraph{Design.} The domain is a $16 \times 14$ block of $0.5^\circ$ cells (224
+cells), with 12 burn-in weeks, 104 training weeks and 26 test weeks. Conflict
+$C_{st}$ and unrest $U_{st}$ are generated jointly from
+\begin{align*}
+\logit P(C_{st} = 1) &= b_c + d_c L^c_{st} + \kappa L^u_{st} + a(s) + w_c(s) + e(s,t),\\
+\logit P(U_{st} = 1) &= b_u + d_u L^u_{st} + 0.8\,a(s) + w_u(s) + \lambda\, e(s,t),
+\end{align*}
+where $L^c_{st}$ and $L^u_{st}$ are $\log(1 + \text{events in the previous four
+weeks})$ of each outcome, $d_c = d_u = 0.3$, $b_c = -3.9$ and $b_u = -3.6$. The static
+field $a$ is shared by both outcomes (SD 0.6, range 400\,km). The fields $w_c$ (SD 0.5,
+range 300\,km) and $w_u$ (SD 0.5, range 150\,km) are specific to each outcome. The
+shared episodes $e$ follow an AR(1) process in time with coefficient 0.95 per week,
+whose innovations are Mat\'ern fields with range 300\,km, scaled to a marginal SD of
+0.8. They enter unrest with loading $\lambda = 0.8$. As in the other simulations, every
+field is drawn from the continuous Mat\'ern covariance, not from the lattice GMRF.
+The escalation effect is $\kappa = 0$ (no escalation) or $\kappa = 0.4$ (escalation).
+Shared episodes raise both outcomes together, so recent unrest predicts conflict even
+when $\kappa = 0$. Event weeks make up about 3.4\% (no escalation) and 3.7\%
+(escalation) of conflict rows and 3.9\% of unrest rows.
+
+We compare four estimators of $\kappa$, fitted to the training weeks, each with 20
+replicates per scenario:
+\begin{itemize}
+\item logistic regression of conflict on $L^c$ and $L^u$;
+\item the same with a static Mat\'ern field;
+\item the same with a static field and a space-time AR(1) field at four-week steps
+(Section~\ref{sec:methods-st});
+\item the joint model of both outcomes (Section~\ref{sec:methods-joint}), with
+outcome-specific intercepts, lags and static fields, and a space-time field at
+four-week steps shared by the two outcomes, which enters unrest with an estimated
+loading $\lambda$.
+\end{itemize}
+The joint model is not the data-generating process. It has no shared static field, so
+$a$ must be absorbed by the two outcome-specific fields, and its space-time field is
+piecewise constant over four weeks while $e$ changes weekly. We also forecast conflict
+over the 26 test weeks and score the forecasts on all test rows and on onset rows,
+those of cells without a conflict event in the previous 52 weeks.
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{figures/s5_estimates.png}
+\caption{S5: estimates of the escalation effect $\kappa$ of recent unrest on conflict
+(a, b) and of the loading $\lambda$ of the shared space-time field in the joint model
+(c), over 20 replicates per scenario. Dots are means and lines span the 5th to 95th
+percentiles of the estimates across replicates; the number above each line is the
+coverage of the nominal 95\% intervals for $\kappa$. Grey: univariate models of
+conflict; blue: the joint model. The dashed line marks the true value. Full results are
+in Table~S11 of the Supplementary Material.}\label{fig:s5}
+\end{figure}
+
+\paragraph{Results.} Figure~\ref{fig:s5} summarises the estimates, and Table~S11 of
+the Supplementary Material gives the full results. Monte Carlo SEs of coverage and
+rejection rates are at most 0.11 with 20 replicates.
+\begin{itemize}
+\item \emph{No escalation.} All three univariate models report escalation that does
+not exist. Logistic regression gives $\hat\kappa = 0.70$ (empirical SD 0.19), the
+static field 0.43 (SD 0.16) and the space-time field 0.27 (SD 0.16). They reject
+$\kappa = 0$ in 95\%, 85\% and 55\% of replicates. The joint model gives 0.04 (SD 0.17,
+Monte Carlo SE of the mean 0.04), with coverage 0.90 (Monte Carlo SE 0.07) and a false
+rejection rate of 0.10.
+\item \emph{Escalation.} The univariate models overestimate $\kappa = 0.4$ (1.03, 0.79
+and 0.66), with coverage 0.00, 0.10 and 0.50. The joint model gives 0.43 (SD 0.11,
+Monte Carlo SE of the mean 0.025), with coverage 0.95 (Monte Carlo SE 0.05), and it
+rejects $\kappa = 0$ in 95\% of replicates.
+\end{itemize}
+A space-time field for conflict alone removes most of the bias in the own-lag
+coefficient $d_c$ (0.37--0.38 against 0.3, compared with 1.52--1.54 for logistic
+regression and 0.80--0.82 with the static field), but not the bias in $\kappa$. A
+plausible explanation is that conflict events are rare, so a field estimated from
+conflict alone tracks the episodes poorly, and recent unrest still carries information
+about the current episode. The joint model estimates the field from both outcomes. Its
+estimate of $d_c$ is 0.36--0.38.
+
+The joint model also recovers the shared field. The estimated loading has mean 0.83
+(SD 0.15) in both scenarios against a true 0.8, and the range of the shared field has
+mean 315\,km (SD 40--44) against 300\,km. As in S3, the standard error of the lag
+coefficient is somewhat too small when a space-time field is fitted under no
+escalation: the empirical SD of $\hat\kappa$ is 1.20 times the mean SE (0.17 against
+0.14). Under escalation the ratio is 0.88.
+
+The joint model does not forecast conflict better than the univariate latent models.
+Paired by replicate, its log score differs from that of the univariate space-time model
+by $+0.0002$ (SE $0.0005$) without escalation and $+0.0003$ (SE $0.0005$) with
+escalation, and its AUC-PR by $-0.002$ (SE $0.002$) and $-0.001$ (SE $0.002$). Onset
+AUC-PR is also similar (0.033 against 0.034 without escalation, 0.042 against 0.045
+with escalation). The latent models forecast better than logistic regression. Without escalation, for
+example, the joint model improves on it by $-0.003$ in log score (SE $0.001$) and by
+$+0.025$ in AUC-PR (SE $0.004$).
+Predictive accuracy therefore cannot show whether unrest escalates into conflict: the
+models predict equally well and disagree about $\kappa$. The cost of the joint model is
+computational. A fit takes about 310--320 seconds, against about 80 seconds for the
+univariate space-time model.
+
+These results hold for a single shared episode process whose loading is constant in
+space, with one direction of escalation. Faster episodes, a loading that varies by
+region, and escalation that runs in both directions are not covered.

@@ -6,6 +6,10 @@ result files in results_real/:
   results_real/spatial/<outcome>/field.csv            -> figures/real_field.png, tables/real_boxes.tex
   results_real/spatial/<outcome>/variogram.csv        -> figures/real_variogram.png
   results_real/compare/compare_<outcome>.json         -> tables/real_diag.tex, tables/real_hybrid.tex
+  results_real/compare/compare_<outcome>{,_st,_update}.json -> tables/real_forecast.tex
+  results_real/compare/compare_<outcome>_rolling.json and
+  results_real/dynamic/<outcome>/summary_*.json         -> tables/real_dynamic.tex (Supplement S10)
+  results_real/bivariate/<region>/summary_biv.json     -> tables/real_joint.tex, tables/real_joint_full.tex (S12)
 
 Every table starts with a LaTeX comment that lists its input files and their SHA-256
 prefixes, so a stale table can be detected. Keys that are absent from a result file
@@ -363,6 +367,300 @@ def table_boxes():
     write("real_boxes.tex", tabular("@{}lllr" + "cc" * len(outs) + "@{}", head, rows), spaths + fpaths)
 
 
+# ----------------------------------------------------------------------------- forecasting, dynamic, joint
+def fm(x, d=3):
+    """Like f, with a typeset minus sign."""
+    t = f(x, d)
+    return f"${t}$" if t.startswith("-") and t != "--" else t
+
+
+TODO_ROW = lambda ncol, txt: f"\\multicolumn{{{ncol}}}{{@{{}}l}}{{\\todo{{{txt}}}}} \\\\"
+
+FORECAST_GROUPS = [
+    ("Fitted once on 2018--2022", [
+        ("xgb", "XGBoost, corrected (reference)"),
+        ("xgb_te", "XGBoost + cell event rate"),
+        ("xgb_crossfit", "XGBoost, cross-fitted by country (offset)"),
+        ("hybrid_iid", "Offset + $u$ + iid cell effects"),
+        ("hybrid_field", "Offset + $u + w$"),
+        ("hybrid_st13", "Offset + $u$ + cell effects + $v$, 13-week steps"),
+        ("hybrid_st26", "Offset + $u$ + cell effects + $v$, 26-week steps")]),
+    ("Updated each quarter of the test period", [
+        ("xgb_te_upd", "XGBoost + cell event rate"),
+        ("hybrid_iid_upd", "Offset + $u$ + iid cell effects"),
+        ("hybrid_field_upd", "Offset + $u + w$"),
+        ("hybrid_st_upd", "Offset + $u$ + cell effects + $v$, 13-week steps")]),
+]
+
+
+def table_forecast():
+    """All models on the identical 2023-2024 test rows, Africa and the Middle East."""
+    inputs, M, meta = [], {o: {} for o in OUTCOMES}, {}
+    for o in OUTCOMES:
+        for suf in ("", "_st", "_update"):
+            p = os.path.join(RES, "compare", f"compare_{o}{suf}.json")
+            if not os.path.exists(p):
+                continue
+            inputs.append(p)
+            c = load(p)
+            if c.get("reference") != "xgb":
+                SUMMARY.append(("real_forecast.tex", f"WARNING {rel(p)} reference={c.get('reference')}"))
+            m0 = meta.setdefault(o, (c.get("n_rows"), c.get("persistence_auc_pr")))
+            if m0[0] != c.get("n_rows"):
+                SUMMARY.append(("real_forecast.tex", f"WARNING {rel(p)} n_rows={c.get('n_rows')} differs from {m0[0]}"))
+            for k, r in c["models"].items():
+                if k in M[o]:
+                    if abs(M[o][k]["log_score"] - r["log_score"]) > 1e-9:
+                        SUMMARY.append(("real_forecast.tex", f"WARNING {o} {k} differs between compare files"))
+                    continue
+                M[o][k] = r
+    sc = lambda x: "--" if x is None else f"{1e3 * x:.2f}"
+    rows = []
+    for gi, (gname, models) in enumerate(FORECAST_GROUPS):
+        if gi:
+            rows.append("\\addlinespace")
+        rows.append(f"\\multicolumn{{5}}{{@{{}}l}}{{\\emph{{{gname}}}}} \\\\")
+        for k, lab in models:
+            if not any(k in M[o] for o in OUTCOMES):
+                rows.append(f"\\quad {lab} & \\multicolumn{{4}}{{c}}{{\\todo{{missing}}}} \\\\")
+                continue
+            cells = [f"\\quad {lab}"]
+            for o in OUTCOMES:
+                r = M[o].get(k)
+                if r is None:
+                    cells += ["--", "--"]; continue
+                d = r.get("logscore_diff_vs_ref") or {}
+                cells += [f(r.get("auc_pr")),
+                          "reference" if k == "xgb" else f"${sc(d.get('mean'))}$ ({sc(d.get('se_country'))})"]
+                SUMMARY.append(("real_forecast.tex", f"{o:8s} {k:17s} AUC-PR={f(r.get('auc_pr'))} "
+                                f"log={f(r.get('log_score'), 5)} dlog x1e3={sc(d.get('mean'))} "
+                                f"se_country={sc(d.get('se_country'))} se_cell={sc(d.get('se_cell'))}"))
+            rows.append(" & ".join(cells) + " \\\\")
+    rows.append("\\addlinespace")
+    rows.append("Persistence (past 4 weeks) & " + " & ".join(
+        f"{f(meta[o][1]) if o in meta else '--'} & --" for o in OUTCOMES) + " \\\\")
+    extra = {o: sorted(set(M[o]) - {k for _, g in FORECAST_GROUPS for k, _ in g}) for o in OUTCOMES}
+    SUMMARY.append(("real_forecast.tex", f"rows={ {o: meta.get(o, (None,))[0] for o in OUTCOMES} } "
+                    f"untabulated models={extra}"))
+    head = ("Model & \\multicolumn{2}{c}{Conflict} & \\multicolumn{2}{c}{Unrest} \\\\\n"
+            "\\cmidrule(lr){2-3}\\cmidrule(lr){4-5}\n"
+            " & AUC-PR & $\\Delta$ log score & AUC-PR & $\\Delta$ log score \\\\\n"
+            " & & $\\times 10^3$ (SE) & & $\\times 10^3$ (SE) \\\\")
+    write("real_forecast.tex", tabular("@{}lcccc@{}", head, rows), inputs)
+
+
+def _dyn(o, mode):
+    p = os.path.join(RES, "dynamic", o, f"summary_{mode}.json")
+    return (p, load(p)) if os.path.exists(p) else (None, None)
+
+
+def table_dynamic():
+    """Supplement S10: oracle, rolling, space-time and quarterly-update experiments."""
+    inputs, rows = [], []
+    D = {}
+    for o in OUTCOMES:
+        for mode in ("oracle", "rolling", "st13_r1", "st26_r1", "update"):
+            p, d = _dyn(o, mode)
+            if p:
+                inputs.append(p); D[(o, mode)] = d
+    R = {}
+    for o in OUTCOMES:
+        p = os.path.join(RES, "compare", f"compare_{o}_rolling.json")
+        if os.path.exists(p):
+            inputs.append(p); R[o] = load(p)
+
+    def line(lab, fn):
+        vals = []
+        for o in OUTCOMES:
+            try:
+                v = fn(o)
+            except (KeyError, TypeError):
+                v = None
+            vals.append("--" if v is None else v)
+        rows.append(f"\\quad {lab} & " + " & ".join(vals) + " \\\\")
+        SUMMARY.append(("real_dynamic.tex", f"{lab}: " + " | ".join(vals)))
+
+    def panel(title, needed):
+        if rows:
+            rows.append("\\addlinespace")
+        rows.append(f"\\multicolumn{{3}}{{@{{}}l}}{{\\emph{{{title}}}}} \\\\")
+        if not any((o, needed) in D for o in OUTCOMES):
+            rows.append(TODO_ROW(3, f"summary\\_{needed}.json missing"))
+            return False
+        return True
+
+    g = lambda o, m, *k: get(D.get((o, m)), *k)
+    if panel("(a) Oracle: latent terms fitted to the 2023--2024 test weeks, offset fixed", "oracle"):
+        line("log marginal likelihood, $u + w$ minus $u$ + iid cell effects",
+             lambda o: f(g(o, "oracle", "log_ml_field_minus_iid"), 1))
+        line("$\\hat\\rho_w$ (km)", lambda o: f(g(o, "oracle", "models", "field", "hyper", "field.range_km"), 0))
+        line("$\\hat\\sigma_w$", lambda o: f(g(o, "oracle", "models", "field", "hyper", "field.sd"), 2))
+        line("$\\mathrm{cor}$(oracle $\\hat w$, $\\hat w$ fitted on 2018--2022)",
+             lambda o: f(g(o, "oracle", "models", "field", "corr_with_2018_2022_field"), 2))
+        line("Moran's $I$ of cell residuals, offset alone",
+             lambda o: fm(g(o, "oracle", "offset_alone", "moran_in_sample", "I")))
+        line("Moran's $I$ of cell residuals, $u$ + iid cell effects",
+             lambda o: fm(g(o, "oracle", "models", "iid", "moran_in_sample", "I")))
+        line("Moran's $I$ of cell residuals, $u + w$",
+             lambda o: fm(g(o, "oracle", "models", "field", "moran_in_sample", "I")))
+    if panel("(b) 2024 test weeks only: AUC-PR; $\\Delta$ log score $\\times 10^3$ (SE)", "rolling"):
+        def score(o, k):
+            r = get(R.get(o), "models", k)
+            if r is None:
+                return None
+            d = r.get("logscore_diff_vs_ref") or {}
+            if k == R[o].get("reference"):
+                return f"{f(r.get('auc_pr'))}; reference"
+            return f"{f(r.get('auc_pr'))}; ${1e3 * d['mean']:.2f}$ ({1e3 * d['se_country']:.2f})"
+        for k, lab in (("xgb", "XGBoost, corrected (2018--2022)"),
+                       ("xgb_te", "XGBoost + cell event rate (2018--2022)"),
+                       ("hybrid_field", "Offset + $u + w$ (2018--2022)"),
+                       ("xgb_crossfit_roll", "Cross-fitted XGBoost (2018--2023)"),
+                       ("hybrid_iid_roll", "Offset + $u$ + iid cell effects (2018--2023)"),
+                       ("hybrid_field_roll", "Offset + $u + w$ (2018--2023)")):
+            line(lab, lambda o, k=k: score(o, k))
+        line("$\\hat\\rho_w$ (km), $u + w$ (2018--2023)", lambda o: f(g(o, "rolling", "models", "field", "hyper", "field.range_km"), 0))
+        line("Test rows (2024)", lambda o: f"{R[o]['n_rows']:,}".replace(",", "{,}"))
+    for mode, steps in (("st13_r1", 13), ("st26_r1", 26)):
+        if panel(f"({'c' if steps == 13 else 'd'}) Space-time hybrid, offset + $u$ + cell effects + $v$, "
+                 f"{steps}-week steps on $1^\\circ$ cells", mode):
+            line("$\\hat\\rho_v$ (km)", lambda o: f(g(o, mode, "hyper", "st.range_km"), 0))
+            line("$\\hat\\sigma_v$", lambda o: f(g(o, mode, "hyper", "st.sd"), 2))
+            line(f"$\\hat\\phi$ (per {steps} weeks)", lambda o: f(g(o, mode, "hyper", "st.rho"), 3))
+            line("$\\hat\\sigma_e$", lambda o: f(g(o, mode, "hyper", "cell.sd"), 2))
+            line("$\\hat\\sigma_u$", lambda o: f(g(o, mode, "hyper", "country.sd"), 2))
+            line("Time steps (training)", lambda o: f"{g(o, mode, 'time_steps')} ({g(o, mode, 'train_steps')})")
+            line("Fit time (h)", lambda o: f(g(o, mode, "seconds") / 3600, 1))
+    if panel("(e) Quarterly update: hyperparameters fixed at their 2018--2022 values", "update"):
+        line("$\\hat\\rho_w$ (km)", lambda o: f(g(o, "update", "models", "field", "hyper", "field.range_km"), 0))
+        line("$\\hat\\sigma_w$", lambda o: f(g(o, "update", "models", "field", "hyper", "field.sd"), 2))
+        line("Number of updates", lambda o: str(len(g(o, "update", "quarters"))))
+    head = "Quantity & Conflict & Unrest \\\\"
+    write("real_dynamic.tex", tabular("@{}lcc@{}", head, rows), inputs)
+
+
+REGION_NAMES = {"west_sahel": "West Africa and Sahel", "africa_me": "Africa and Middle East"}
+JOINT_MODELS = [("uni_static", "Conflict only, $u + e + w$"),
+                ("uni_st", "Conflict only, $u + e + w + v$"),
+                ("biv", "Joint, shared $v$")]
+
+
+def biv_files():
+    ps = sorted(glob.glob(os.path.join(RES, "bivariate", "*", "summary_biv.json")))
+    out = {os.path.basename(os.path.dirname(p)): p for p in ps}
+    order = [r for r in ("west_sahel", "africa_me") if r in out] + sorted(r for r in out if r not in REGION_NAMES)
+    return {r: out[r] for r in order}
+
+
+def coef(c):
+    return "--" if c is None else f"${c[0]:.3f}$ ({c[1]:.3f})"
+
+
+def st_hyper(h, k):
+    """Space-time hyperparameter: shared field in the joint model, conflict's own field in uni_st."""
+    for pre in ("shared_st.", "st_conflict."):
+        if pre + k in h:
+            return h[pre + k]
+    return None
+
+
+def table_joint():
+    bf = biv_files()
+    rows = []
+    for i, (reg, p) in enumerate(bf.items()):
+        s = load(p)
+        if i:
+            rows.append("\\addlinespace")
+        rows.append(f"\\multicolumn{{7}}{{@{{}}l}}{{\\emph{{{REGION_NAMES.get(reg, tex_escape(reg))}}}}} \\\\")
+        for k, lab in JOINT_MODELS:
+            m = get(s, "models", k)
+            if m is None:
+                rows.append(f"\\quad {lab} & \\multicolumn{{6}}{{c}}{{\\todo{{not fitted}}}} \\\\"); continue
+            lc, h = m.get("lag_coefficients", {}), m.get("hyper", {})
+            rng = st_hyper(h, "range_km")
+            cells = [f"\\quad {lab}", coef(lc.get("conflict:lag_other")), coef(lc.get("conflict:lag_other_nb")),
+                     coef(lc.get("conflict:lag_own_nb")), f(h.get("shared_st.loading"), 2),
+                     "--" if rng is None else f"{rng:.0f}", f(st_hyper(h, "rho"), 2)]
+            rows.append(" & ".join(cells) + " \\\\")
+            SUMMARY.append(("real_joint.tex", f"{reg:10s} {k:10s} kappa={lc.get('conflict:lag_other')} "
+                            f"kappa_nb={lc.get('conflict:lag_other_nb')} delta_nb={lc.get('conflict:lag_own_nb')} "
+                            f"delta={lc.get('conflict:lag_own')} hyper={json.dumps({a: round(b, 3) for a, b in h.items()})}"))
+        SUMMARY.append(("real_joint.tex", f"{reg:10s} rows/outcome={s.get('rows_per_outcome')} cells={s.get('cells')} "
+                        f"countries={s.get('countries')} st_cells={s.get('st_cells')} steps={s.get('time_steps')} "
+                        f"x {s.get('st_step_weeks')} weeks"))
+    if "africa_me" not in bf:
+        if rows:
+            rows.append("\\addlinespace")
+        rows.append("\\multicolumn{7}{@{}l}{\\emph{Africa and Middle East}: \\todo{running}} \\\\")
+    head = ("Region and model & $\\hat\\kappa$ & $\\hat\\kappa^{\\mathrm{nb}}$ & $\\hat\\delta^{\\mathrm{nb}}_{\\mathrm{C}}$ & "
+            "$\\hat\\lambda$ & $\\hat\\rho_v$ (km) & $\\hat\\phi$ \\\\\n"
+            " & unrest & neighbours' & neighbours' & & & \\\\\n"
+            " & history & unrest & conflict & & & \\\\")
+    write("real_joint.tex", tabular("@{}lcccccc@{}", head, rows),
+          list(bf.values()))
+
+
+HYPER_ROWS = [("country_conflict.sd", "$\\sigma_{u,\\mathrm{C}}$", 2), ("cell_conflict.sd", "$\\sigma_{e,\\mathrm{C}}$", 2),
+              ("field_conflict.range_km", "$\\rho_{w,\\mathrm{C}}$ (km)", 0), ("field_conflict.sd", "$\\sigma_{w,\\mathrm{C}}$", 2),
+              ("country_unrest.sd", "$\\sigma_{u,\\mathrm{U}}$", 2), ("cell_unrest.sd", "$\\sigma_{e,\\mathrm{U}}$", 2),
+              ("field_unrest.range_km", "$\\rho_{w,\\mathrm{U}}$ (km)", 0), ("field_unrest.sd", "$\\sigma_{w,\\mathrm{U}}$", 2),
+              ("@range_km", "$\\rho_v$ (km)", 0), ("@sd", "$\\sigma_v$", 2), ("@rho", "$\\phi$ (per step)", 3),
+              ("shared_st.loading", "$\\lambda$", 3)]
+LAG_ROWS = [("conflict:lag_own", "$\\delta_{\\mathrm{C}}$: own history"),
+            ("conflict:lag_other", "$\\kappa$: unrest history"),
+            ("conflict:lag_own_nb", "$\\delta^{\\mathrm{nb}}_{\\mathrm{C}}$: neighbours' conflict"),
+            ("conflict:lag_other_nb", "$\\kappa^{\\mathrm{nb}}$: neighbours' unrest"),
+            ("unrest:lag_own", "$\\delta_{\\mathrm{U}}$: own history"),
+            ("unrest:lag_other", "$\\kappa_{\\mathrm{U}}$: conflict history"),
+            ("unrest:lag_own_nb", "$\\delta^{\\mathrm{nb}}_{\\mathrm{U}}$: neighbours' unrest"),
+            ("unrest:lag_other_nb", "$\\kappa^{\\mathrm{nb}}_{\\mathrm{U}}$: neighbours' conflict")]
+
+
+def table_joint_full():
+    """Supplement S12: hyperparameters and lag coefficients of every joint-model fit."""
+    bf = biv_files()
+    rows = []
+    for i, (reg, p) in enumerate(bf.items()):
+        s = load(p)
+        M = [get(s, "models", k) or {} for k, _ in JOINT_MODELS]
+        if i:
+            rows.append("\\addlinespace")
+        n_ = lambda k: "--" if s.get(k) is None else f"{s[k]:,}"
+        rows.append(f"\\multicolumn{{4}}{{@{{}}l}}{{\\emph{{{REGION_NAMES.get(reg, tex_escape(reg))}}}}} \\\\")
+        rows.append((f"\\multicolumn{{4}}{{@{{}}l}}{{\\quad {n_('cells')} cells, {s.get('countries')} countries, "
+                     f"{n_('rows_per_outcome')} rows per outcome}} \\\\").replace(",", "{,}").replace("{,} ", ", "))
+        rows.append((f"\\multicolumn{{4}}{{@{{}}l}}{{\\quad $v$ on {n_('st_cells')} $1^\\circ$ cells, "
+                     f"{s.get('time_steps')} steps of {s.get('st_step_weeks')} weeks}} \\\\").replace(",", "{,}").replace("{,} ", ", "))
+        rows.append("\\multicolumn{4}{@{}l}{Hyperparameters} \\\\")
+        for key, lab, d in HYPER_ROWS:
+            vals = [(st_hyper(m.get("hyper", {}), key[1:]) if key.startswith("@") else get(m, "hyper", key)) for m in M]
+            if all(v is None for v in vals):
+                continue
+            rows.append(f"\\quad {lab} & " + " & ".join(f(v, d) for v in vals) + " \\\\")
+        rows.append("\\multicolumn{4}{@{}l}{Conflict equation} \\\\")
+        for key, lab in LAG_ROWS:
+            if key == "unrest:lag_own":
+                rows.append("\\multicolumn{4}{@{}l}{Unrest equation} \\\\")
+            rows.append(f"\\quad {lab} & " + " & ".join(coef(get(m, "lag_coefficients", key)) for m in M) + " \\\\")
+        rows.append("\\multicolumn{4}{@{}l}{Fit} \\\\")
+        rows.append("\\quad Log marginal likelihood & " + " & ".join(fm(m.get("log_ml"), 1) for m in M) + " \\\\")
+        rows.append("\\quad Fit time (h) & " + " & ".join(
+            "--" if m.get("seconds") is None else f"{m['seconds'] / 3600:.1f}" for m in M) + " \\\\")
+        for o in OUTCOMES:
+            rows.append(f"\\quad Test AUC-PR, {o} & " + " & ".join(f(get(m, "test_scores", o, "auc_pr")) for m in M) + " \\\\")
+            rows.append(f"\\quad Test log score, {o} & " + " & ".join(f(get(m, "test_scores", o, "log_score"), 4) for m in M) + " \\\\")
+        for m, (k, _) in zip(M, JOINT_MODELS):
+            SUMMARY.append(("real_joint_full.tex", f"{reg} {k} hyper={m.get('hyper')} log_ml={m.get('log_ml')} "
+                            f"test={m.get('test_scores')}"))
+    if "africa_me" not in bf:
+        if rows:
+            rows.append("\\addlinespace")
+        rows.append("\\multicolumn{4}{@{}l}{\\emph{Africa and Middle East}: \\todo{running}} \\\\")
+    head = ("Quantity & Conflict only & Conflict only & Joint \\\\\n"
+            " & $u + e + w$ & $u + e + w + v$ & shared $v$ \\\\")
+    write("real_joint_full.tex", tabular("@{}lccc@{}", head, rows), list(bf.values()))
+
+
 def write_summary(path):
     with open(path, "w") as fh:
         cur = None
@@ -377,6 +675,7 @@ if __name__ == "__main__":
     import sys
     field_maps(); variograms()
     table_xgb(); table_diag(); table_hybrid(); table_field(); table_boxes()
+    table_forecast(); table_dynamic(); table_joint(); table_joint_full()
     if len(sys.argv) > 1:
         write_summary(sys.argv[1])
     else:
