@@ -740,3 +740,8 @@ New `quarterly_update` block, on the global test set (4,787,224 rows):
 - For the merge I used a small wrapper script with the same resources: `source crc/jobs/env.sh && cd sims && N_JOBS=1
   python s5_bivariate.py`. The `qsub -b y "source ... && ..."` form in TASKS.md would not go through a shell, so
   `source` and `&&` would fail.
+
+## 2026-11-06 20:02 EST: Round 7 submitted (repo at 8d506cb)
+- Job: 16_bivariate **1696206** (tasks 1-2).
+- It requests mem_free=200G. Most long-queue nodes have 251 GB, so it may wait for a mostly idle node. I'll report
+  the queue wait if it's long, and task 2's maxvmem after its first hour.
