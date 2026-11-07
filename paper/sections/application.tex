@@ -36,7 +36,8 @@ are not on the same rows as the test-period scores below. The leak arises only i
 cell-weeks that have copies, and never in the first copy of a cell-week, which is the
 one the repaired table keeps. Copies come from cells that intersect several countries
 or several IPC regions; we have not checked how many of them lie on international
-borders.
+borders. \todo{Share of duplicated cells that intersect an international border,
+against those that cross only IPC boundaries.}
 
 The repaired table has one row per cell-week (Section~\ref{sec:data-acled}). After
 ACLED coverage and the biome exclusion it has 19{,}364{,}639 cell-weeks in
@@ -80,9 +81,14 @@ and 0.468, and the location-aware model 0.566 and 0.583. The scores are similar 
 for unrest, the corrected model reaches AUC-PR 0.0073 and 0.0097, and the
 location-aware model 0.0111 and 0.0119.
 
-Three conclusions follow. First, the covariates add to recent history, but by less
-than the published scores suggest: the corrected model improves on persistence by
-0.06 in AUC-PR for conflict and 0.09 for unrest. Second, a cell intercept adds a
+Three conclusions follow. First, a flexible model of history and covariates improves
+on persistence, but by less than the published scores suggest: the corrected model
+improves on persistence by 0.06 in AUC-PR for conflict and 0.09 for unrest. This gain
+cannot be attributed to the covariates alone. The persistence baseline uses only the
+total count of the outcome, while the corrected model also uses the five event types
+separately, including those of the other outcome, in a nonlinear way, together with
+calendar indicators and country-year indicators whose joint values can identify a
+country. \todo{XGBoost on the event histories alone, with the same tuning.} Second, a cell intercept adds a
 further 0.02 to 0.03, so part of what the covariates leave unexplained is persistent
 and local. Third, on onset rows all models rank cell-weeks several times better than
 chance, but their AUC-PR stays near 0.01. New events in places without recent events
@@ -111,7 +117,19 @@ from zero (Section~\ref{sec:app-glmm} and Table~\ref{tab:app-joint}). S5
 When the two outcomes share latent episodes, univariate models report escalation that
 does not exist, even when they include their own space-time field. The joint model of
 Section~\ref{sec:methods-joint} recovered the escalation coefficient $\kappa$ in both
-scenarios of S5. We therefore fit it to the data.
+scenarios of S5, and we fit it to the data. The application lies outside the S5 design
+in several respects. S5 as reported has a single shared space-time field and no
+outcome-specific space-time field, fits that field at steps of $\Delta = 4$ weeks on
+the $0.5^\circ$ lattice, has escalation in one direction only and has no neighbour
+histories. The application uses steps of 13 weeks on a $1^\circ$ lattice, cross-lags
+in both directions and the neighbour histories of both outcomes. A single shared field
+also carries a risk that S5 cannot detect. Episodes of unrest that do not involve
+conflict are forced into $v$, which enters the conflict equation with loading one.
+Conditioning on $v$ then removes part of the variation in the unrest history through
+which escalation would act, and $\hat\kappa$ is biased towards zero.
+\todo{biv2 and S5 extension results: joint model with an additional unrest-specific
+space-time field, and S5 scenarios with unrest-only episodes, with and without
+escalation.}
 
 \paragraph{Region and models.} The region is West Africa and the Sahel, longitude
 $18^\circ$W to $16^\circ$E and latitude $4^\circ$N to $25^\circ$N. It has 2{,}505 cells
@@ -127,8 +145,9 @@ static Mat\'ern field;
 \item \emph{joint}: model~\eqref{eq:joint}, in which the space-time field is shared by the
 two outcomes.
 \end{itemize}
-The second model is the joint model with $\lambda = 0$. It isolates the effect of letting
-unrest inform the space-time field. Table~\ref{tab:app-joint} reports the lag
+The second model is the joint model with $\lambda = 0$. Comparing the two shows the
+effect of letting unrest inform the space-time field, under the assumption that there
+is no unrest-specific space-time variation. Table~\ref{tab:app-joint} reports the lag
 coefficients, the hyperparameters of the space-time fields and the test scores.
 Table~S12 of the Supplementary Material gives all hyperparameters and coefficients.
 
@@ -152,34 +171,54 @@ hardly changes it (0.131, SE 0.032), although the field is clearly present (rang
 the own-lag coefficient from 0.575 (SE 0.016) to 0.444 (SE 0.017). This is the
 pattern of S5: a field estimated from conflict alone absorbs part of the persistence
 of conflict, but not the information about the current episode that is carried by
-recent unrest. In the joint model the coefficient falls to 0.044 (SE 0.032), with
-an approximate 95\% interval from $-0.018$ to $0.106$. The own-lag coefficient stays
-at the level of the univariate space-time model (0.459, SE 0.017). The coefficient of
-unrest in neighbouring cells is close to zero in the univariate models (0.005 and
-0.003, SE 0.008) and slightly negative in the joint model ($-0.020$, SE 0.008).
+recent unrest. In the joint model the coefficient falls to 0.044 (SE 0.032). The
+plug-in interval of $\pm 1.96$ SE runs from $-0.018$ to $0.106$, but it is likely too
+short. In S5 without escalation, the empirical SD of $\hat\kappa$ from the joint model
+was 1.20 times its mean SE, and in S3 the corresponding ratio for $\hat\delta$ was
+1.19 to 1.66 whenever a space-time field was fitted
+(Sections~\ref{sec:sim-joint} and~\ref{sec:sim-persistence}).
+The own-lag coefficient stays at the level of the univariate space-time model (0.459,
+SE 0.017). The coefficient of unrest in neighbouring cells is close to zero in the
+univariate models (0.005 and 0.003, SE 0.008) and negative in the joint model
+($-0.020$, SE 0.008).
 
-The shared field is large and persistent. Its loading on unrest is $\hat\lambda =
-0.87$, its range is 499\,km, its standard deviation 1.01 and its AR(1) coefficient
-0.95 per 13 weeks. Shared episodes therefore extend over several hundred kilometres
-and persist for several quarters. In the unrest equation of the joint model, the
-coefficient of recent conflict on unrest is 0.066 (SE 0.031), and that of conflict in
-the neighbouring cells is $-0.042$ (SE 0.013).
+The shared field has loading $\hat\lambda = 0.87$ on unrest, range 499\,km, standard
+deviation 1.01 and AR(1) coefficient 0.95 per 13 weeks. It is a shared latent
+component of recorded risk that varies over several hundred kilometres and changes
+slowly over quarters; what it represents is discussed below. In the unrest equation of
+the joint model, the coefficient of recent conflict on unrest is 0.066 (SE 0.031), and
+that of conflict in the neighbouring cells is $-0.042$ (SE 0.013). Negative
+neighbour coefficients in both equations would mean that events in neighbouring cells
+lower the risk in a cell, which is implausible as a substantive spillover. One
+possible reading is that the shared field over-absorbs regional variation, and the
+neighbour terms compensate. We take them as a possible sign of misspecification of
+the joint model.
 
 The joint model does not forecast conflict better. Its test log score for conflict is
 0.1031, against 0.1020 for the univariate static model and 0.1026 for the univariate
 space-time model, and its AUC-PR is 0.466 against 0.470 and 0.471, at a conflict
-prevalence of 4.2\%. As in S5, the three models predict conflict about equally well
-and disagree about $\kappa$. Predictive accuracy cannot decide between escalation
-and shared episodes. The joint fit took about 4.5 hours, against 8 minutes for the
-univariate static model and 43 minutes for the univariate space-time model.
+prevalence of 4.2\%. We have not computed standard errors for these differences, so
+we do not read their order as evidence for one model. As in S5, the three models
+predict conflict similarly and disagree about $\kappa$. Predictive accuracy cannot
+decide between escalation and shared episodes. The joint fit took about 4.5 hours,
+against 8 minutes for the univariate static model and 43 minutes for the univariate space-time model.
 
-\paragraph{Interpretation.} The data are consistent with shared episodes accounting
-for most of the association between recent unrest and conflict in this region.
+\paragraph{Interpretation.} Under this model, and pending the extended model described
+above, the univariate association between recent unrest and conflict in this region is
+largely accounted for by shared episodes.
 Under no escalation, the univariate space-time model rejected $\kappa = 0$ in 55\% of
 the S5 replicates, while the joint model had coverage 0.90. A univariate estimate of
 0.13 to 0.14 is therefore not, by itself, evidence that unrest escalates into
-conflict. The joint estimate does not show that escalation is absent either. Its
-interval includes values of about 0.1. Three further limits apply. First, $\kappa$ is
+conflict. The joint estimate does not show that escalation is absent. Its interval
+includes values of about 0.1 even before allowing for the SE shortfall above. The
+fall from 0.131 to 0.044 also has a second reading. Compared with the conflict-only
+field, the shared field has a larger standard deviation (1.01 against 0.69) and range
+(499 against 423\,km). This is what removing confounding by shared
+episodes would produce, but also what a field that absorbs unrest-specific episodes
+would produce, with $\hat\kappa$ attenuated towards zero. The two readings cannot be
+separated with a single shared field, and we leave the conclusion open until the
+extended model is fitted. \todo{biv2 and S5 extension results.} Three further limits
+apply. First, $\kappa$ is
 the short-run, local part of escalation. Escalation that unfolds over several months
 and over hundreds of kilometres cannot be told apart from a shared episode, and the
 joint model attributes it to $v$ (Section~\ref{sec:methods-joint}). The finding is
@@ -197,16 +236,17 @@ joint model treats it as a shared episode. With a single event source the two ca
 be separated, so neither $v$ nor $\lambda$ should be read as a property of occurrence
 alone.
 
-\paragraph{Africa and the Middle East.} \todo{Joint fit for Africa and the Middle East
+\paragraph{The AME region.} \todo{Joint fit for the AME region
 (13{,}719 cells, $v$ on 3{,}637 cells of $1^\circ$): $\hat\kappa$ and SE in the univariate
 static, univariate space-time and joint models; $\hat\lambda$, range, standard deviation
 and AR(1) coefficient of the shared field; test scores. The fit is still running.}
 
 \subsection{Residual spatial structure and the hybrid model}\label{sec:app-hybrid}
 
-We fit the hybrid model~\eqref{eq:hybrid} to Africa and the Middle East (longitude
-$20^\circ$W to $65^\circ$E, latitude $36^\circ$S to $45^\circ$N; 13{,}719 cells in 93
-countries, 4{,}976{,}634 cell-weeks of which 1{,}426{,}776 are in the test period). It
+We fit the hybrid model~\eqref{eq:hybrid} to the AME region, that is Africa, the
+Middle East and adjacent regions (longitude $20^\circ$W to $65^\circ$E, latitude
+$36^\circ$S to $45^\circ$N; 13{,}719 cells in 93 countries, 4{,}976{,}634 cell-weeks of
+which 1{,}426{,}776 are in the test period; Section~\ref{sec:data-acled}). It
 combines the XGBoost offset cross-fitted by country, country effects, and either a
 Mat\'ern field with sea barriers (Remark~\ref{rem:boundary}) or independent cell
 effects. The offset is trained on the rows of this region only, whereas the corrected
@@ -218,10 +258,15 @@ every model, and Figure~S1 of the Supplementary Material the semivariograms of t
 test-period residuals. The residuals of the corrected XGBoost model have Moran's $I$
 of 0.42 for conflict and 0.15 for unrest (Section~\ref{sec:data-eda}). The
 location-aware model reduces it to 0.29 for conflict but increases it to 0.25 for
-unrest. The
-hybrid models leave test-period residual structure of the same order as the corrected
-model: Moran's $I$ is 0.45 for conflict and 0.29 for unrest, with the field or with
-independent cell effects. They do reduce the residual correlation across borders,
+unrest. The hybrid models do not reduce the overall test-period residual structure. For
+conflict, Moran's $I$ is 0.45 with the field or with independent cell effects, about
+the same as for the corrected model. For unrest it is 0.29, about twice the value of
+the corrected model and above the 0.26 of the cross-fitted offset alone. For unrest,
+latent effects estimated on the training years therefore increase the test-period
+residual autocorrelation. One possible explanation is that cell effects estimated in
+2018--2022 are carried into a period in which recorded unrest rose and its cell-level
+pattern changed (Section~\ref{sec:data-acled}); the location-aware model shows a
+similar increase. The hybrid models do reduce the residual correlation across borders,
 from 0.21 to 0.14 for conflict and from 0.08 to $-0.02$ for unrest. Residual structure
 in the test period is therefore not removed by latent effects estimated on the
 training years. Section~\ref{sec:app-forecast} examines why. For the cross-fitted
@@ -240,7 +285,12 @@ cell effects by 1{,}254 for conflict but only by 95 for unrest, and the two give
 the same test scores for unrest (Table~\ref{tab:app-forecast}). For unrest,
 cell-level effects would largely track towns and cities, where protests are both more
 frequent and more often reported. A fit to all locations worldwide (46{,}031 cells)
-gives a range of 313\,km for conflict and 65\,km for unrest.
+gives a range of 313\,km for conflict and 65\,km for unrest. The unrest results of the
+AME region also depend on its composition. It includes Mediterranean Europe, where
+unrest is dense and where several countries enter ACLED only in 2020
+(Section~\ref{sec:data-acled}). \todo{Sensitivity of the unrest range, the hotspot
+shares and the national coefficients to restricting the region to Africa and the
+Middle East proper.}
 
 Figure~\ref{fig:app-fitted} compares observed and predicted frequencies over the
 test period. The hybrid model reproduces the regional pattern of both outcomes,
@@ -253,7 +303,7 @@ lower than predicted. The cross-fitted offset alone underpredicts in the same bi
 \centering
 \includegraphics[width=\textwidth]{figures/real_fitted.png}
 \caption{Observed and predicted event frequency in the test period 2023--2024,
-Africa and the Middle East. (a, d) Share of test weeks with at least one event in each
+AME region. (a, d) Share of test weeks with at least one event in each
 cell; grey cells have no event week. (b, e) Mean predicted probability of the hybrid
 model with country effects and the Mat\'ern field over the same weeks, on the same
 colour scale. (c, f) Calibration: observed frequency against mean predicted probability
@@ -295,7 +345,7 @@ placed at town and administrative centroids (Section~\ref{sec:data-acled}).}\lab
 \subsection{Forecasting}\label{sec:app-forecast}
 
 Table~\ref{tab:app-forecast} compares out-of-sample scores on identical test rows of
-Africa and the Middle East. The reference is the corrected XGBoost model. Differences
+the AME region. The reference is the corrected XGBoost model. Differences
 in mean log score are given against it, with standard errors clustered by country
 (standard errors clustered by cell are smaller). A gain of a hybrid model over the
 cross-fitted offset alone is not evidence for the latent effects
@@ -308,10 +358,16 @@ recomputing the cell event rate. The hybrid models keep the hyperparameters fitt
 2018--2022 and recompute the latent effects. Table~S10 of the Supplementary Material
 reports all dynamic experiments.
 
-\paragraph{Static models.} The hybrid models improve on the corrected XGBoost model in
-log score, by 0.0012 (SE 0.0009) for conflict and 0.0021 (SE 0.0007) for unrest
-with the field, but they do not reach the location-aware model, which improves on it by
-0.0035 (SE 0.0013) and 0.0032 (SE 0.0008). The field and the independent cell effects
+\paragraph{Static models.} With the field, the hybrid model improves on the corrected
+XGBoost model in log score by 0.0021 (SE 0.0007) for unrest. For conflict the
+difference, 0.0012 (SE 0.0009), is within about one standard error. The hybrid models
+do not reach the location-aware model, which improves on the corrected model by
+0.0035 (SE 0.0013) and 0.0032 (SE 0.0008). The Brier score, which
+Table~\ref{tab:app-forecast} does not report, points the other way for conflict. The
+hybrid model with the field has a Brier score higher than the corrected model by
+0.0004 (SE 0.0002) for conflict, and lower by 0.0001 (SE 0.0002) for unrest. The
+location-aware model lowers the Brier score by 0.0003 (SE 0.0002) and 0.0004
+(SE 0.0002). The field and the independent cell effects
 give almost the same scores: for conflict the field is better by 0.0002 in log score,
 and for unrest by less than 0.0001. A hybrid model with a space-time field
 ($\Delta = 13$ weeks, forecast through its AR(1) dynamics) improves only slightly on
@@ -320,9 +376,10 @@ corrected model reaches 0.515 for conflict and 0.532 for unrest, the hybrid mode
 the field 0.519 and 0.540, the location-aware model 0.533 and 0.550, and persistence
 0.446 and 0.451. On onset rows, where the prevalence is 0.15\% for conflict and 0.18\%
 for unrest, AUC-PR is 0.008 to 0.011 for conflict and 0.010 to 0.014 for unrest for all
-models.
+models except the cross-fitted offset alone, which reaches 0.006 and 0.009.
 
-\paragraph{Updated models.} Quarterly updating improves every model. The updated
+\paragraph{Updated models.} Quarterly updating improves every model that is updated;
+the corrected XGBoost model and the cross-fitted offset are not updated. The updated
 hybrid model with the space-time field improves on the corrected XGBoost model by
 0.0035 (SE 0.0008) for conflict and 0.0034 (SE 0.0007) for unrest. It thus reaches the
 score of the static location-aware model, and its AUC-PR is 0.539 and 0.554. It also
@@ -330,10 +387,13 @@ has the highest AUC-PR on onset rows, 0.0120 for conflict and 0.0142 for unrest.
 Updating also improves the location-aware model, however, to 0.0050 (SE 0.0013) and
 0.0044 (SE 0.0008) in log score, and AUC-PR 0.544 and 0.559. Of the gap in log score
 between the static hybrid model with the field and the static location-aware model,
-0.0023 for conflict and 0.0011 for unrest, a gap of 0.0015 and 0.0010 remains between
-the best updated models of each kind. The updated space-time hybrid model removes most
+0.0023 for conflict and 0.0012 for unrest, a gap of 0.0015 and 0.0010 remains between
+the best updated models of each kind. In the Brier score the updated space-time hybrid
+model is better than the corrected model, by 0.0001 (SE 0.0001) for conflict and
+0.0004 (SE 0.0002) for unrest, and the updated location-aware model by 0.0005
+(SE 0.0002) and 0.0006 (SE 0.0002). The updated space-time hybrid model removes most
 of the test-period residual structure: Moran's $I$ of its residuals is 0.12 for
-conflict and 0.11 for unrest, against 0.32 and 0.26 for the updated location-aware
+conflict and 0.10 for unrest, against 0.32 and 0.26 for the updated location-aware
 model.
 
 We also refitted the hybrid models, including the boosting offset and the
@@ -361,13 +421,13 @@ risk is mainly cell-level, which is what a cell event rate captures directly. A
 location-aware boosting model is a strong benchmark for both.
 
 \begin{table}
-\caption{Out-of-sample scores, Africa and the Middle East, 2023--2024, on identical
+\caption{Out-of-sample scores, AME region, 2023--2024, on identical
 test rows. Static models are fitted once on 2018--2022; updated models are updated
 each quarter with all data before the quarter (hybrid models: latent effects
 recomputed with the hyperparameters fixed; location-aware model: cell event rate
 recomputed). Differences in mean log score against the corrected XGBoost model, with
 standard errors clustered by country. Lower is better for the log score. The hybrid
-offset is trained on Africa and the Middle East only; the corrected and
+offset is trained on the AME region only; the corrected and
 location-aware XGBoost models are trained on all locations. Onset rows: cells without
 an event of the outcome in the previous 52 weeks. Further experiments in Table~S10 of
 the Supplementary Material.}\label{tab:app-forecast}
@@ -377,8 +437,8 @@ the Supplementary Material.}\label{tab:app-forecast}
 
 \subsection{State dependence, climate and national indicators}\label{sec:app-glmm}
 
-The parametric latent models of Section~\ref{sec:methods-model} are fitted to Africa
-and the Middle East (3{,}494{,}982 training rows, 13{,}719 cells). We compare
+The parametric latent models of Section~\ref{sec:methods-model} are fitted to the AME
+region (3{,}494{,}982 training rows, 13{,}719 cells). We compare
 logistic regression without latent effects, a model with country effects, and models
 with country effects, independent cell effects and a Mat\'ern field, with and without
 a spatially varying coefficient for maximum temperature and with the spatial+
@@ -389,48 +449,100 @@ adjustment of Section~\ref{sec:methods-confounding}.
 0.92 (SE 0.008) with country effects, cell effects and the field. For unrest it is
 1.62, 1.47 and 0.78. The coefficient of the other outcome's history falls in the same
 way, from 0.40 to 0.15 for unrest on conflict and from 0.22 to 0.13 for conflict on
-unrest. In the central Sahel ($9^\circ$N to $20^\circ$N, $6^\circ$W to $16^\circ$E;
-968 cells, steps of 8 weeks), adding a space-time field lowers $\hat\delta$ further:
-for conflict from 1.58 without latent effects to 0.65 with the static terms and 0.28
-(SE 0.021) with the space-time field, whose range is 230\,km and AR(1) coefficient
-0.93 per 8 weeks. For unrest the corresponding values are 1.27, 0.42 and 0.17 (SE
-0.060), with an AR(1) coefficient of 0.49. Much of the apparent state dependence is
-therefore persistent or slowly moving latent risk. As in S3
-(Section~\ref{sec:sim-persistence}), we read the remaining $\hat\delta$ as conditional
-dependence of recorded events (Section~\ref{sec:methods-persistence}), not as
-contagion.
+unrest. In the central Sahel ($9^\circ$N to $20^\circ$N, $6^\circ$W to $16^\circ$E, a
+box of $22^\circ$ by $11^\circ$; 968 cells, steps of 8 weeks), adding a space-time field
+lowers $\hat\delta$ further: for conflict from 1.58 without latent effects to 0.65
+with the static terms and 0.28 (SE 0.021) with the space-time field, whose range is
+230\,km and AR(1) coefficient 0.93 per 8 weeks. For unrest the corresponding values
+are 1.27, 0.42 and 0.17 (SE 0.060), with an AR(1) coefficient of 0.49 per 8 weeks,
+about 0.915 per week. Much of the apparent state dependence is therefore absorbed by
+latent risk that varies slowly in space and time. Three caveats apply. First, the
+central Sahel models have no neighbour histories, so a space-time field at this scale
+can also absorb diffusion of events between neighbouring cells. In West Africa,
+adding the space-time field lowers the coefficient of conflict in neighbouring cells
+from 0.129 (SE 0.007) to 0.051 (SE 0.008) (Table~\ref{tab:app-joint}). The fall in
+$\hat\delta$ therefore cannot distinguish persistent latent risk from spatio-temporal
+diffusion. Second, in S3 the empirical SD of $\hat\delta$ was 1.19 to 1.66 times its
+mean SE whenever a space-time field was fitted, so the SEs above are too small,
+by an amount that varies across settings. Third, the unrest dynamics are in the regime
+of S3 ($\phi$ about 0.9 per week, $\Delta = 8$) in which $\hat\delta$ kept an upward
+bias of about 0.10 under pure heterogeneity. The field $v$ is also defined on the
+observed cells only, with reflecting edges, which departs from Remark~\ref{rem:boundary};
+in the space-time hybrid models the same holds for the static part. $\hat\delta$ under
+$v$ should be read with that caveat. As in S3 (Section~\ref{sec:sim-persistence}), we
+read the remaining $\hat\delta$ as conditional dependence of recorded events
+(Section~\ref{sec:methods-persistence}), not as contagion.
 
-\paragraph{Climate.} The coefficients of the standardised maximum-temperature
-anomaly are small: 0.015 (SE 0.006) for conflict and 0.009 (SE 0.007) for unrest in the
-model with the field. The biome-specific slopes of the model with a spatially varying coefficient lie
+\paragraph{Climate.} All models condition on the event histories of the previous four
+weeks and on the latent effects. The climate coefficients are therefore short-run
+direct associations. Any effect of climate that acts through earlier events is
+blocked, and we do not estimate total effects. In the model with the field, the
+coefficients of the five standardised anomalies for conflict are 0.015 (SE 0.006) for
+maximum temperature, $-0.007$ (SE 0.006) for minimum temperature, $-0.003$ (SE 0.005)
+for precipitation, $-0.004$ (SE 0.004) for drought and 0.005 (SE 0.007) for
+PM$_{2.5}$. For unrest they are 0.009 (SE 0.007), $-0.021$ (SE 0.006), $-0.017$
+(SE 0.005), $-0.006$ (SE 0.004) and 0.033 (SE 0.007). The unrest coefficients of
+minimum temperature and precipitation are thus 3 to 4 SE from zero and larger in
+absolute value than that of maximum temperature. These SEs treat cell-weeks as
+conditionally independent given the static latent effects, and residual space-time
+dependence would make them too small, so we do not read the conflict coefficient of
+maximum temperature, 2.5 SE from zero, as clear evidence. The PM$_{2.5}$ anomaly is
+not interpretable. PM$_{2.5}$ is missing in 55.5\% of training rows and its
+climatological standard deviation is undefined in 91{,}392 of the 164{,}628
+cell-months, so the floor is about $10^{-9}$ and standardised anomalies can be
+extreme (Section~\ref{sec:data-cov}). Of the five, we examine the maximum-temperature
+anomaly in more detail. The biome-specific slopes of the model with a spatially varying coefficient lie
 between $-0.16$ and $0.08$ for conflict and between $-0.09$ and $0.06$ for unrest, and
 none is more than two standard errors from zero. The spatially varying part has
 standard deviation 0.076 for conflict and 0.072 for unrest, so variation within biomes
 is negligible, and the model does not improve the marginal likelihood or the test
-scores over the model without it. The association of short-run temperature anomalies
-with the weekly probability of recorded events is therefore small in this region,
-and we find no evidence that it differs between or within biomes.
+scores over the model without it. Conditional on recent event history and the latent
+effects, the short-run direct association of maximum-temperature anomalies with the
+weekly probability of recorded events is therefore small in the AME region, and we find
+no evidence that it differs between or within biomes. This statement does not extend
+to the other anomalies, nor to total effects of climate.
 
 \paragraph{National indicators.} Without latent effects, several between-country
 coefficients are large and estimated with standard errors below 0.02, for example
-$-0.56$ (SE 0.008) for the EPI on conflict and 0.35 (SE 0.013) for access to
-electricity on unrest. With country effects their standard errors grow by an order of
-magnitude, and with the field they change further: $-0.22$ (SE 0.12) for the EPI on
-conflict and 0.50 (SE 0.20) for electricity on unrest. They are also unstable under
-spatial+: for the EPI on conflict $-0.23$, $-0.22$ and $-0.07$ with $m = 10$, 20 and
-$m^* = 138$, and for electricity on unrest 0.52, 0.00 and $-0.09$ with $m = 10$, 20 and
-$m^* = 176$. The within-country coefficients barely change across these models, for
-example 0.014 to 0.016 for the EPI on conflict and 0.030 for the liberal democracy index on
-unrest, in all models with the field. In the light of S2 (Section~\ref{sec:sim-confounding}),
-the between-country coefficients cannot be separated from spatially smooth
-unmeasured risk, and we do not interpret them. The within-country coefficients are
-identified from changes over time within a country and are small.
+$-0.56$ (SE 0.008) for the EPI on conflict and 0.12 (SE 0.005) for the liberal
+democracy index on unrest. With country effects their standard errors grow by an order
+of magnitude, and with the field they change further: $-0.22$ (SE 0.12) for the EPI on
+conflict and 0.21 (SE 0.14) for the liberal democracy index on unrest. They are also
+unstable under spatial+: for the EPI on conflict $-0.23$, $-0.22$ and $-0.07$ with
+$m = 10$, 20 and $m^* = 138$, and for the liberal democracy index on unrest 0.17, 0.20
+and $-0.02$ with $m = 10$, 20 and $m^* = 176$. In the light of S2
+(Section~\ref{sec:sim-confounding}), the between-country coefficients cannot be
+separated from spatially smooth unmeasured risk, and we do not interpret them.
+
+The within-country coefficients are identified from changes over time within a
+country. Across the models with the field (with the field, with the spatially varying
+coefficient, and spatial+), they barely change, for example 0.014 to 0.016 for the EPI
+on conflict and 0.030 for the liberal democracy index on unrest. They are not all
+small. In the model with the field, the within coefficients on conflict are 0.095
+(SE 0.007) for log GDP per capita, $-0.082$ (SE 0.011) for greenhouse gas emissions and
+0.049 (SE 0.010) for the ecological footprint, several times the
+maximum-temperature coefficient. Their standard errors, however, treat cell-weeks as
+conditionally independent, whereas the within variation comes from about 93 countries
+over five training years. Like the between coefficients, they rest on few independent
+contrasts, and their model-based standard errors are too small by an unknown amount.
+We therefore do not interpret them either. Access to electricity needs a further
+caveat. Unlike the other national indicators, it is not re-attached per country and
+year in the repaired table (Section~\ref{sec:data-acled}), so in cells that had copies
+it can carry the value of a neighbouring country. Its within component then mixes
+change over time with differences across borders. This may explain why its within
+coefficient on conflict is $-0.106$ (SE 0.005) without latent effects but $-0.027$
+(SE 0.023) with the field, and on unrest 0.008 (SE 0.006) without latent effects but
+0.072 (SE 0.024) with the field. We do not interpret the electricity coefficients.
 
 \paragraph{Missingness.} Two missingness indicators were dropped because they are
 constant in the training rows (EPI and liberal democracy index), and the material and
-ecological footprint indicators were merged with that of greenhouse gas emissions. In
-the model with the field, a missing IPC analysis lowers the log odds of conflict by
-0.19 (SE 0.022) and of unrest by 0.18 (SE 0.030), and a missing GDP lowers that of
-conflict by 0.26 (SE 0.056). The other indicators have large standard errors.
+ecological footprint indicators were merged with that of greenhouse gas emissions. The
+remaining indicators are not interpretable as effects. They vary mostly between
+countries, so they are confounded with the country effects and the field, and their
+signs change across specifications. For a missing GDP the coefficient on conflict is
+0.31 (SE 0.022) without latent effects, $-0.08$ (SE 0.061) with country effects and
+$-0.26$ (SE 0.056) with the field. For a missing IPC analysis the coefficient on unrest
+is 0.06 (SE 0.020), 0.20 (SE 0.023) and $-0.18$ (SE 0.030) in the same three models.
+The other indicators have large standard errors.
 \todo{National-indicator coefficients refitted on the countries with complete
 indicators.}

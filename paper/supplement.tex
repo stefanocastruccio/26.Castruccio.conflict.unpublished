@@ -127,7 +127,11 @@ a sea strait of 2, 4 or 6 cells (about 110, 220, 330\,km): marginal variance of 
 coastal and of an inland land cell (nominal 1) and correlation between the two
 coastal cells facing each other across the strait, from 4{,}000 exact draws with
 $\rho = 400$\,km. ``Land only'' removes the strait from the lattice; ``sea = land''
-keeps it as ordinary cells without data.}\label{tab:barrier}
+keeps it as ordinary cells without data. The strait lies inside a closed rectangle.
+This is not the geometry of the application, which has an open coast, a buffer of sea
+cells and a reflecting outer edge, and the fitted ranges there are both above and
+below 400\,km, so the table shows the behaviour of the barrier only
+qualitatively.}\label{tab:barrier}
 \centering\small
 \input{tables/barrier}
 \end{table}
@@ -143,7 +147,11 @@ replicates).}\label{tab:s1-field}
 \begin{table}
 \caption{S2: estimation of the effect $\alpha$ of a national indicator (30 replicates
 per scenario). Coverage of nominal 95\% intervals, and the proportion of replicates in
-which the interval excludes zero. $^\dagger$Least-squares slope of SHAP values on
+which the interval excludes zero. $^\ast$The model with $u + w$, in which $Z_0$ is
+replaced by its residual after projection on the 10 smoothest eigenvectors of the
+lattice Laplacian. As in the application, $u$ stays in the model, so the coefficient
+is identified partly through the shrinkage of $u$ under its exchangeable prior; we
+read spatial+ as a sensitivity analysis. $^\dagger$Least-squares slope of SHAP values on
 $Z_0$, with the 95\% block-bootstrap percentile interval and interquartile
 range.}\label{tab:s2}
 \centering\small
@@ -169,7 +177,7 @@ over 30 replicates).}\label{tab:s4-extra}
 
 \section{Application}\label{supp:app}
 \begin{table}
-\caption{Test-period (2023--2024) residual diagnostics, Africa and the Middle East,
+\caption{Test-period (2023--2024) residual diagnostics, AME region,
 for every model on identical test rows: Moran's $I$ of the standardised cell
 residuals (permutation $p$-value from 999 permutations, bounded below by 0.001) and
 the residual correlation between neighbouring cells in the same country and across a
@@ -179,7 +187,7 @@ border.}\label{tab:app-diag}
 \end{table}
 
 \begin{table}
-\caption{Fitted hyperparameters of the hybrid models, Africa and the Middle East:
+\caption{Fitted hyperparameters of the hybrid models, AME region:
 range $\rho_w$ and standard deviation $\sigma_w$ of the field, standard deviation of
 the independent cell effects, and standard deviation $\sigma_u$ of the country
 effects.}\label{tab:app-field}
@@ -207,7 +215,7 @@ against great-circle distance.}\label{fig:app-variogram}
 \section{Additional results}\label{supp:additional}
 
 \begin{table}
-\caption{Dynamic experiments for the hybrid models, Africa and the Middle East. In
+\caption{Dynamic experiments for the hybrid models, AME region. In
 all of them the offset is the country cross-fitted XGBoost prediction. (a) Oracle:
 the latent terms are fitted to the 2023--2024 test weeks themselves, with the offset
 fixed, to show how much residual structure the test period contains and whether it is
@@ -217,8 +225,10 @@ the 2024 test weeks only (713{,}388 rows per outcome), for models fitted on 2018
 and for models whose offset and latent terms are retrained on 2018--2023 (training
 years in parentheses); differences in log score are
 relative to the corrected XGBoost model, with SEs clustered by country. (c, d)
-Hyperparameters of the space-time hybrids, in which an AR(1) $\otimes$ Mat\'ern field
-$v$ on $1^\circ$ cells replaces the static field $w$; $\phi$ is the AR(1) coefficient
+Hyperparameters of the space-time hybrids: offset, $u$, independent cell effects $e$
+and an AR(1) $\otimes$ Mat\'ern field $v$ on $1^\circ$ cells, with no static field
+$w$. The field $v$ is defined on the observed cells only, with reflecting edges, which
+departs from the boundary rule of Remark~1 of the main paper; $\phi$ is the AR(1) coefficient
 per time step, and the number of steps in parentheses is the number that falls in the
 training period. (e) Quarterly update: the latent terms are re-estimated at the start
 of each quarter of the test period with all data observed so far, and the
@@ -238,7 +248,13 @@ proportion of replicates whose interval excludes zero; mean estimate of the own-
 coefficient $d_c$ (truth 0.3); mean and SD of the estimated loading $\lambda$ of the
 shared space-time field (truth 0.8, joint model only); and mean log score, AUC-PR and
 onset AUC-PR of the conflict forecasts over the 26 test weeks. Onset rows are those of
-cells without a conflict event in the previous 52 weeks.}\label{tab:s5}
+cells without a conflict event in the previous 52 weeks. In both scenarios reported
+here the data contain a single shared space-time field and no unrest-specific
+space-time variation, so the joint model is correctly specified and the table cannot
+show attenuation of $\kappa$ by unrest-only episodes absorbed into the shared field.
+\todo{biv2 and S5 extension results: scenarios with unrest-only episodes, with and
+without escalation, and the joint model with an unrest-specific space-time
+field.}}\label{tab:s5}
 \centering\small
 \resizebox{\textwidth}{!}{\input{tables/s5}}
 \end{table}
@@ -253,9 +269,38 @@ it is shared, with loading $\lambda$ for unrest. Histories are $\log(1 + \text{e
 in the previous four weeks})$; neighbour histories are means over the rook neighbours,
 standardised on the training rows. The log marginal likelihood of the joint model
 includes the unrest data and is not comparable with those of the univariate models.
-Test scores are for 2023--2024 in the same region.}\label{tab:app-joint-full}
+Test scores are for 2023--2024 in the same region. The field $v$ is defined on the
+observed $1^\circ$ cells only, with reflecting edges, which departs from the boundary
+rule of Remark~1 of the main paper. SEs are plug-in values; in S3 and S5 such SEs are
+too small when a space-time field is fitted (ratio of empirical SD to mean SE up to
+1.66 in S3 and 1.20 in S5 without escalation), so intervals from these models are
+likely too narrow. With a single shared space-time field, unrest-only episodes are
+absorbed into $v$, which can bias $\kappa$ towards zero. \todo{biv2 and S5 extension
+results.}}\label{tab:app-joint-full}
 \centering\small
 \input{tables/real_joint_full}
+\end{table}
+
+\section{Further simulation results}\label{supp:further-sim}
+
+\begin{table}
+\caption{S3: estimation of the state-dependence parameter $\delta$ for all five truths
+and all step lengths of the space-time field $v$ (20 replicates per truth). The two
+truths with slow $v$ have an AR(1) coefficient of 0.97 per week instead of 0.9. SD/SE
+is the ratio of the empirical SD of $\hat\delta$ to the mean estimated SE; values
+above 1 mean that the plug-in intervals are too narrow. Time is the mean fit time per
+replicate.}\label{tab:s3-full}
+\centering\small
+\input{tables/s3_full}
+\end{table}
+
+\begin{table}
+\caption{S4 with asymmetric biome effects $\gamma = (0, 0.1, 0.2, 0.4)$ (30
+replicates); otherwise as Table~\ref{tab:s4}. Because the cell-weighted mean
+$\bar\gamma$ of $\gamma$ is not zero, the SHAP slope targets
+$(\bar\gamma + \gamma_b)/2$.}\label{tab:s4-asym}
+\centering\small
+\input{tables/s4_asym}
 \end{table}
 
 \end{document}

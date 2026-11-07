@@ -1,0 +1,40 @@
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Estimator & Mean $\hat\delta$ & Emp.\ SD & Mean SE & SD/SE & Coverage & Time (s) \\
+\midrule
+\multicolumn{7}{@{}l}{\emph{State dependence ($\delta = 1$)}} \\
+\quad Lags only & 1.263 & 0.107 & 0.136 & 0.78 & 0.60 & 0.1 \\
+\quad Lags + $w$ & 1.032 & 0.131 & 0.139 & 0.94 & 0.90 & 0.9 \\
+\quad Lags + $w$ + $v$ (8-week steps) & 0.981 & 0.128 & 0.140 & 0.92 & 0.95 & 27.3 \\
+\quad Lags + $w$ + $v$ (4-week steps) & 0.990 & 0.135 & 0.140 & 0.96 & 0.95 & 101.5 \\
+\quad Lags + $w$ + $v$ (weekly steps) & 0.997 & 0.143 & 0.140 & 1.02 & 0.95 & 449.6 \\
+\addlinespace
+\multicolumn{7}{@{}l}{\emph{Heterogeneity ($\delta = 0$)}} \\
+\quad Lags only & 1.614 & 0.386 & 0.099 & 3.88 & 0.00 & 0.1 \\
+\quad Lags + $w$ & 0.464 & 0.093 & 0.111 & 0.84 & 0.00 & 1.0 \\
+\quad Lags + $w$ + $v$ (8-week steps) & 0.097 & 0.140 & 0.117 & 1.19 & 0.80 & 26.4 \\
+\quad Lags + $w$ + $v$ (4-week steps) & 0.045 & 0.152 & 0.119 & 1.28 & 0.90 & 95.1 \\
+\quad Lags + $w$ + $v$ (weekly steps) & 0.011 & 0.162 & 0.120 & 1.35 & 0.90 & 474.2 \\
+\addlinespace
+\multicolumn{7}{@{}l}{\emph{Mixed ($\delta = 0.5$)}} \\
+\quad Lags only & 1.659 & 0.351 & 0.106 & 3.32 & 0.00 & 0.1 \\
+\quad Lags + $w$ & 0.782 & 0.111 & 0.115 & 0.96 & 0.25 & 1.0 \\
+\quad Lags + $w$ + $v$ (8-week steps) & 0.567 & 0.144 & 0.119 & 1.21 & 0.85 & 24.6 \\
+\quad Lags + $w$ + $v$ (4-week steps) & 0.545 & 0.152 & 0.120 & 1.27 & 0.85 & 90.0 \\
+\quad Lags + $w$ + $v$ (weekly steps) & 0.535 & 0.172 & 0.120 & 1.43 & 0.80 & 349.7 \\
+\addlinespace
+\multicolumn{7}{@{}l}{\emph{Heterogeneity, slow $v$ ($\delta = 0$, $\phi = 0.97$ per week)}} \\
+\quad Lags only & 1.649 & 0.418 & 0.100 & 4.18 & 0.00 & 0.1 \\
+\quad Lags + $w$ & 0.384 & 0.115 & 0.113 & 1.01 & 0.05 & 1.0 \\
+\quad Lags + $w$ + $v$ (8-week steps) & 0.037 & 0.160 & 0.119 & 1.35 & 0.90 & 25.7 \\
+\quad Lags + $w$ + $v$ (4-week steps) & 0.006 & 0.170 & 0.119 & 1.42 & 0.95 & 91.8 \\
+\quad Lags + $w$ + $v$ (weekly steps) & -0.013 & 0.165 & 0.120 & 1.37 & 0.90 & 464.9 \\
+\addlinespace
+\multicolumn{7}{@{}l}{\emph{Mixed, slow $v$ ($\delta = 0.5$, $\phi = 0.97$ per week)}} \\
+\quad Lags only & 1.650 & 0.367 & 0.107 & 3.42 & 0.00 & 0.1 \\
+\quad Lags + $w$ & 0.711 & 0.144 & 0.118 & 1.22 & 0.55 & 1.0 \\
+\quad Lags + $w$ + $v$ (8-week steps) & 0.503 & 0.194 & 0.121 & 1.60 & 0.85 & 22.9 \\
+\quad Lags + $w$ + $v$ (4-week steps) & 0.491 & 0.198 & 0.122 & 1.63 & 0.85 & 84.0 \\
+\quad Lags + $w$ + $v$ (weekly steps) & 0.479 & 0.203 & 0.122 & 1.66 & 0.85 & 468.4 \\
+\bottomrule
+\end{tabular}

@@ -6,28 +6,30 @@
 %   results_real/compare/compare_unrest.json  b8e39ca9067c
 %   results_real/compare/compare_unrest_st.json  8d037dd2f5c8
 %   results_real/compare/compare_unrest_update.json  4c3deb048ccd
-\begin{tabular}{@{}lcccc@{}}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lcccccc@{}}
 \toprule
-Model & \multicolumn{2}{c}{Conflict} & \multicolumn{2}{c}{Unrest} \\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}
- & AUC-PR & $\Delta$ log score & AUC-PR & $\Delta$ log score \\
- & & $\times 10^3$ (SE) & & $\times 10^3$ (SE) \\
+Model & \multicolumn{3}{c}{Conflict} & \multicolumn{3}{c}{Unrest} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+ & AUC-PR & $\Delta$ log score & $\Delta$ Brier & AUC-PR & $\Delta$ log score & $\Delta$ Brier \\
+ & & $\times 10^3$ (SE) & $\times 10^3$ (SE) & & $\times 10^3$ (SE) & $\times 10^3$ (SE) \\
 \midrule
-\multicolumn{5}{@{}l}{\emph{Fitted once on 2018--2022}} \\
-\quad XGBoost, corrected (reference) & 0.515 & reference & 0.532 & reference \\
-\quad XGBoost + cell event rate & 0.533 & $-3.50$ (1.27) & 0.550 & $-3.22$ (0.78) \\
-\quad XGBoost, cross-fitted by country (offset) & 0.461 & $8.24$ (2.27) & 0.493 & $4.74$ (1.20) \\
-\quad Offset + $u$ + iid cell effects & 0.519 & $-0.93$ (0.89) & 0.540 & $-2.04$ (0.67) \\
-\quad Offset + $u + w$ & 0.519 & $-1.17$ (0.94) & 0.540 & $-2.07$ (0.66) \\
-\quad Offset + $u$ + cell effects + $v$, 13-week steps & 0.519 & $-1.56$ (0.96) & 0.541 & $-2.33$ (0.79) \\
-\quad Offset + $u$ + cell effects + $v$, 26-week steps & 0.518 & $-1.52$ (0.95) & 0.540 & $-2.29$ (0.80) \\
+\multicolumn{7}{@{}l}{\emph{Fitted once on 2018--2022}} \\
+\quad XGBoost, corrected (reference) & 0.515 & reference & reference & 0.532 & reference & reference \\
+\quad XGBoost + cell event rate & 0.533 & $-3.50$ (1.27) & $-0.32$ (0.22) & 0.550 & $-3.22$ (0.78) & $-0.36$ (0.18) \\
+\quad XGBoost, cross-fitted by country (offset) & 0.461 & $8.24$ (2.27) & $1.39$ (0.42) & 0.493 & $4.74$ (1.20) & $0.91$ (0.28) \\
+\quad Offset + $u$ + iid cell effects & 0.519 & $-0.93$ (0.89) & $0.42$ (0.21) & 0.540 & $-2.04$ (0.67) & $-0.10$ (0.18) \\
+\quad Offset + $u + w$ & 0.519 & $-1.17$ (0.94) & $0.44$ (0.23) & 0.540 & $-2.07$ (0.66) & $-0.10$ (0.18) \\
+\quad Offset + $u$ + cell effects + $v$, 13-week steps & 0.519 & $-1.56$ (0.96) & $0.30$ (0.24) & 0.541 & $-2.33$ (0.79) & $-0.19$ (0.21) \\
+\quad Offset + $u$ + cell effects + $v$, 26-week steps & 0.518 & $-1.52$ (0.95) & $0.34$ (0.25) & 0.540 & $-2.29$ (0.80) & $-0.17$ (0.22) \\
 \addlinespace
-\multicolumn{5}{@{}l}{\emph{Updated each quarter of the test period}} \\
-\quad XGBoost + cell event rate & 0.544 & $-4.98$ (1.31) & 0.559 & $-4.38$ (0.83) \\
-\quad Offset + $u$ + iid cell effects & 0.531 & $-2.30$ (0.76) & 0.550 & $-3.03$ (0.72) \\
-\quad Offset + $u + w$ & 0.531 & $-2.65$ (0.77) & 0.550 & $-3.06$ (0.72) \\
-\quad Offset + $u$ + cell effects + $v$, 13-week steps & 0.539 & $-3.52$ (0.81) & 0.554 & $-3.39$ (0.71) \\
+\multicolumn{7}{@{}l}{\emph{Updated each quarter of the test period}} \\
+\quad XGBoost + cell event rate & 0.544 & $-4.98$ (1.31) & $-0.54$ (0.23) & 0.559 & $-4.38$ (0.83) & $-0.59$ (0.17) \\
+\quad Offset + $u$ + iid cell effects & 0.531 & $-2.30$ (0.76) & $0.12$ (0.14) & 0.550 & $-3.03$ (0.72) & $-0.35$ (0.18) \\
+\quad Offset + $u + w$ & 0.531 & $-2.65$ (0.77) & $0.11$ (0.14) & 0.550 & $-3.06$ (0.72) & $-0.35$ (0.18) \\
+\quad Offset + $u$ + cell effects + $v$, 13-week steps & 0.539 & $-3.52$ (0.81) & $-0.14$ (0.09) & 0.554 & $-3.39$ (0.71) & $-0.42$ (0.17) \\
 \addlinespace
-Persistence (past 4 weeks) & 0.446 & -- & 0.451 & -- \\
+Persistence (past 4 weeks) & 0.446 & -- & -- & 0.451 & -- & -- \\
 \bottomrule
 \end{tabular}
+}

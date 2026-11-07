@@ -110,7 +110,7 @@ def s2():
     t = pd.read_csv(p)
     lab = {"glm": "Logistic regression", "country": "+ country effects $u$",
            "field": "+ spatial field $w$", "field+country": "+ $u$ + $w$",
-           "spatial+": "spatial+ with $u$ + $w$", "xgb_shap": "XGBoost SHAP slope$^\\dagger$"}
+           "spatial+": "spatial+: $u + w$, $Z_0$ projected$^\\ast$", "xgb_shap": "XGBoost SHAP slope$^\\dagger$"}
     scen = {"B_noconf_null": r"No confounding, $\alpha = 0$",
             "A_conf_null": r"Confounding, $\alpha = 0$",
             "C_conf_effect": r"Confounding, $\alpha = -0.3$"}
@@ -160,11 +160,41 @@ def s3():
             r"\midrule" "\n" + "\n".join(rows) + "\n" r"\bottomrule" "\n" r"\end{tabular}" "\n")
     write("s3.tex", body)
 
+    # Supplement: every truth and every step length, with the SD/SE ratio and fit times
+    lab_full = {"lag_only": "Lags only", "lag+field": "Lags + $w$",
+                "lag+field+st8": "Lags + $w$ + $v$ (8-week steps)",
+                "lag+field+st": "Lags + $w$ + $v$ (4-week steps)",
+                "lag+field+st1": "Lags + $w$ + $v$ (weekly steps)"}
+    tr_full = dict(tr)
+    tr_full.update({"heterogeneity_slow": r"Heterogeneity, slow $v$ ($\delta = 0$, $\phi = 0.97$ per week)",
+                    "mixed_slow": r"Mixed, slow $v$ ($\delta = 0.5$, $\phi = 0.97$ per week)"})
+    rows = []
+    for k, tl in tr_full.items():
+        sub = t[t.truth == k]
+        if len(sub) == 0:
+            continue
+        if rows:
+            rows.append(r"\addlinespace")
+        rows.append(r"\multicolumn{7}{@{}l}{\emph{" + tl + r"}} \\")
+        for m, ml in lab_full.items():
+            if (sub.model == m).sum() == 0:
+                continue
+            r = sub[sub.model == m].iloc[0]
+            ratio = r.emp_sd / r.mean_se if "sd_se_ratio" not in r or pd.isna(r.sd_se_ratio) else r.sd_se_ratio
+            rows.append(f"\\quad {ml} & {f(r.mean_est)} & {f(r.emp_sd)} & {f(r.mean_se)} & {f(ratio, 2)} & "
+                        f"{f(r.coverage95, 2)} & {f(r.mean_seconds, 1)} \\\\")
+    body = (r"\begin{tabular}{@{}lcccccc@{}}" "\n" r"\toprule" "\n"
+            r"Estimator & Mean $\hat\delta$ & Emp.\ SD & Mean SE & SD/SE & Coverage & Time (s) \\" "\n"
+            r"\midrule" "\n" + "\n".join(rows) + "\n" r"\bottomrule" "\n" r"\end{tabular}" "\n")
+    write("s3_full.tex", body)
 
-def s4():
-    p = os.path.join(RES, "s4_summary.csv")
+
+def s4(suffix=""):
+    """suffix '' : symmetric biome effects (s4.tex, s4_extra.tex);
+    suffix '_asym': asymmetric run (s4_asym.tex, s4_extra_asym.tex, Supplement)."""
+    p = os.path.join(RES, f"s4_summary{suffix}.csv")
     if not os.path.exists(p):
-        return placeholder("s4.tex", "s4_extra.tex")
+        return placeholder(f"s4{suffix}.tex", f"s4_extra{suffix}.tex")
     t = pd.read_csv(p)
     lab = {"biome_nofield": "Biome slopes, no latent effects",
            "biome_field": "Biome slopes + $u$ + $w$",
@@ -172,6 +202,8 @@ def s4():
            "xgb_slope": "XGBoost SHAP slope (targets $\\gamma_b/2$)",
            "xgb_slope_full": "XGBoost SHAP slope, interactions credited",
            "xgb_median_raw": "XGBoost median SHAP, raw temperature$^\\ddagger$"}
+    if suffix:   # with a non-zero cell-weighted mean of gamma the SHAP slope targets (gbar + gamma_b) / 2
+        lab["xgb_slope"] = "XGBoost SHAP slope (targets $(\\bar\\gamma + \\gamma_b)/2$)"
     rows = []
     for m, ml in lab.items():
         sub = t[t.model == m].sort_values("biome")
@@ -184,8 +216,11 @@ def s4():
     body = (r"\begin{tabular}{@{}lcccc@{}}" "\n" r"\toprule" "\n"
             r"Estimator / biome & Mean est. & Cov.\ $\gamma_b$ & Cov.\ $\bar\beta_b$ & Detects sign \\" "\n"
             r"\midrule" "\n" + "\n".join(rows) + "\n" r"\bottomrule" "\n" r"\end{tabular}" "\n")
-    write("s4.tex", body)
-    e = pd.read_csv(os.path.join(RES, "s4_extra.csv"))
+    write(f"s4{suffix}.tex", body)
+    pe = os.path.join(RES, f"s4_extra{suffix}.csv")
+    if not os.path.exists(pe):
+        return placeholder(f"s4_extra{suffix}.tex")
+    e = pd.read_csv(pe)
     lines = [(r"$\mathrm{cor}\{\hat\beta(s), \beta(s)\}$, SVC", e.svc_corr_beta_s),
              (r"RMSE of $\hat\beta(s)$, SVC", e.svc_rmse_beta_s),
              (r"RMSE of $\hat\beta(s)$, biome slopes only", e.biome_only_rmse_beta_s),
@@ -195,7 +230,7 @@ def s4():
     body = (r"\begin{tabular}{@{}lcc@{}}" "\n" r"\toprule" "\n" r"Quantity & Mean & SD \\" "\n"
             r"\midrule" "\n" + "\n".join(f"{a} & {b.mean():.{dg(a)}f} & {b.std():.{dg(a)}f} \\\\" for a, b in lines)
             + "\n" r"\bottomrule" "\n" r"\end{tabular}" "\n")
-    write("s4_extra.tex", body)
+    write(f"s4_extra{suffix}.tex", body)
 
 
 def s5():
@@ -207,8 +242,13 @@ def s5():
     rp = os.path.join(RES, "s5_raw.csv")
     raw = pd.read_csv(rp) if os.path.exists(rp) else None
     lab = {"glm": "Logistic regression", "uni_field": "Static field $w_c$",
-           "uni_st": "Static field $w_c$ + space-time field", "biv_st": "Joint model, shared space-time field"}
-    scen = {"no_escalation": r"No escalation, $\kappa = 0$", "escalation": r"Escalation, $\kappa = 0.4$"}
+           "uni_st": "Static field $w_c$ + space-time field", "biv_st": "Joint model, shared space-time field",
+           "biv_st2": "Joint model, shared + unrest-specific space-time fields"}
+    scen = {"no_escalation": r"No escalation, $\kappa = 0$", "escalation": r"Escalation, $\kappa = 0.4$",
+            "no_escalation_uST": r"No escalation, $\kappa = 0$, with unrest-only episodes",
+            "escalation_uST": r"Escalation, $\kappa = 0.4$, with unrest-only episodes"}
+    base = ("no_escalation", "escalation")
+    scen = {k: v for k, v in scen.items() if k in base or k in set(t.scenario)}
     fm = lambda x, d=3: (lambda v: f"${v}$" if v.startswith("-") and v != "--" else v)(f(x, d))
     rows = []
     for s_, sl in scen.items():
@@ -261,4 +301,4 @@ def barrier():
 
 
 if __name__ == "__main__":
-    s0(); s1(); s2(); s3(); s4(); s5(); barrier()
+    s0(); s1(); s2(); s3(); s4(); s4("_asym"); s5(); barrier()

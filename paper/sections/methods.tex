@@ -144,12 +144,23 @@ correlation across straits of four cells or more (about 220\,km) below 0.04, whi
 a strait of two cells still has a correlation of 0.16. Straits narrower than one
 cell are not resolved at this grid resolution. These figures depend on $\rho$,
 because the barrier range $f\rho$ and the buffer of six rings scale differently with
-it. For the fitted ranges of $w$ in the application, which are well below 400\,km,
-the barrier is stronger than in Table~S2 of the Supplementary Material. For ranges of 800\,km or
-more, which the SVC fields of Section~\ref{sec:methods-svc} can reach, $f\rho$
-exceeds the buffer, so the coastal variance inflation returns and correlation leaks
-across the wider straits. The stored real-data fits use the sea cells of the country
-polygons as barriers.
+it. The fitted ranges of the static fields in the application are mixed. In
+model~\eqref{eq:model} for Africa and the Middle East, $\hat\rho$ is 544\,km for
+conflict and 465\,km for unrest. In the regional fits of the state-dependence analysis
+it is 430--469\,km for conflict and 333--335\,km for unrest. In the joint model it is
+453\,km for $w_{\mathrm{C}}$ and 369\,km for $w_{\mathrm{U}}$. The fields of the
+spatially varying coefficients have ranges of 465\,km (conflict) and 972\,km (unrest).
+Below 400\,km the barrier range $f\rho$ is shorter, and the coastline is closer to a
+reflecting boundary than in Table~S2. For ranges of 800\,km or more, such as that of
+the unrest coefficient field, $f\rho$ exceeds the buffer, so the coastal variance
+inflation returns and correlation leaks across the wider straits. The residual fields
+of the hybrid models (Section~\ref{sec:methods-hybrid}) have ranges of 263\,km
+(conflict) and 65\,km (unrest). The latter is not resolved by the lattice and is read
+as cell-level effects (Section~\ref{sec:app-hybrid}). Table~S2 is also computed for a
+sea strait inside a closed rectangle of land, not for the geometry of the application,
+which has an open coast, a buffer of six rings and a reflecting outer edge. It shows
+the order of magnitude of the effects, not their size in the application. The stored
+real-data fits use the sea cells of the country polygons as barriers.
 \end{remark}
 
 \paragraph{Priors.} We use penalised-complexity priors
@@ -178,12 +189,21 @@ state-dependence analysis, and $\Delta = 13$ and $\Delta = 26$ for the space-tim
 forecasting models and the joint model of Section~\ref{sec:methods-joint}. In the
 last two, $v$ is also coarsened in space: it is defined on the $1^\circ$ cells that
 contain observed $0.5^\circ$ cells, and each $0.5^\circ$ cell takes the value of its
-$1^\circ$ cell. The field $v$ is defined on observed land cells only, so it cannot link
-cells across the sea, and it has reflecting boundaries at the edges of the observed
-region. In the models with $v$,
-the static field $w$ uses the same lattice as elsewhere: the observed cells, a
-buffer of six rings and sea barriers with $f = 0.5$ (Remark~\ref{rem:boundary}). The
-prior on
+$1^\circ$ cell. The field $v$ is defined on the observed land cells only, with no
+buffer, so it cannot link cells across the sea. Its lattice has reflecting boundaries
+at the coast and at the edges of the analysis box. This departs from
+Remark~\ref{rem:boundary}, under which land cells outside a regional box keep the
+range $\rho$. Near these edges the prior variance of $v$ is inflated, roughly doubled
+at an edge. The Central Sahel box of the state-dependence analysis is
+$22^\circ \times 11^\circ$, about $2400 \times 1200$\,km. The fitted range of $v$ there
+is 230\,km for conflict and 485\,km for unrest, so for unrest a large part of the box
+lies within one range of an edge, in particular in the north--south direction.
+Estimates of $\delta$ and $\kappa$ conditional on $v$ should be read with this caveat.
+In the state-dependence and joint models, the static field $w$ uses the same lattice
+as elsewhere: the observed cells, a buffer of six rings and sea barriers with
+$f = 0.5$ (Remark~\ref{rem:boundary}). The space-time forecasting models contain no
+$w$. Their static part is the country effects and independent cell effects, so their
+predictor is the boosting offset plus $\beta_0 + u + e + v$. The prior on
 $\operatorname{atanh}\phi$ is $\Normal(0, 1.5^2)$. Non-separable alternatives exist
 \citep{lindgren2024diffusion} but are not needed for the questions asked here.
 
@@ -314,7 +334,9 @@ is fixed at one, which fixes the scale and the sign of $v$, so $\lambda$ and its
 are identified. With $\lambda = 0$, the conflict equation of~\eqref{eq:joint} is the
 univariate conflict model with its own space-time field, and the two outcomes are
 independent given their histories. The comparison of the joint fit with that
-univariate fit therefore isolates the effect of letting unrest inform $v$. In the
+univariate fit shows the effect of letting unrest inform $v$, under the assumption that
+there is no outcome-specific space-time variation (see \emph{Identification and
+limits} below). In the
 application $v$ uses $\Delta = 13$ weeks on the $1^\circ$ lattice of
 Section~\ref{sec:methods-st}.
 
@@ -340,7 +362,11 @@ and~\ref{sec:methods-confounding} in another form. In the joint model the unrest
 outcomes enter the likelihood of $v$. The episode is estimated from both outcomes,
 and the dependence of $h_{\mathrm{U}st}$ on it is part of the model, because
 $h_{\mathrm{U}st}$ is built from earlier values of a modelled outcome.
-Section~\ref{sec:sim-joint} checks this argument by simulation.
+Section~\ref{sec:sim-joint} checks this argument by simulation. The simulation as
+reported has a single shared space-time field and no outcome-specific space-time field
+in the data-generating process, with steps of four weeks on a $0.5^\circ$ lattice. It
+checks the upward bias of the univariate estimate, but not the bias in the opposite
+direction described below.
 
 \paragraph{Identification and limits.} The shared field is identified from the joint
 movement of the two outcomes at its own resolution, beyond what the fixed effects
@@ -351,6 +377,16 @@ of the range of $v$ cannot be told apart from a shared episode, and is attribute
 $v$. The estimate $\hat\kappa$ is therefore the short-run, local part of escalation,
 and it can understate escalation at longer time scales. Second, shared episodes that
 are shorter than $\Delta$ weeks or finer than the lattice of $v$ remain in $\kappa$.
+Third, episodes that affect unrest only are also forced into $v$, because the model has
+no unrest-specific space-time field. Since $v$ enters the conflict predictor with
+loading one, conditioning on $v$ then removes part of the variation in
+$h_{\mathrm{U}st}$ through which escalation would act. This biases $\hat\kappa$ towards
+zero, even when escalation is real. The drop from the univariate to the joint estimate
+is therefore consistent both with the removal of confounding by shared episodes and
+with this attenuation. To separate the two, we fit an extended joint model with an
+additional unrest-specific space-time field of the same form as $v$, and we extend the
+simulation of Section~\ref{sec:sim-joint} with scenarios that contain unrest-only
+episodes, with and without escalation \todo{biv2 and S5 extension results}.
 
 The shared component mixes common shocks to occurrence with common shocks to
 reporting. Reporting rates vary in space \citep{weidmann2016closer}, reporting of
@@ -370,8 +406,10 @@ space-time component and fixed loading one for conflict
 \citep{gelfand2004nonstationary}. Outcome-specific persistent variation enters
 through $u_j$, $e_j$ and $w_j$, but there is no outcome-specific space-time field.
 Space-time variation of conflict that is not shared with unrest therefore also loads
-on $v$, and $\lambda$ is estimated against it. A second space-time component would
-relax this, at the cost of a second latent block of the size of $v$. Multivariate Hawkes
+on $v$, and $\lambda$ is estimated against it. Space-time variation of unrest that is
+not shared with conflict loads on $v$ as well, with the attenuation of $\hat\kappa$
+described above. A second space-time component, as in the extended model, relaxes
+this at the cost of a second latent block of the size of $v$. Multivariate Hawkes
 models of event data \citep{jun2024hawkes} and discrete-time Hawkes models of ACLED
 \citep{browning2026hawkes} explain co-occurrence by triggering, with a background rate
 that does not contain a shared time-varying latent component. In such models a shared
@@ -451,10 +489,14 @@ $n_c$ countries only, so their effective sample size is of order $n_c$, not the
 number of cell-weeks. Modelling cell-weeks as conditionally independent, or
 bootstrapping spatial blocks that cut across countries, therefore produces intervals
 that are far too narrow. The within coefficients rest on the few years of change
-within each country. A country with no training-period value of an indicator gets
-the mean between component and a value of one for that indicator's missingness
-indicator (Section~\ref{sec:methods-model}). The missingness indicator is itself
-country-level, so its coefficient also rests on few contrasts.
+within each country. A missing value of an indicator is set to the training mean, and
+the indicator's missingness indicator is set to one (Section~\ref{sec:methods-model}).
+The missingness indicator is defined per country and year. It varies mostly between
+countries, so its coefficient also rests on few contrasts. An indicator that is never
+missing in the training years has a constant missingness indicator there, which is
+dropped. This is the case for the EPI and liberal democracy. Their missing values in
+the test years are therefore set to the training mean without a flag
+(Section~\ref{sec:app-glmm}).
 
 If the indicators are associated with unobserved country-level risk, so that
 $\E\{u_c + \bar w_c \mid \bar z_c\} \neq 0$ with $\bar w_c$ the country average of
@@ -478,40 +520,44 @@ We report the following estimators and treat their disagreement as a measure of 
 fragile the national-level conclusions are:
 \begin{enumerate}
 \item model~\eqref{eq:model} without latent effects;
-\item model~\eqref{eq:model} with $\bu$ and $\bm{e}$;
+\item model~\eqref{eq:model} with $\bu$ (the cell effects $\bm{e}$ enter only together
+with $\bw$);
 \item model~\eqref{eq:model} with $\bu$, $\bw$ and $\bm{e}$;
 \item a \emph{spatial+} estimator \citep{dupont2022spatial}: model~\eqref{eq:model}
-with $\bw$ and $\bm{e}$ but \emph{without} $\bu$, in which each between component is
-replaced by its residual after an area-weighted projection, over the observed land
-cells, on the $m$ smoothest eigenvectors $\bm{\psi}$ of
-$\bG\bm{\psi} = \mu\bC\bm{\psi}$.
+with $\bu$, $\bw$ and $\bm{e}$, in which each between component is replaced by its
+residual after an area-weighted projection, over the observed land cells, on the $m$
+smoothest eigenvectors $\bm{\psi}$ of $\bG\bm{\psi} = \mu\bC\bm{\psi}$.
 \end{enumerate}
 These eigenvectors are the lattice analogue of the thin-plate eigenvectors of
 \citet{dupont2022spatial}. A country-constant indicator varies only by steps at
 borders. After the projection, the residual keeps these steps, minus a smooth
-function of the eigenvectors. In a model without $\bu$, the smooth variation is left
-to $\bw$ and the border steps identify the coefficient. In a model with $\bu$, the
-border steps are country-level jumps, which $\bu$ can absorb. The coefficient would
-then be identified only through the shrinkage of $\bu$ under its exchangeable prior,
-which is independent of the indicator. That is the random-effects exogeneity
-assumption we have just called implausible. This is why (iv) omits $\bu$. Without
-$\bu$, however, country-level risk that is not spatially smooth remains a possible
-confounder, and the projection also gives the residual some within-country variation
-that is a function of the smooth eigenvectors. We therefore treat (iv) as a
-sensitivity analysis and not as a preferred estimate.
+function of the eigenvectors. The projection removes the part of the between
+component that is smooth on the scales of $\bw$, so that it cannot be confounded with
+$\bw$. It does nothing about confounding with $\bu$. The remaining border steps are
+country-level jumps, which $\bu$ can absorb. With $\bu$ in the model, the between
+coefficient is therefore identified partly through the shrinkage of $\bu$ under its
+exchangeable prior, which is independent of the indicator. This is the random-effects
+exogeneity assumption $\E(u_c \mid \bar z_c) = 0$, which we have just called
+implausible. The same holds for estimators (ii) and (iii): the between component
+$\bar z_c$ and $u_c$ vary at the same country level, so the Mundlak decomposition does
+not protect the between coefficients. Their larger standard errors reflect the $n_c$
+contrasts, not robustness to confounding. The between conclusions under every
+estimator are conditional on this assumption. The projection also gives the residual
+some within-country variation that is a function of the smooth eigenvectors. We
+therefore treat (iv) as a sensitivity analysis and not as a preferred estimate.
 
 The default $m^*$ is the number of eigenvalues below
 $\kappa_w^2 = 8/\hat\rho_w^2$, the eigenvectors that vary on scales longer than the
-fitted range of $w$. This number can be large. By Weyl's law, for a region of area
-$|D|$ it is approximately $|D|\kappa_w^2/(4\pi) = 2|D|/(\pi\hat\rho_w^2)$. If
-$\hat\rho_w$ is close to the ranges of the hybrid fields of
-Section~\ref{sec:app-hybrid} (264\,km for conflict and 68\,km for unrest, on 13{,}719
-cells), $m^*$ is of the order of a few hundred for conflict and several thousand for
-unrest. The eigenvectors near the cut-off then vary on scales comparable to the size
-of many countries, and most of the between-country variation of a country-constant
-indicator is projected out. We therefore report $m = 10$, $m = 20$ and $m^*$, and
-state $m^*$ for each fit \todo{values of $m^*$ from the rerun of fit\_glmm.py, and
-whether the eigenvalue computation reached $m^*$}. The restricted spatial regression
+fitted range of $w$. We take $\hat\rho_w$ from estimator (iii): 544\,km for conflict
+and 465\,km for unrest. The eigenvalues are computed on the 13{,}719 observed land
+cells, up to a maximum of 400 eigenpairs. This gives $m^* = 138$ for conflict and
+$m^* = 176$ for unrest, both below the cap. By Weyl's law, for a region of area
+$|D|$ the count is approximately $|D|\kappa_w^2/(4\pi) = 2|D|/(\pi\hat\rho_w^2)$. With
+$|D| \approx 3.9\times10^7$\,km$^2$ this gives about 84 and 114. The computed counts
+are larger, which is consistent with the positive boundary correction to Weyl's law
+under reflecting boundaries and the long coastline of the region. We report $m = 10$,
+$m = 20$ and $m^*$, that is $m \in \{10, 20, 138\}$ for conflict and
+$m \in \{10, 20, 176\}$ for unrest. The restricted spatial regression
 of \citet{reich2006effects} is not used, because its intervals are known to be
 anticonservative \citep{hanks2015restricted, khan2022restricted}.
 
@@ -530,7 +576,7 @@ folds. For each fold $k$, $\hat f^{(-k)}$ is trained on the 2018--2022 rows of t
 other folds, with its number of trees chosen by early stopping on 2022 after training
 on 2018--2021. It then provides the offset for every row of fold $k$, in both the
 training and test periods. The offset and the latent effects are fitted on the
-Africa and Middle East box only. Trees that receive national indicators can identify
+Africa and the Middle East box only. Trees that receive national indicators can identify
 countries, and through population, biome and distance from the equator, approximate
 locations. Cross-fitting by country ensures that the offset of a cell was learned
 without any data from its own country, so that $u$ does not count that country's
@@ -588,7 +634,8 @@ is found by damped Newton iterations,
 \{\bA^\top(\bm{y} - \bm{\pi}) - \bQ\bm{\xi}\},
 \qquad \bm{W} = \mathrm{diag}\{\pi_{st}(1-\pi_{st})\},
 \]
-with step length $\ell$ halved until the objective does not decrease. For the joint
+with step length $\ell$ halved until the objective does not decrease. If $\ell$ falls
+below $10^{-6}$, the step is taken even if the objective has decreased. For the joint
 model~\eqref{eq:joint} the rows of both outcomes are stacked, so $\bm{y}$, $\bm{\pi}$
 and $\bm{W}$ run over the cell-weeks of both. The Laplace approximation to the marginal likelihood is
 \begin{equation}\label{eq:laplace}
@@ -622,7 +669,15 @@ latent variable and events are rare \citep{fong2010glmm, ferkingstad2015improvin
 The intervals also ignore the uncertainty in $\hat\btheta$.
 Section~\ref{sec:sim-engine} therefore checks coverage at the event prevalence of
 the data, and Section~\ref{sec:sim-persistence} checks it for the space-time model,
-where each latent value is informed by only $\Delta$ Bernoulli observations.
+where each latent value is informed by only $\Delta$ Bernoulli observations. When a
+space-time field is fitted and the data contain one, the plug-in standard errors are
+too small. In S3 the ratio of the empirical standard deviation of $\hat\delta$ to its
+mean standard error is between 1.19 and 1.66, and the coverage of nominal 95\%
+intervals is between 0.80 and 0.95. In S5 without escalation the ratio for
+$\hat\kappa$ is 1.20 (Section~\ref{sec:sim-joint}). Intervals from the space-time and
+joint models in the application are therefore likely too narrow, and an estimate whose
+nominal interval only just excludes zero should not be read as clearly different from
+zero.
 
 \paragraph{Computation.} All prior precisions are sparse. Every Newton step and every
 log-determinant requires a factorisation of $\bQ + \bH$, whose sparsity pattern does
@@ -647,7 +702,7 @@ ordering reduced factorisation time by a factor of 7 to 14 compared with that
 fallback. An LU factorisation stores both triangular factors, so it needs about twice
 the memory of a Cholesky factor of the same matrix. scikit-sparse was not installed on
 the computing cluster, so the fits run there used SuperLU \todo{confirm the backend
-of the Africa and Middle East joint fit}.
+of the Africa and the Middle East joint fit}.
 
 The $n_\theta$ perturbed evaluations of a finite-difference gradient are independent.
 They run in parallel in forked worker processes, which share the data, the design and
@@ -658,10 +713,13 @@ the shared field. Newton iterations stop when the relative change of the objecti
 below $10^{-8}$ and the largest step is below $10^{-5}$, or after 50 steps. An inner
 solve that stops at 50 steps without converging gives a Laplace value that is
 meaningless and often spuriously high. Such evaluations are rejected, as are those at
-which the factorisation fails: the objective is set to a very large value, and in a
-parallel gradient the corresponding component is set to zero. Rejected evaluations
-can still make the optimiser stop at a poor point, so they should be recorded for each
-fit \todo{report the number of rejected evaluations for the real-data fits}.
+which the factorisation fails: the objective is set to a very large value. In a
+parallel gradient, a component whose perturbed evaluation is rejected is set to zero.
+If the evaluation at the current point is itself rejected, the components are not set
+to zero and take very large values. In the serial path, the finite differences of
+L-BFGS-B are taken on the large value directly. Rejected evaluations can make the
+optimiser stop at a poor point, so they should be recorded for each fit \todo{report
+the number of rejected evaluations for the real-data fits}.
 
 Since $\bH = \bA^\top\bm{W}\bA$ aggregates over weeks, the cost of the spatial and SVC
 blocks is driven by the number of cells, not by the number of cell-weeks. A global

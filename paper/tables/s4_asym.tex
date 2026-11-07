@@ -1,0 +1,36 @@
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Estimator / biome & Mean est. & Cov.\ $\gamma_b$ & Cov.\ $\bar\beta_b$ & Detects sign \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{Biome slopes, no latent effects}} \\
+\quad biome 1 ($\gamma = +0.0$) & 0.013 & 0.53 & 0.90 & 0.00 \\
+\quad biome 2 ($\gamma = +0.1$) & 0.108 & 0.57 & 0.87 & 0.70 \\
+\quad biome 3 ($\gamma = +0.2$) & 0.197 & 0.57 & 0.63 & 0.93 \\
+\quad biome 4 ($\gamma = +0.4$) & 0.401 & 0.50 & 0.57 & 1.00 \\
+\multicolumn{5}{@{}l}{\emph{Biome slopes + $u$ + $w$}} \\
+\quad biome 1 ($\gamma = +0.0$) & 0.012 & 0.67 & 0.87 & 0.00 \\
+\quad biome 2 ($\gamma = +0.1$) & 0.120 & 0.60 & 0.93 & 0.73 \\
+\quad biome 3 ($\gamma = +0.2$) & 0.213 & 0.57 & 0.73 & 0.97 \\
+\quad biome 4 ($\gamma = +0.4$) & 0.420 & 0.47 & 0.87 & 1.00 \\
+\multicolumn{5}{@{}l}{\emph{SVC: biome means + $\eta$ + $u$ + $w$}} \\
+\quad biome 1 ($\gamma = +0.0$) & 0.013 & 0.87 & 1.00 & 0.00 \\
+\quad biome 2 ($\gamma = +0.1$) & 0.121 & 0.83 & 1.00 & 0.37 \\
+\quad biome 3 ($\gamma = +0.2$) & 0.209 & 0.77 & 1.00 & 0.77 \\
+\quad biome 4 ($\gamma = +0.4$) & 0.413 & 0.77 & 1.00 & 1.00 \\
+\multicolumn{5}{@{}l}{\emph{XGBoost SHAP slope (targets $(\bar\gamma + \gamma_b)/2$)}} \\
+\quad biome 1 ($\gamma = +0.0$) & 0.111 & 0.30 & 0.30 & 0.00 \\
+\quad biome 2 ($\gamma = +0.1$) & 0.147 & 0.60 & 0.80 & 0.87 \\
+\quad biome 3 ($\gamma = +0.2$) & 0.186 & 0.67 & 0.67 & 0.97 \\
+\quad biome 4 ($\gamma = +0.4$) & 0.228 & 0.10 & 0.03 & 1.00 \\
+\multicolumn{5}{@{}l}{\emph{XGBoost SHAP slope, interactions credited}} \\
+\quad biome 1 ($\gamma = +0.0$) & 0.052 & 0.80 & 0.83 & 0.00 \\
+\quad biome 2 ($\gamma = +0.1$) & 0.124 & 0.67 & 0.93 & 0.80 \\
+\quad biome 3 ($\gamma = +0.2$) & 0.205 & 0.63 & 0.80 & 0.93 \\
+\quad biome 4 ($\gamma = +0.4$) & 0.286 & 0.43 & 0.37 & 1.00 \\
+\multicolumn{5}{@{}l}{\emph{XGBoost median SHAP, raw temperature$^\ddagger$}} \\
+\quad biome 1 ($\gamma = +0.0$) & -0.226 & 0.03 & 0.00 & 0.00 \\
+\quad biome 2 ($\gamma = +0.1$) & -0.174 & 0.00 & 0.00 & 0.00 \\
+\quad biome 3 ($\gamma = +0.2$) & -0.077 & 0.00 & 0.00 & 0.03 \\
+\quad biome 4 ($\gamma = +0.4$) & 0.092 & 0.00 & 0.00 & 0.67 \\
+\bottomrule
+\end{tabular}

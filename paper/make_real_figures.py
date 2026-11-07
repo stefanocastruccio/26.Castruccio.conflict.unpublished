@@ -419,34 +419,41 @@ def table_forecast():
     for gi, (gname, models) in enumerate(FORECAST_GROUPS):
         if gi:
             rows.append("\\addlinespace")
-        rows.append(f"\\multicolumn{{5}}{{@{{}}l}}{{\\emph{{{gname}}}}} \\\\")
+        rows.append(f"\\multicolumn{{7}}{{@{{}}l}}{{\\emph{{{gname}}}}} \\\\")
         for k, lab in models:
             if not any(k in M[o] for o in OUTCOMES):
-                rows.append(f"\\quad {lab} & \\multicolumn{{4}}{{c}}{{\\todo{{missing}}}} \\\\")
+                rows.append(f"\\quad {lab} & \\multicolumn{{6}}{{c}}{{\\todo{{missing}}}} \\\\")
                 continue
             cells = [f"\\quad {lab}"]
             for o in OUTCOMES:
                 r = M[o].get(k)
                 if r is None:
-                    cells += ["--", "--"]; continue
+                    cells += ["--", "--", "--"]; continue
                 d = r.get("logscore_diff_vs_ref") or {}
-                cells += [f(r.get("auc_pr")),
-                          "reference" if k == "xgb" else f"${sc(d.get('mean'))}$ ({sc(d.get('se_country'))})"]
+                b = r.get("brier_diff_vs_ref") or {}
+                if k == "xgb":
+                    cells += [f(r.get("auc_pr")), "reference", "reference"]
+                else:
+                    cells += [f(r.get("auc_pr")), f"${sc(d.get('mean'))}$ ({sc(d.get('se_country'))})",
+                              f"${sc(b.get('mean'))}$ ({sc(b.get('se_country'))})"]
                 SUMMARY.append(("real_forecast.tex", f"{o:8s} {k:17s} AUC-PR={f(r.get('auc_pr'))} "
                                 f"log={f(r.get('log_score'), 5)} dlog x1e3={sc(d.get('mean'))} "
-                                f"se_country={sc(d.get('se_country'))} se_cell={sc(d.get('se_cell'))}"))
+                                f"se_country={sc(d.get('se_country'))} se_cell={sc(d.get('se_cell'))} "
+                                f"brier={f(r.get('brier'), 5)} dbrier x1e3={sc(b.get('mean'))} "
+                                f"se_country={sc(b.get('se_country'))}"))
             rows.append(" & ".join(cells) + " \\\\")
     rows.append("\\addlinespace")
     rows.append("Persistence (past 4 weeks) & " + " & ".join(
-        f"{f(meta[o][1]) if o in meta else '--'} & --" for o in OUTCOMES) + " \\\\")
+        f"{f(meta[o][1]) if o in meta else '--'} & -- & --" for o in OUTCOMES) + " \\\\")
     extra = {o: sorted(set(M[o]) - {k for _, g in FORECAST_GROUPS for k, _ in g}) for o in OUTCOMES}
     SUMMARY.append(("real_forecast.tex", f"rows={ {o: meta.get(o, (None,))[0] for o in OUTCOMES} } "
                     f"untabulated models={extra}"))
-    head = ("Model & \\multicolumn{2}{c}{Conflict} & \\multicolumn{2}{c}{Unrest} \\\\\n"
-            "\\cmidrule(lr){2-3}\\cmidrule(lr){4-5}\n"
-            " & AUC-PR & $\\Delta$ log score & AUC-PR & $\\Delta$ log score \\\\\n"
-            " & & $\\times 10^3$ (SE) & & $\\times 10^3$ (SE) \\\\")
-    write("real_forecast.tex", tabular("@{}lcccc@{}", head, rows), inputs)
+    head = ("Model & \\multicolumn{3}{c}{Conflict} & \\multicolumn{3}{c}{Unrest} \\\\\n"
+            "\\cmidrule(lr){2-4}\\cmidrule(lr){5-7}\n"
+            " & AUC-PR & $\\Delta$ log score & $\\Delta$ Brier & AUC-PR & $\\Delta$ log score & $\\Delta$ Brier \\\\\n"
+            " & & $\\times 10^3$ (SE) & $\\times 10^3$ (SE) & & $\\times 10^3$ (SE) & $\\times 10^3$ (SE) \\\\")
+    # seven columns with long model labels: scale to the text width
+    write("real_forecast.tex", "\\resizebox{\\textwidth}{!}{%\n" + tabular("@{}lcccccc@{}", head, rows) + "}\n", inputs)
 
 
 def _dyn(o, mode):
@@ -523,7 +530,7 @@ def table_dynamic():
         line("Test rows (2024)", lambda o: f"{R[o]['n_rows']:,}".replace(",", "{,}"))
     for mode, steps in (("st13_r1", 13), ("st26_r1", 26)):
         if panel(f"({'c' if steps == 13 else 'd'}) Space-time hybrid, offset + $u$ + cell effects + $v$, "
-                 f"{steps}-week steps on $1^\\circ$ cells", mode):
+                 f"{steps}-week steps on observed $1^\\circ$ cells", mode):
             line("$\\hat\\rho_v$ (km)", lambda o: f(g(o, mode, "hyper", "st.range_km"), 0))
             line("$\\hat\\sigma_v$", lambda o: f(g(o, mode, "hyper", "st.sd"), 2))
             line(f"$\\hat\\phi$ (per {steps} weeks)", lambda o: f(g(o, mode, "hyper", "st.rho"), 3))
@@ -539,17 +546,38 @@ def table_dynamic():
     write("real_dynamic.tex", tabular("@{}lcc@{}", head, rows), inputs)
 
 
-REGION_NAMES = {"west_sahel": "West Africa and Sahel", "africa_me": "Africa and Middle East"}
+REGION_NAMES = {"west_sahel": "West Africa and Sahel", "africa_me": "AME region"}
 JOINT_MODELS = [("uni_static", "Conflict only, $u + e + w$"),
                 ("uni_st", "Conflict only, $u + e + w + v$"),
-                ("biv", "Joint, shared $v$")]
+                ("biv", "Joint, shared $v$"),
+                ("biv2", "Joint, shared $v$ + unrest-specific $v_{\\mathrm{U}}$")]
 
 
 def biv_files():
-    ps = sorted(glob.glob(os.path.join(RES, "bivariate", "*", "summary_biv.json")))
-    out = {os.path.basename(os.path.dirname(p)): p for p in ps}
+    """Region -> list of summary files. summary_biv.json holds uni_static, uni_st and biv; an
+    extended run (biv2: shared v + unrest-specific space-time field) may write its own
+    summary_biv*.json in the same folder. Models are merged by load_biv()."""
+    out = {}
+    for p in sorted(glob.glob(os.path.join(RES, "bivariate", "*", "summary_biv*.json"))):
+        reg = os.path.basename(os.path.dirname(p))
+        out.setdefault(reg, [])
+        # the main file first
+        out[reg].insert(0, p) if os.path.basename(p) == "summary_biv.json" else out[reg].append(p)
     order = [r for r in ("west_sahel", "africa_me") if r in out] + sorted(r for r in out if r not in REGION_NAMES)
     return {r: out[r] for r in order}
+
+
+def load_biv(paths):
+    s = load(paths[0])
+    s.setdefault("models", {})
+    for p in paths[1:]:
+        for k, m in (load(p).get("models") or {}).items():
+            s["models"].setdefault(k, m)
+    return s
+
+
+def biv_inputs(bf):
+    return [p for ps in bf.values() for p in ps]
 
 
 def coef(c):
@@ -568,14 +596,14 @@ def table_joint():
     bf = biv_files()
     rows = []
     for i, (reg, p) in enumerate(bf.items()):
-        s = load(p)
+        s = load_biv(p)
         if i:
             rows.append("\\addlinespace")
         rows.append(f"\\multicolumn{{7}}{{@{{}}l}}{{\\emph{{{REGION_NAMES.get(reg, tex_escape(reg))}}}}} \\\\")
         for k, lab in JOINT_MODELS:
             m = get(s, "models", k)
             if m is None:
-                rows.append(f"\\quad {lab} & \\multicolumn{{6}}{{c}}{{\\todo{{not fitted}}}} \\\\"); continue
+                rows.append(f"\\quad {lab} & \\multicolumn{{6}}{{c}}{{\\todo{{{k} results}}}} \\\\"); continue
             lc, h = m.get("lag_coefficients", {}), m.get("hyper", {})
             rng = st_hyper(h, "range_km")
             cells = [f"\\quad {lab}", coef(lc.get("conflict:lag_other")), coef(lc.get("conflict:lag_other_nb")),
@@ -591,13 +619,12 @@ def table_joint():
     if "africa_me" not in bf:
         if rows:
             rows.append("\\addlinespace")
-        rows.append("\\multicolumn{7}{@{}l}{\\emph{Africa and Middle East}: \\todo{running}} \\\\")
+        rows.append("\\multicolumn{7}{@{}l}{\\emph{AME region}: \\todo{running}} \\\\")
     head = ("Region and model & $\\hat\\kappa$ & $\\hat\\kappa^{\\mathrm{nb}}$ & $\\hat\\delta^{\\mathrm{nb}}_{\\mathrm{C}}$ & "
             "$\\hat\\lambda$ & $\\hat\\rho_v$ (km) & $\\hat\\phi$ \\\\\n"
             " & unrest & neighbours' & neighbours' & & & \\\\\n"
             " & history & unrest & conflict & & & \\\\")
-    write("real_joint.tex", tabular("@{}lcccccc@{}", head, rows),
-          list(bf.values()))
+    write("real_joint.tex", tabular("@{}lcccccc@{}", head, rows), biv_inputs(bf))
 
 
 HYPER_ROWS = [("country_conflict.sd", "$\\sigma_{u,\\mathrm{C}}$", 2), ("cell_conflict.sd", "$\\sigma_{e,\\mathrm{C}}$", 2),
@@ -605,7 +632,9 @@ HYPER_ROWS = [("country_conflict.sd", "$\\sigma_{u,\\mathrm{C}}$", 2), ("cell_co
               ("country_unrest.sd", "$\\sigma_{u,\\mathrm{U}}$", 2), ("cell_unrest.sd", "$\\sigma_{e,\\mathrm{U}}$", 2),
               ("field_unrest.range_km", "$\\rho_{w,\\mathrm{U}}$ (km)", 0), ("field_unrest.sd", "$\\sigma_{w,\\mathrm{U}}$", 2),
               ("@range_km", "$\\rho_v$ (km)", 0), ("@sd", "$\\sigma_v$", 2), ("@rho", "$\\phi$ (per step)", 3),
-              ("shared_st.loading", "$\\lambda$", 3)]
+              ("shared_st.loading", "$\\lambda$", 3),
+              ("st_unrest.range_km", "$\\rho_{v,\\mathrm{U}}$ (km)", 0), ("st_unrest.sd", "$\\sigma_{v,\\mathrm{U}}$", 2),
+              ("st_unrest.rho", "$\\phi_{\\mathrm{U}}$ (per step)", 3)]
 LAG_ROWS = [("conflict:lag_own", "$\\delta_{\\mathrm{C}}$: own history"),
             ("conflict:lag_other", "$\\kappa$: unrest history"),
             ("conflict:lag_own_nb", "$\\delta^{\\mathrm{nb}}_{\\mathrm{C}}$: neighbours' conflict"),
@@ -617,48 +646,60 @@ LAG_ROWS = [("conflict:lag_own", "$\\delta_{\\mathrm{C}}$: own history"),
 
 
 def table_joint_full():
-    """Supplement S12: hyperparameters and lag coefficients of every joint-model fit."""
+    """Supplement S12: hyperparameters and lag coefficients of every joint-model fit.
+    The column for biv2 (shared v + unrest-specific space-time field) appears once any
+    region has it; until then a TODO row marks where it goes."""
     bf = biv_files()
+    S = {reg: load_biv(ps) for reg, ps in bf.items()}
+    cols = [(k, lab) for k, lab in JOINT_MODELS
+            if k != "biv2" or any(get(s, "models", "biv2") for s in S.values())]
+    nc = 1 + len(cols)
     rows = []
-    for i, (reg, p) in enumerate(bf.items()):
-        s = load(p)
-        M = [get(s, "models", k) or {} for k, _ in JOINT_MODELS]
+    for i, (reg, s) in enumerate(S.items()):
+        M = [get(s, "models", k) or {} for k, _ in cols]
         if i:
             rows.append("\\addlinespace")
         n_ = lambda k: "--" if s.get(k) is None else f"{s[k]:,}"
-        rows.append(f"\\multicolumn{{4}}{{@{{}}l}}{{\\emph{{{REGION_NAMES.get(reg, tex_escape(reg))}}}}} \\\\")
-        rows.append((f"\\multicolumn{{4}}{{@{{}}l}}{{\\quad {n_('cells')} cells, {s.get('countries')} countries, "
+        mc = f"\\multicolumn{{{nc}}}{{@{{}}l}}"
+        rows.append(f"{mc}{{\\emph{{{REGION_NAMES.get(reg, tex_escape(reg))}}}}} \\\\")
+        rows.append((f"{mc}{{\\quad {n_('cells')} cells, {s.get('countries')} countries, "
                      f"{n_('rows_per_outcome')} rows per outcome}} \\\\").replace(",", "{,}").replace("{,} ", ", "))
-        rows.append((f"\\multicolumn{{4}}{{@{{}}l}}{{\\quad $v$ on {n_('st_cells')} $1^\\circ$ cells, "
+        rows.append((f"{mc}{{\\quad $v$ on {n_('st_cells')} observed $1^\\circ$ cells (reflecting edges), "
                      f"{s.get('time_steps')} steps of {s.get('st_step_weeks')} weeks}} \\\\").replace(",", "{,}").replace("{,} ", ", "))
-        rows.append("\\multicolumn{4}{@{}l}{Hyperparameters} \\\\")
+        rows.append(f"{mc}{{Hyperparameters}} \\\\")
         for key, lab, d in HYPER_ROWS:
             vals = [(st_hyper(m.get("hyper", {}), key[1:]) if key.startswith("@") else get(m, "hyper", key)) for m in M]
             if all(v is None for v in vals):
                 continue
             rows.append(f"\\quad {lab} & " + " & ".join(f(v, d) for v in vals) + " \\\\")
-        rows.append("\\multicolumn{4}{@{}l}{Conflict equation} \\\\")
+        rows.append(f"{mc}{{Conflict equation}} \\\\")
         for key, lab in LAG_ROWS:
             if key == "unrest:lag_own":
-                rows.append("\\multicolumn{4}{@{}l}{Unrest equation} \\\\")
+                rows.append(f"{mc}{{Unrest equation}} \\\\")
             rows.append(f"\\quad {lab} & " + " & ".join(coef(get(m, "lag_coefficients", key)) for m in M) + " \\\\")
-        rows.append("\\multicolumn{4}{@{}l}{Fit} \\\\")
+        rows.append(f"{mc}{{Fit}} \\\\")
         rows.append("\\quad Log marginal likelihood & " + " & ".join(fm(m.get("log_ml"), 1) for m in M) + " \\\\")
         rows.append("\\quad Fit time (h) & " + " & ".join(
             "--" if m.get("seconds") is None else f"{m['seconds'] / 3600:.1f}" for m in M) + " \\\\")
         for o in OUTCOMES:
             rows.append(f"\\quad Test AUC-PR, {o} & " + " & ".join(f(get(m, "test_scores", o, "auc_pr")) for m in M) + " \\\\")
             rows.append(f"\\quad Test log score, {o} & " + " & ".join(f(get(m, "test_scores", o, "log_score"), 4) for m in M) + " \\\\")
-        for m, (k, _) in zip(M, JOINT_MODELS):
+        for m, (k, _) in zip(M, cols):
             SUMMARY.append(("real_joint_full.tex", f"{reg} {k} hyper={m.get('hyper')} log_ml={m.get('log_ml')} "
                             f"test={m.get('test_scores')}"))
+    if len(cols) < len(JOINT_MODELS):
+        rows.append("\\addlinespace")
+        rows.append(f"\\multicolumn{{{nc}}}{{@{{}}l}}{{Joint model with an unrest-specific space-time field: "
+                    f"\\todo{{biv2 results}}}} \\\\")
     if "africa_me" not in bf:
-        if rows:
-            rows.append("\\addlinespace")
-        rows.append("\\multicolumn{4}{@{}l}{\\emph{Africa and Middle East}: \\todo{running}} \\\\")
-    head = ("Quantity & Conflict only & Conflict only & Joint \\\\\n"
-            " & $u + e + w$ & $u + e + w + v$ & shared $v$ \\\\")
-    write("real_joint_full.tex", tabular("@{}lccc@{}", head, rows), list(bf.values()))
+        rows.append("\\addlinespace")
+        rows.append(f"\\multicolumn{{{nc}}}{{@{{}}l}}{{\\emph{{AME region}}: \\todo{{running}}}} \\\\")
+    top = {"uni_static": "Conflict only", "uni_st": "Conflict only", "biv": "Joint", "biv2": "Joint"}
+    bot = {"uni_static": "$u + e + w$", "uni_st": "$u + e + w + v$", "biv": "shared $v$",
+           "biv2": "shared $v$ + $v_{\\mathrm{U}}$"}
+    head = ("Quantity & " + " & ".join(top[k] for k, _ in cols) + " \\\\\n"
+            " & " + " & ".join(bot[k] for k, _ in cols) + " \\\\")
+    write("real_joint_full.tex", tabular("@{}l" + "c" * len(cols) + "@{}", head, rows), biv_inputs(bf))
 
 
 def write_summary(path):
