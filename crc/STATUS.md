@@ -969,3 +969,9 @@ The bivariate model's shared space-time component absorbs the unrest-to-conflict
   qhost reports the node at only 61.5 GB physically used, so the summed rss counts shared pages several times.
   There is no OOM sign. For future runs on 16 slots with FIT_JOBS=8, though, expect the summed figures to roughly
   double: rss about 370 GB on a 251 GB node. That would be fine only if the sharing holds.
+
+## 2026-11-07 15:08 EST: Round 8 submitted (repo at 65d48ff)
+- West Africa biv2: **1701825** (`-t 1`, 16 slots, FIT_JOBS=8), submitted first as the priority.
+- S5 v2: **1701826** (40 tasks × 4 slots), with merge **1701827** held on it. The merge uses the same wrapper as Round 6:
+  `cd sims && N_JOBS=1 python s5_bivariate.py`. The new checkpoints (`s5v2_ckpt*`) are separate from Round 6's `s5_ckpt*`.
+- 1699951.2 (africa_me biv) keeps running. `17_biv2.sh -t 2` waits until it finishes.
