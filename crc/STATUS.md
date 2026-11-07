@@ -907,3 +907,13 @@ The bivariate model's shared space-time component absorbs the unrest-to-conflict
   - **EPI_index and v2x_libdem missing were dropped** because they are constant in training;
   - MF and ECO were merged into GHG.
 - **Round 3 is now complete.** The only job still running is the Round 7 bivariate africa_me (1696206.2).
+
+## 2026-11-07 08:21 EST: FLAG. Round 7 bivariate africa_me (1696206.2) may exceed 48 h
+- Wall time 12 h 18 min, maxvmem 59.2 GB, no Traceback. uni_static and uni_st are done, and the bivariate fit has
+  been running for roughly 8-9 h.
+- Rough projection: the west_sahel bivariate fit took 16,253 s (4.5 h). africa_me has about 5.4x the rows,
+  5.5x the static-field cells, and a space-time latent about 2.8x larger (3,637 x 14 against 641 x 28).
+  - If cost scales 5-15x, the bivariate fit alone needs about 22-70 h.
+  - So the total is plausibly 1-3 days, with a real chance of passing 48 h.
+- `h_rt` is 96 h, so the job is killed at the latest around Mon 2026-11-10 20:00 EST.
+- I am **leaving it running**. If you'd rather switch to sub-regions, put that in TASKS.md and say whether to qdel 1696206.2.
