@@ -293,3 +293,18 @@ qsub -hold_jid $J crc/jobs/12_dynamic_compare.sh
   - `variogram_*.csv` and `field_test.csv` -> `results_real/dynamic/<outcome>/`
   - `$WORK/compare/compare_*_st.json` and `compare_*_rolling.json` -> `results_real/compare/`
 - Also: the global (1694070) and glmm (1694071) jobs from Round 3. Report them when they finish.
+
+## Round 5 (quarterly updating): READY
+Every model is updated each quarter of 2023-2024 with all data before the quarter.
+```
+cd /users/scastruc/projects/26.Castruccio.conflict.unpublished && git pull
+X=$(qsub -terse -t 7-8 crc/jobs/03_xgb.sh | cut -d. -f1)       # corrected_te again: adds the logit_upd column
+U=$(qsub -terse crc/jobs/13_update.sh | cut -d. -f1)            # latent models, about 3 h (space-time fit)
+qsub -hold_jid $X,$U crc/jobs/14_update_compare.sh
+```
+- Commit these:
+  - `results_real/xgb/metrics_corrected_te_*.json`, which now has a `quarterly_update` block;
+  - `results_real/dynamic/<outcome>/summary_update.json`;
+  - `results_real/compare/compare_*_update.json` and the `_variogram.csv` files.
+- Not done yet: the rolling-compare label you flagged. The rows are 2024 only and the label is wrong. I'll fix it in
+  compare.py later; no rerun is needed.

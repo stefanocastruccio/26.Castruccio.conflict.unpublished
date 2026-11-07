@@ -256,6 +256,25 @@ def main():
             "logit_cal": logit_cal.astype("float32")}
     if "events_52w" in test.columns:
         pred["events_52w"] = test["events_52w"].to_numpy(dtype="float32")
+    if a.target_encode:
+        # quarterly updating (same trees): for each quarter of the test period the cell's
+        # event rate is recomputed from ALL rows before the start of that quarter, as an
+        # operational forecaster would; compared with the latent models updated the same
+        # way in fit_dynamic.py --mode update
+        ws = df["week_start"]
+        upd = np.empty(len(test), dtype="float32")
+        qstarts = pd.date_range("2023-01-01", "2025-01-01", freq="QS")
+        for q0, q1 in zip(qstarts[:-1], qstarts[1:]):
+            before = (ws < q0).to_numpy()
+            rate = pd.Series(cell_rate_feature(df["grid_id"].to_numpy(), yr.to_numpy(),
+                                               df[y].to_numpy(float), before), index=df.index)
+            inq = ((test.week_start >= q0) & (test.week_start < q1)).to_numpy()
+            upd[inq] = model.predict(xgb.DMatrix(X(test[inq], rate)), output_margin=True,
+                                     iteration_range=(0, rounds))
+        pred["logit_upd"] = upd
+        m_upd = _scores(yt, 1 / (1 + np.exp(-upd)), lag)
+        json.dump({**m, "quarterly_update": m_upd},
+                  open(os.path.join(a.out, f"metrics_{tag}_{y}.json"), "w"), indent=1)
     pd.DataFrame(pred).to_parquet(os.path.join(a.out, f"pred_{tag}_{y}.parquet"), index=False)
     print(json.dumps({k: v for k, v in m.items() if k not in ("features",)}, indent=1))
 

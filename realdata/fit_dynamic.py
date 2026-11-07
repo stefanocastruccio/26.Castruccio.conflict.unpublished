@@ -15,6 +15,13 @@ the hybrid model of fit_acled.py (same region, rows, features, offset and lattic
                     latent models fitted on 2018-2023; scores on 2024. Writes
                     test_pred_2024.parquet with p_*_roll columns for compare.py, to be put
                     next to the 2024 rows of the static fit.
+  --mode update     Quarterly updating, as an early-warning system would be run. The
+                    hyperparameters of three latent models (field, iid, space-time with
+                    --step weeks) are fitted once on 2018-2022; then for each quarter of
+                    2023-2024 the latent effects are recomputed (posterior mode with the
+                    hyperparameters fixed) from ALL rows before the start of the quarter,
+                    and the quarter is predicted. Writes test_pred_update.parquet
+                    (p_field_upd, p_iid_upd, p_st_upd) and summary_update.json.
   --mode spacetime  Offset + intercept + country effects + iid cell effects + AR(1) x Matern
                     space-time field v on the observed land cells (on a --st-res degree grid,
                     1 degree by default, to keep the latent size manageable), with time steps of
@@ -125,7 +132,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("table"); ap.add_argument("--outcome", default="conflict")
     ap.add_argument("--region", default="africa_me"); ap.add_argument("--land", required=True)
-    ap.add_argument("--mode", choices=["oracle", "rolling", "spacetime"], required=True)
+    ap.add_argument("--mode", choices=["oracle", "rolling", "spacetime", "update"], required=True)
     ap.add_argument("--offset", help="offset.npy written by fit_acled.py (oracle, spacetime)")
     ap.add_argument("--static-field", help="field.csv written by fit_acled.py (oracle)")
     ap.add_argument("--step", type=int, default=13, help="weeks per time step of v (spacetime)")
@@ -200,6 +207,68 @@ def main():
         pd.DataFrame({"grid_id": d_te["grid_id"].to_numpy(), "week_start": d_te["week_start"].to_numpy(),
                       "y": d_te["y"].to_numpy().astype("int8"), **preds}).to_parquet(
             os.path.join(a.out, "test_pred_2024.parquet"), index=False)
+
+    elif a.mode == "update":
+        off = load_offset()
+        tr = (df["year"] <= 2022).to_numpy()
+        wk = ((df["week_start"] - df["week_start"].min()).dt.days // 7).to_numpy()
+        df["tstep"] = wk // a.step
+        T = int(df["tstep"].max() + 1)
+        r = a.st_res
+        lon_v = np.floor(df.lon.to_numpy() / r) * r + r / 2
+        lat_v = np.floor(df.lat.to_numpy() / r) * r + r / 2
+        Lv, cell_v, _ = build_lattice(lon_v, lat_v, res=r, buffer=0)
+        df["cell_v"] = cell_v
+
+        def designs(name, d):
+            base = [np.ones((len(d), 1)), de.index_design(d["country_id"], nC)]
+            if name == "field":
+                return base + [de.index_design(d["cell"], L.n)]
+            if name == "iid":
+                return base + [de.index_design(d["cell"], L.n)]
+            return base + [de.index_design(d["cell"], L.n),
+                           de.spacetime_design(d["cell_v"].to_numpy(), d["tstep"].to_numpy(), Lv.n, T)]
+
+        def blocks(name):
+            base = [FixedBlock(1, ["intercept"]), IIDBlock(nC, name="country")]
+            if name == "field":
+                return base + [MaternBlock(L, name="field", range_init=300.0, barrier=barrier)]
+            if name == "iid":
+                return base + [IIDBlock(L.n, name="cell", sd_init=0.5)]
+            return base + [IIDBlock(L.n, name="cell", sd_init=0.5),
+                           SpaceTimeAR1Block(Lv, T, name="st", range_init=300.0, sd_init=0.5, rho_init=0.8)]
+
+        qstarts = pd.date_range("2023-01-01", "2025-01-01", freq="QS")
+        te = (df["year"] >= 2023).to_numpy()
+        d_te = df[te]
+        preds = {}
+        res["models"] = {}
+        for name in ["field", "iid", "st"]:
+            d_tr = df[tr]
+            m = LatentGaussianModel(d_tr["y"].to_numpy(), blocks(name), designs(name, d_tr), offset=off[tr]).fit()
+            theta, x = m.theta, m.x_hat
+            p = np.full(te.sum(), np.nan)
+            for q0, q1 in zip(qstarts[:-1], qstarts[1:]):
+                cond = (df["week_start"] < q0).to_numpy()
+                d_c = df[cond]
+                mq = LatentGaussianModel(d_c["y"].to_numpy(), blocks(name), designs(name, d_c), offset=off[cond])
+                mq.theta = theta
+                mq.x_hat, mq.f_hat, mq.lu = mq.mode(theta, x0=x)
+                x = mq.x_hat
+                inq = ((d_te["week_start"] >= q0) & (d_te["week_start"] < q1)).to_numpy()
+                dq = d_te[inq]
+                eta, sd = mq.predict_eta(designs(name, dq), off[te][inq], n_samples=30)
+                p[inq] = prob_from_eta(eta, sd)
+                print(name, q0.date(), "conditioning rows", int(cond.sum()), flush=True)
+            res["models"][name] = {"hyper": m.hyper(), "log_ml_2018_2022": float(m.log_ml),
+                                   "scores": dg.scores(d_te["y"].to_numpy(), p)}
+            preds[f"p_{name}_upd"] = p.astype("float32")
+            print(name, json.dumps(res["models"][name]["scores"]), flush=True)
+        res.update(step_weeks=a.step, st_res_deg=a.st_res, quarters=[str(q.date()) for q in qstarts[:-1]])
+        json.dump(res, open(os.path.join(a.out, "summary_update.json"), "w"), indent=1, default=float)
+        pd.DataFrame({"grid_id": d_te["grid_id"].to_numpy(), "week_start": d_te["week_start"].to_numpy(),
+                      "y": d_te["y"].to_numpy().astype("int8"), **preds}).to_parquet(
+            os.path.join(a.out, "test_pred_update.parquet"), index=False)
 
     else:  # spacetime
         off = load_offset()
