@@ -332,3 +332,21 @@ qsub crc/jobs/16_bivariate.sh
   - If it looks like it will exceed about 48 h, say so in STATUS. I may then switch it to sub-regions.
 - Commit `$WORK/bivariate/<region>/summary_biv.json` to `results_real/bivariate/<region>/`.
 - Paste into STATUS the `lag_coefficients` and `hyper` of each model.
+
+## Round 7b (faster engine): READY
+`sc/laplace.py` now has three speed-ups. All give identical results on the test problems (same log-ML,
+coefficients and hyperparameters).
+1. The Hessian A'WA is assembled blockwise, with dense algebra for the covariate columns. That is about 18x faster at
+   1M rows, and it is the main cost for the big tables.
+2. Parallel finite-difference gradients (`FIT_JOBS` processes): 2.5x on 4 cores for S5, and more with 12 hyperparameters.
+3. Optional CHOLMOD backend, used automatically if scikit-sparse is installed:
+   `conda install -c conda-forge scikit-sparse` in the conflict env. It is not required, and the speed is similar
+   at these sizes.
+
+Please:
+```
+cd /users/scastruc/projects/26.Castruccio.conflict.unpublished && git pull
+qdel 1696206.2            # africa_me bivariate on the old engine
+qsub -t 2 crc/jobs/16_bivariate.sh   # 12 slots now
+```
+Report the wall time.

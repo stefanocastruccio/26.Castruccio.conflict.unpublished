@@ -45,12 +45,34 @@ def nested_dissection(M):
     return np.asarray(perm)
 
 
-class Factor:
-    """Sparse LU of an SPD matrix with an optional fixed symmetric permutation."""
+try:                                      # supernodal Cholesky (SuiteSparse), if installed
+    from sksparse import cholmod as _cholmod
+except ImportError:                       # pragma: no cover
+    _cholmod = None
 
-    def __init__(self, M, perm=None):
-        self.perm = perm
-        if perm is None:
+import os as _os
+BACKEND = ("cholmod" if _cholmod is not None else "superlu") \
+    if _os.environ.get("LAPLACE_BACKEND", "auto") == "auto" else _os.environ["LAPLACE_BACKEND"]
+
+
+class Factor:
+    """Factorisation of an SPD matrix Q + H.
+
+    CHOLMOD backend (default when scikit-sparse is installed): supernodal Cholesky with
+    the symbolic analysis (fill-reducing ordering) computed once per model and reused,
+    since the sparsity pattern of Q + H does not depend on theta. SuperLU fallback:
+    LU in symmetric mode with an optional fixed nested-dissection permutation."""
+
+    def __init__(self, M, perm=None, symbolic=None):
+        self.perm, self.kind = perm, "superlu"
+        if symbolic is not None:
+            self.kind = "cholmod"
+            if hasattr(symbolic, "factorize"):          # scikit-sparse >= 0.5
+                self.lu = symbolic.copy()
+                self.lu.factorize(sp.csc_matrix(M))
+            else:                                       # scikit-sparse <= 0.4
+                self.lu = symbolic.cholesky(sp.csc_matrix(M))
+        elif perm is None:
             self.lu = _lu(M)
         else:
             Mp = sp.csr_matrix(M)[perm][:, perm]
@@ -58,6 +80,8 @@ class Factor:
                            options=dict(SymmetricMode=True))
 
     def solve(self, b):
+        if self.kind == "cholmod":
+            return self.lu.solve(b) if hasattr(self.lu, "factorize") else self.lu.solve_A(b)
         if self.perm is None:
             return self.lu.solve(b)
         x = np.empty_like(b, dtype=float)
@@ -65,7 +89,25 @@ class Factor:
         return x
 
     def logdet(self):
+        if self.kind == "cholmod":
+            return float(self.lu.logdet())
         return float(np.sum(np.log(np.abs(self.lu.U.diagonal()))))
+
+
+_PAR_MODEL = None   # model shared with forked gradient workers (copy-on-write)
+
+
+def _par_nlp(args):
+    th, x0 = args
+    m = _PAR_MODEL
+    try:
+        x, f, lu = m.mode(th, x0=x0)
+        if not m._converged:
+            return 1e100
+        v = -(f + 0.5 * m.logdet_Q(th) - 0.5 * lu.logdet() + m.log_prior(th))
+        return v if np.isfinite(v) else 1e100
+    except Exception:
+        return 1e100
 
 
 class LatentGaussianModel:
@@ -79,6 +121,21 @@ class LatentGaussianModel:
             assert D.shape == (n, b.size), (b.name, D.shape, b.size)
         self.A = sp.hstack(self.designs, format="csr")
         self.At = self.A.T.tocsr()
+        # Leading dense design columns (e.g. the fixed-effect covariates) are kept as a
+        # dense array: H = A' W A is then assembled blockwise, with BLAS for the dense
+        # block and its coupling to the latent effects and a sparse product only for the
+        # truly sparse remainder (about 10x faster than a sparse product with dense rows).
+        p_dense = 0
+        for b, D in zip(blocks, self.designs):
+            if D.shape[1] and D.nnz > 0.3 * D.shape[0] * D.shape[1] and D.shape[1] <= 2000:
+                p_dense += D.shape[1]
+            else:
+                break
+        self._pd = p_dense if 0 < p_dense < self.A.shape[1] else 0
+        if self._pd:
+            self._Xd = np.asarray(self.A[:, :self._pd].todense())
+            self._S = self.A[:, self._pd:].tocsr()
+            self._St = self._S.T.tocsr()
         self.offset = np.zeros(n) if offset is None else np.asarray(offset, float)
         self.family = family
         self.trials = np.ones(n) if trials is None else np.asarray(trials, float)
@@ -93,6 +150,7 @@ class LatentGaussianModel:
         self._x = np.zeros(self.dim)
         self.n_evals = 0
         self._perm = False     # computed lazily: the sparsity of Q + H does not change
+        self._symb = None      # CHOLMOD symbolic analysis, computed once (same reason)
 
     # ---- likelihood pieces ------------------------------------------------
     def _loglik(self, eta):
@@ -128,6 +186,26 @@ class LatentGaussianModel:
     def log_prior(self, theta):
         return sum(b.log_prior(t) for b, t in zip(self.blocks, self._split(theta)))
 
+    def H(self, w):
+        """A' diag(w) A, with a fixed sparsity pattern (dense blocks are stored in full)."""
+        if not self._pd:
+            return self.At @ sp.diags(w) @ self.A
+        p = self._Xd.shape[1]; m = self._S.shape[1]
+        Hdd = np.zeros((p, p)); Hsd = np.zeros((m, p))
+        step = 250_000                                       # row chunks: bounded memory per process
+        for a in range(0, len(w), step):
+            Xc = self._Xd[a:a + step]
+            Xwc = Xc * w[a:a + step, None]
+            Hdd += Xwc.T @ Xc
+            Hsd += np.asarray(self._S[a:a + step].T @ Xwc)
+        Hss = self._St @ sp.diags(w) @ self._S
+        p, m = Hdd.shape[0], Hsd.shape[0]
+
+        def full(Mat):                                       # keep explicit zeros: fixed pattern
+            r, c = np.indices(Mat.shape)
+            return sp.csr_matrix((Mat.ravel(), (r.ravel(), c.ravel())), shape=Mat.shape)
+        return sp.bmat([[full(Hdd), full(Hsd.T)], [full(Hsd), Hss]], format="csc")
+
     # ---- inner optimisation -------------------------------------------------
     def mode(self, theta, x0=None, tol=1e-8, maxit=50):
         Q = self.Q(theta)
@@ -140,13 +218,20 @@ class LatentGaussianModel:
         f, eta = obj(x)
         if self._perm is False:
             _, w = self._grad_w(eta)
-            self._perm = (nested_dissection(Q + self.At @ sp.diags(w) @ self.A)
-                          if self.dim > 2000 else None)
+            M0 = Q + self.H(w)
+            if BACKEND == "cholmod":
+                self._perm = None
+                if hasattr(_cholmod, "CholeskyFactor"):   # scikit-sparse >= 0.5
+                    self._symb = _cholmod.CholeskyFactor(sp.csc_matrix(M0), supernodal_mode="supernodal")
+                else:                                     # scikit-sparse <= 0.4
+                    self._symb = _cholmod.analyze(sp.csc_matrix(M0), mode="supernodal")
+            else:
+                self._perm = nested_dissection(M0) if self.dim > 2000 else None
         self._converged = False
         for it in range(maxit):
             g_lik, w = self._grad_w(eta)
             grad = self.At @ g_lik - Q @ x
-            lu = Factor(Q + self.At @ sp.diags(w) @ self.A, self._perm)
+            lu = Factor(Q + self.H(w), self._perm, self._symb)
             step = lu.solve(grad)
             t = 1.0
             while True:
@@ -160,7 +245,7 @@ class LatentGaussianModel:
                 self._converged = True
                 break
         _, w = self._grad_w(eta)
-        return x, f, Factor(Q + self.At @ sp.diags(w) @ self.A, self._perm)
+        return x, f, Factor(Q + self.H(w), self._perm, self._symb)
 
     def log_marginal(self, theta, require_converged=False):
         x, f, lu = self.mode(theta)
@@ -173,10 +258,16 @@ class LatentGaussianModel:
         return f + 0.5 * self.logdet_Q(theta) - 0.5 * ld_post
 
     # ---- outer optimisation -------------------------------------------------
-    def fit(self, theta0=None, verbose=False, maxiter=200):
+    def fit(self, theta0=None, verbose=False, maxiter=200, n_jobs=None, eps=1e-4):
+        """Empirical Bayes: maximise log p(y | theta) + log p(theta) by L-BFGS-B with
+        forward finite-difference gradients. With n_jobs > 1 (default: the environment
+        variable FIT_JOBS, else 1) the n_theta perturbed evaluations of each gradient run
+        in parallel forked processes, warm-started at the current mode."""
+        import os
         t0 = time.time()
         theta0 = (np.concatenate([b.theta0() for b in self.blocks])
                   if theta0 is None else np.asarray(theta0, float))
+        n_jobs = int(n_jobs or os.environ.get("FIT_JOBS", 1))
         if self.n_theta == 0:
             self.theta = theta0
         else:
@@ -191,8 +282,36 @@ class LatentGaussianModel:
                 return v if np.isfinite(v) else 1e100
 
             bounds = [bd for b in self.blocks for bd in b.bounds()]
-            res = minimize(nlp, theta0, method="L-BFGS-B", bounds=bounds,
-                           options=dict(maxiter=maxiter, eps=1e-4))
+            if n_jobs > 1 and self.n_theta > 1:
+                import multiprocessing as mp
+                global _PAR_MODEL
+                self.mode(theta0)                    # builds the ordering / symbolic analysis once
+                _PAR_MODEL = self
+                pool = mp.get_context("fork").Pool(min(n_jobs, self.n_theta))
+                lo = np.array([b[0] for b in bounds]); hi = np.array([b[1] for b in bounds])
+
+                def fg(th):
+                    f0 = nlp(th)
+                    x0 = self._x.copy()
+                    # step inward at the upper bound
+                    steps = [eps if th[i] + eps <= hi[i] else -eps for i in range(self.n_theta)]
+                    pts = []
+                    for i in range(self.n_theta):
+                        t = th.copy(); t[i] += steps[i]; pts.append((t, x0))
+                    fs = np.array(pool.map(_par_nlp, pts))
+                    self.n_evals += self.n_theta
+                    g = (fs - f0) / np.array(steps)
+                    g[~np.isfinite(g) | (np.abs(fs) >= 1e99)] = 0.0
+                    return f0, g
+
+                try:
+                    res = minimize(fg, theta0, method="L-BFGS-B", jac=True, bounds=bounds,
+                                   options=dict(maxiter=maxiter))
+                finally:
+                    pool.close(); pool.join(); _PAR_MODEL = None
+            else:
+                res = minimize(nlp, theta0, method="L-BFGS-B", bounds=bounds,
+                               options=dict(maxiter=maxiter, eps=eps))
             self.theta, self.opt = res.x, res
         self.x_hat, self.f_hat, self.lu = self.mode(self.theta)
         self.log_ml = self.log_marginal(self.theta)
