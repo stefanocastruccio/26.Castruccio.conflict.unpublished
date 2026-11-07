@@ -734,3 +734,9 @@ New `quarterly_update` block, on the global test set (4,787,224 rows):
 | Unrest | 0.583 | **0.588** (ROC 0.968) | 0.468 |
 
 13_update (1695629.1-2) is running, at maxvmem 16.5 GB so far.
+
+## 2026-11-06 19:46 EST: Round 6 submitted (repo at 657ddc5)
+- Jobs: 15_s5 **1696020** (array); merge **1696021**, held on it.
+- For the merge I used a small wrapper script with the same resources: `source crc/jobs/env.sh && cd sims && N_JOBS=1
+  python s5_bivariate.py`. The `qsub -b y "source ... && ..."` form in TASKS.md would not go through a shell, so
+  `source` and `&&` would fail.
