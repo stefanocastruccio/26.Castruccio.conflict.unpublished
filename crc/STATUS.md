@@ -811,3 +811,16 @@ and the `_variogram.csv` files are committed. Test rows 2023-24: 1,426,776. Δlo
 - Among the latent models, the space-time model now beats the static field. The updated location-aware XGBoost is
   still best overall.
 - Still running: Round 7 bivariate (1696206) and Round 3 glmm (1694071).
+
+## 2026-11-07 00:26 EST: Round 7 bivariate, progress check (1696206)
+| task | wall time | maxvmem | models finished (log) |
+|---|---|---|---|
+| 1 west_sahel | 4 h 22 min | 22.6 GB | uni_static, uni_st (both done within the first hour) |
+| 2 africa_me | 4 h 22 min | **59.2 GB** | uni_static, uni_st |
+
+- No Tracebacks. The node (d32cepyc246, 251 GB) has plenty of headroom.
+- Both tasks have been on the bivariate model(s) for more than 3 h. On west_sahel, the univariate space-time fit took
+  under an hour, so the bivariate fit is much slower.
+- The log only reports finished models, so I can't project task 2's total. If it hasn't finished the bivariate fit by
+  about 12 h of wall time (around 08:00 EST), I'll flag that the 48 h limit is at risk.
+- Round 3 glmm 1694071 is still running: about 10 h 20 min wall, maxvmem 39.9 GB.
