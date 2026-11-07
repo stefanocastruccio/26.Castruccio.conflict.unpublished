@@ -745,3 +745,23 @@ New `quarterly_update` block, on the global test set (4,787,224 rows):
 - Job: 16_bivariate **1696206** (tasks 1-2).
 - It requests mem_free=200G. Most long-queue nodes have 251 GB, so it may wait for a mostly idle node. I'll report
   the queue wait if it's long, and task 2's maxvmem after its first hour.
+
+## 2026-11-06 20:04 EST: Round 6 S5 done (1696020, 20 tasks, about 10-15 min each, maxvmem about 2.5 GB, no Tracebacks; merge 1696021 rc 0)
+`results/s5_raw.csv` and `results/s5_summary.csv` are committed. 20 replicates per scenario; the shard checkpoints are not committed.
+```
+     scenario     model  truth  mean_est  emp_sd  mean_se  coverage95  reject_zero   d_c  log_score  auc_pr  onset_auc_pr  loading  seconds  n  mc_se_coverage
+   escalation    biv_st    0.4     0.434   0.111    0.126        0.95         0.95 0.358      0.140   0.103         0.042    0.832  316.759 20           0.049
+   escalation       glm    0.4     1.026   0.163    0.116        0.00         1.00 1.516      0.143   0.077         0.025      NaN    0.026 20           0.000
+   escalation uni_field    0.4     0.794   0.128    0.122        0.10         1.00 0.805      0.139   0.105         0.044      NaN    0.419 20           0.067
+   escalation    uni_st    0.4     0.659   0.108    0.127        0.50         1.00 0.375      0.140   0.105         0.045      NaN   80.759 20           0.112
+no_escalation    biv_st    0.0     0.042   0.166    0.138        0.90         0.10 0.376      0.134   0.088         0.033    0.827  309.529 20           0.067
+no_escalation       glm    0.0     0.695   0.193    0.129        0.05         0.95 1.539      0.137   0.063         0.022      NaN    0.033 20           0.049
+no_escalation uni_field    0.0     0.426   0.161    0.135        0.15         0.85 0.821      0.133   0.090         0.037      NaN    0.409 20           0.080
+no_escalation    uni_st    0.0     0.269   0.158    0.140        0.45         0.55 0.384      0.134   0.090         0.034      NaN   79.353 20           0.111
+```
+- Only biv_st recovers the escalation coefficient:
+  - Truth 0.4: estimate 0.434, coverage 0.95.
+  - Truth 0: estimate 0.042, coverage 0.90, false rejection 0.10.
+- The univariate models and glm are biased upward and falsely reject zero 55-95% of the time when there is no
+  escalation. The ranking is glm > uni_field > uni_st.
+- Predictive scores are close across the latent models.
