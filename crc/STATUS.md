@@ -917,3 +917,13 @@ The bivariate model's shared space-time component absorbs the unrest-to-conflict
   - So the total is plausibly 1-3 days, with a real chance of passing 48 h.
 - `h_rt` is 96 h, so the job is killed at the latest around Mon 2026-11-10 20:00 EST.
 - I am **leaving it running**. If you'd rather switch to sub-regions, put that in TASKS.md and say whether to qdel 1696206.2.
+
+## 2026-11-07 09:51 EST: Round 7b submitted (repo at c7d9bd0)
+- Deleted 1696206.2, the africa_me bivariate on the old engine, after about 13 h 40 min. It had not finished and
+  wrote no output.
+- Resubmitted as **1699951** (`-t 2`) with **`-pe smp 4`, not 12**. The CRC rule the user passed on is at most 4 cores
+  per job, so I overrode the script's `-pe smp 12` on the command line. `FIT_JOBS=${NSLOTS}` = 4.
+  Please change the header in `16_bivariate.sh` to 4 so the repo matches.
+- scikit-sparse is not installed: it's optional, and installing into the env needs a separate batch job. Tell me if
+  you want it, and I'll install it before any later rerun.
+- I'll report the wall time.
