@@ -1009,3 +1009,41 @@ no_escalation_uST    uni_st    0.0     0.281   0.158    0.135        0.45       
 - The univariate models and glm stay strongly biased upward in every scenario.
 - biv_st2 costs about 5-7× biv_st in fit time: about 1,000-2,000 s per replicate against about 180-290 s.
 - West Africa biv2 (1701825) is still running: about 1 h 45 min wall time, maxrss 65 GB, on an ACMS 24-core node.
+
+## 2026-11-07 18:20 EST: Round 7b bivariate africa_me done (1699951.2, rc 0, 10:58-18:16, **7 h 18 min** on 4 slots with the new engine; maxrss 187 GB summed over workers; no Traceback)
+`results_real/bivariate/africa_me/summary_biv.json` is committed. Data: 4,921,758 rows per outcome, 13,719 cells, 93 countries; v on 3,637 cells × 14 steps.
+
+| model | fit time | log-ML | conflict test AUC-PR / log | unrest test AUC-PR / log |
+|---|---|---|---|---|
+| uni_static | 532 s | -173,069 | 0.524 / 0.0593 | |
+| uni_st | 2,466 s | -170,579 | 0.522 / 0.0600 | |
+| biv | **23,084 s** (6.4 h) | -354,669 (both outcomes) | 0.526 / 0.0595 | 0.541 / 0.0640 |
+
+**Lag coefficients** (estimate, SE):
+
+| term | uni_static | uni_st | biv |
+|---|---|---|---|
+| conflict:lag_own | 0.794 (0.008) | 0.603 (0.009) | 0.626 (0.009) |
+| conflict:lag_other | 0.150 (0.014) | 0.133 (0.015) | **0.057 (0.015)** |
+| conflict:lag_own_nb | 0.175 (0.004) | 0.070 (0.004) | 0.083 (0.004) |
+| conflict:lag_other_nb | -0.004 (0.006) | -0.007 (0.006) | -0.035 (0.006) |
+| unrest:lag_own | | | 0.585 (0.009) |
+| unrest:lag_other | | | 0.025 (0.014) |
+| unrest:lag_own_nb | | | 0.071 (0.004) |
+| unrest:lag_other_nb | | | -0.042 (0.006) |
+
+**Hyperparameters:**
+- uni_static: country 0.497, cell 0.958, field 562 km / sd 1.63.
+- uni_st: country 0.502, cell 0.971, field 583 km / 1.60; st 480 km, sd 0.869, rho 0.873.
+- biv:
+  - country sd: conflict 0.533, unrest 0.903;
+  - cell sd: conflict 0.994, unrest 1.308;
+  - field_conflict: 632 km, sd 1.197;
+  - field_unrest: 439 km, sd 0.350;
+  - shared_st: 486 km, sd 1.254, rho 0.946, **loading 0.668**.
+
+As in west_sahel, the shared episode field absorbs most of unrest → conflict. lag_other falls from 0.150 to 0.057,
+but unlike west_sahel it stays about 3.8 SE from zero.
+
+**Next:** I submitted `17_biv2.sh -t 2` (africa_me biv2) as **1705023** now that 1699951.2 has finished, as TASKS.md says.
+West Africa biv2 (1701825) has run 3 h 10 min, maxrss 65 GB.
