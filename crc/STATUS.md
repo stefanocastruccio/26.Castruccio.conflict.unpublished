@@ -789,3 +789,25 @@ on the Africa + ME test rows:
 For comparison, the static fit of the same models (Round 3/4, no updating) gave 0.519 / 0.0606.
 
 Still running: the unrest update (1695629.2). The update compare (1695630) is held on it.
+
+## 2026-11-06 22:30 EST: Round 5 complete
+**Unrest update** (1695629.2): rc 0, 19:11-22:26 about 3 h 15 min, maxvmem 26.9 GB.
+`results_real/dynamic/unrest/summary_update.json` is committed. Field 0.550 / 0.0629, iid 0.550 / 0.0630, **st 0.554 / 0.0626** (AUC-PR / log score).
+
+**Update compare** (1695630.1-2): rc 0, about 1 min, no Tracebacks. `results_real/compare/compare_{conflict,unrest}_update.json`
+and the `_variogram.csv` files are committed. Test rows 2023-24: 1,426,776. Δlog is model minus xgb (country-clustered SE).
+
+| model | conflict AUC-PR / log / Δlog (SE) | unrest AUC-PR / log / Δlog (SE) |
+|---|---|---|
+| xgb (ref) | 0.515 / 0.0618 | 0.532 / 0.0660 |
+| xgb_te (static) | 0.533 / 0.0583 / -0.00350 (0.00127) | 0.550 / 0.0628 / -0.00322 (0.00078) |
+| **xgb_te_upd** | **0.544 / 0.0568 / -0.00498 (0.00131)** | **0.559 / 0.0616 / -0.00438 (0.00083)** |
+| hybrid_field (static) | 0.519 / 0.0606 / -0.00117 (0.00094) | 0.540 / 0.0639 / -0.00207 (0.00066) |
+| hybrid_field_upd | 0.531 / 0.0592 / -0.00265 (0.00077) | 0.550 / 0.0629 / -0.00306 (0.00072) |
+| hybrid_iid_upd | 0.531 / 0.0595 / -0.00230 (0.00076) | 0.550 / 0.0630 / -0.00303 (0.00072) |
+| hybrid_st_upd | 0.539 / 0.0583 / -0.00352 (0.00081) | 0.554 / 0.0626 / -0.00339 (0.00071) |
+
+- Quarterly updating improves every model by about 0.01 AUC-PR.
+- Among the latent models, the space-time model now beats the static field. The updated location-aware XGBoost is
+  still best overall.
+- Still running: Round 7 bivariate (1696206) and Round 3 glmm (1694071).
