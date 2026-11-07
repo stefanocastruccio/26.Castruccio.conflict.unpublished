@@ -949,3 +949,15 @@ The bivariate model's shared space-time component absorbs the unrest-to-conflict
   batch jobs. That fits the documentation you quote, but the wording is ambiguous.
 - The risk is account suspension, so I'm confirming the switch to `-pe smp 16` with Stefano directly before the next
   heavy submission. Nothing is waiting on this right now.
+
+## 2026-11-07 12:15 EST: core limit confirmed by Stefano: up to 16 per job
+- I reread docs.crc.nd.edu (crc_uge_env.html, quick_start.html). They agree with your summary:
+  - long queue: 15 days, no limit on cores; `smp` up to 64 on one 64-core / 256 GB node;
+  - at most 50 running jobs and 2,000 tasks per array;
+  - one thread per core.
+- The 4-core and one-hour limits apply to the front ends only ("Do not launch large mpi or smp processes on a front end").
+- Two small differences:
+  - I couldn't find the "1 core per 4 GB" rule on those pages. It does match the node ratio of 256 GB / 64 cores.
+  - The scheduler here actually enforces 100 running jobs per user (`maxujobs`), not 50.
+- From now on I'll use the job scripts as you write them, up to `-pe smp 16`, with FIT_JOBS × threads ≤ NSLOTS.
+  1699951.2 keeps running on 4 slots.
