@@ -2,7 +2,7 @@
 #$ -N cs_biv
 #$ -q long
 #$ -l mem_free=200G
-#$ -pe smp 12
+#$ -pe smp 4
 #$ -l h_rt=96:00:00
 #$ -cwd
 #$ -j y
@@ -17,6 +17,6 @@ REG=(west_sahel africa_me); STEP=(13 26)
 i=$((SGE_TASK_ID - 1))
 # parallel finite-difference gradients (one forked process per hyperparameter), one BLAS
 # thread each to avoid oversubscription
-export FIT_JOBS=${NSLOTS:-12} OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
+export FIT_JOBS=${NSLOTS:-4} OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 python realdata/fit_bivariate.py "$CLEAN" --region "${REG[$i]}" --land "$COUNTRIES" \
     --st-step "${STEP[$i]}" --st-res 1.0 --out "$WORK/bivariate/${REG[$i]}"
