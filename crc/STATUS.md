@@ -886,3 +886,24 @@ The bivariate model's shared space-time component absorbs the unrest-to-conflict
 - Still running: glmm conflict (1694071.1, about 12.5 h) and bivariate africa_me (1696206.2). That task has run
   about 6 h 20 min at 59 GB maxvmem. Given west_sahel's 4.5 h bivariate fit, africa_me (5.4x the rows) could take well
   over a day. I'll flag at 12 h of wall time (08:00 EST) if it hasn't finished.
+
+## 2026-11-07 02:35 EST: Round 3 glmm, conflict done (1694071.1, rc 0, 13:57-02:27 about 12 h 30 min; seconds_total 45,009; maxvmem 39.9 GB; no Traceback)
+`results_real/glmm/{models_conflict.json, coefficients_conflict.csv, svc_tmax_conflict.csv}` is committed.
+
+| model | test AUC-PR | log score | hyperparameters | fit time |
+|---|---|---|---|---|
+| glm | 0.501 | 0.0665 | | 148 s |
+| country | 0.511 | 0.0633 | country 1.19 | 917 s |
+| field | 0.510 | 0.0607 | country 0.50, range 544 km, sd 1.72, cell 0.90 | 6,655 s |
+| svc | 0.509 | 0.0608 | as field, plus svc range 465 km, **svc sd 0.076** | 6,154 s |
+| spatialplus m = 10 / 20 / 138 | 0.510 / 0.510 / 0.510 | 0.0607 | range 545 / 537 / 575 km | 7,982 / 8,683 / 6,557 s |
+
+- **st part** (central_sahel: 249,744 rows, 968 cells, 33 steps of 8 weeks; completed with no rerun needed):
+  - field: country 0.20, range 430 km, sd 1.72, cell 0.53;
+  - field+st: st range 230 km, sd 0.99, **rho 0.93**.
+- `prep.climate.*.cell_months_sd_zero`: same as unrest. tmax 0, tmin 0, ppt 2, **drought 138,600**, pm25 0.
+- `prep.missing_indicators`:
+  - kept: ipc, log_gdp_pc, electricity_access, GHG_pc_t;
+  - **EPI_index and v2x_libdem missing were dropped** because they are constant in training;
+  - MF and ECO were merged into GHG.
+- **Round 3 is now complete.** The only job still running is the Round 7 bivariate africa_me (1696206.2).
