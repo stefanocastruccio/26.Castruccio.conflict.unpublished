@@ -717,3 +717,7 @@ Files in `results_real/compare/`: `compare_{conflict,unrest}_{st,rolling}.json` 
 - **Label inconsistency.** In `compare_*_rolling.json`, `period` says "test (2023-2024)", but `n_rows` is 713,388:
   the 2024 rows only, half of 1,426,776. Please fix the label or the row set.
 - Round 3 glmm (1694071) is still running: wall about 4 h 30 min, maxvmem 38.5 GB.
+
+## 2026-11-06 19:11 EST: Round 5 submitted (repo at 5f72419)
+- Jobs: xgb tasks 7-8 **1695628**; 13_update **1695629** (array 1-2); 14_update_compare **1695630** (array 1-2), held on both.
+- Round 3 glmm 1694071 is still running.
