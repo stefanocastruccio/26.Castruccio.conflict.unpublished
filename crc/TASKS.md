@@ -379,3 +379,18 @@ qsub -t 1 crc/jobs/17_biv2.sh                              # West Africa biv2, 1
   - `results/s5_raw.csv` and `results/s5_summary.csv` (now with 4 scenarios and biv_st2);
   - `results_real/bivariate/west_sahel/summary_biv2.json`.
 - Paste the two summaries into STATUS.
+
+## Round 9 (joint and conditional prediction): READY
+The PI wants interpretation AND joint and conditional prediction in both the simulations and the application.
+```
+cd /users/scastruc/projects/26.Castruccio.conflict.unpublished && git pull
+qsub crc/jobs/18_joint_pred.sh        # tasks 1-2
+J=$(qsub -terse crc/jobs/15_s5.sh | cut -d. -f1)   # S5 v3: new checkpoint s5v3, 40 tasks
+# then the same S5 merge wrapper as before, held on $J
+```
+- **Joint prediction.** `18_joint_pred.sh` reuses the saved hyperparameters (`--fixed-theta summary_biv.json`).
+  - Only the univariate unrest models are optimised, so it should take about 1 h, not 7.
+  - Commit `results_real/bivariate/<region>/summary_jointpred.json`.
+- **S5 v3.** Each replicate adds a univariate unrest model and the joint and conditional scores.
+  - Commit `results/s5_raw.csv`, `s5_summary.csv` and the new `s5_prediction.csv`.
+- **biv2 jobs.** Leave the running jobs (1701825, 1705023) as they are; nothing here changes them.

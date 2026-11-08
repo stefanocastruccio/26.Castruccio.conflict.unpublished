@@ -74,6 +74,75 @@ def stack(Dc, Du):
     return sp.vstack([Dc, Du], format="csr")
 
 
+def theta_from_hyper(blocks, hyper):
+    """Internal hyperparameter vector from a saved hyper() dictionary (inverse of describe)."""
+    from sc.gmrf import CopyBlock, IIDBlock, MaternBlock, SpaceTimeAR1Block
+    th = []
+    for b in blocks:
+        if isinstance(b, CopyBlock):
+            base, nm = b.base, b.name
+        else:
+            base, nm = b, b.name
+        if isinstance(base, IIDBlock):
+            th += [np.log(hyper[f"{nm}.sd"])]
+        elif isinstance(base, SpaceTimeAR1Block):
+            th += [np.log(hyper[f"{nm}.range_km"]), np.log(hyper[f"{nm}.sd"]), np.arctanh(hyper[f"{nm}.rho"])]
+        elif isinstance(base, MaternBlock):
+            th += [np.log(hyper[f"{nm}.range_km"]), np.log(hyper[f"{nm}.sd"])]
+        if isinstance(b, CopyBlock):
+            th += [hyper[f"{nm}.loading"]]
+    return np.array(th, float)
+
+
+def fit_or_condition(m, saved, model):
+    """Full empirical-Bayes fit, or (with --fixed-theta) the posterior at the saved
+    hyperparameters of the same model: one Laplace mode instead of the optimisation."""
+    if saved is None or model not in saved.get("models", {}):
+        return m.fit()
+    import time
+    t0 = time.time()
+    m.theta = theta_from_hyper(m.blocks, saved["models"][model]["hyper"])
+    m.x_hat, m.f_hat, m.lu = m.mode(m.theta)
+    m.log_ml = m.log_marginal(m.theta)
+    m.x_hat, m.f_hat, m.lu = m.mode(m.theta, x0=m._x)
+    m.fit_seconds = time.time() - t0
+    return m
+
+
+def _logb(y, p):
+    p = np.clip(p, 1e-12, 1 - 1e-12)
+    return np.where(y == 1, np.log(p), np.log1p(-p))
+
+
+def joint_eval(m, Dte, yc, yu, n_samples=200, seed=0, chunk=100_000):
+    """Joint and conditional predictive quantities of a joint model on the test rows, from
+    posterior samples of the latent vector (so conflict and unrest share the same draw of
+    every latent effect, including the shared field v).
+
+    Returns per-row arrays:
+      logj      log p(yc, yu)                    (joint predictive, dependence kept)
+      logi      log p(yc) + log p(yu)            (same model, dependence ignored)
+      pc, pu    marginal predictive probabilities
+      pc_given  P(yc = 1 | yu observed)           (conditional, 'nowcast' given unrest)
+      pboth     P(yc = 1, yu = 1)"""
+    A = sp.hstack([sp.csr_matrix(D) for D in Dte], format="csr")
+    n = len(yc)
+    Ac, Au = A[:n], A[n:]
+    S = m.sample(n_samples, np.random.default_rng(seed))
+    out = {k: np.empty(n) for k in ("logj", "logi", "pc", "pu", "pc_given", "pboth")}
+    for a in range(0, n, chunk):
+        b = min(a + chunk, n)
+        pc = 1 / (1 + np.exp(-(Ac[a:b] @ S))); pu = 1 / (1 + np.exp(-(Au[a:b] @ S)))
+        bc = np.where(yc[a:b, None] == 1, pc, 1 - pc); bu = np.where(yu[a:b, None] == 1, pu, 1 - pu)
+        mc, mu = pc.mean(1), pu.mean(1)
+        out["logj"][a:b] = np.log(np.clip((bc * bu).mean(1), 1e-300, None))
+        out["logi"][a:b] = _logb(yc[a:b], mc) + _logb(yu[a:b], mu)
+        out["pc"][a:b], out["pu"][a:b] = mc, mu
+        out["pc_given"][a:b] = (pc * bu).mean(1) / np.clip(bu.mean(1), 1e-300, None)
+        out["pboth"][a:b] = (pc * pu).mean(1)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("table"); ap.add_argument("--region", default="west_sahel")
@@ -81,6 +150,9 @@ def main():
     ap.add_argument("--st-step", type=int, default=13); ap.add_argument("--st-res", type=float, default=1.0)
     ap.add_argument("--models", default="uni_static,uni_st,biv")   # also: biv2
     ap.add_argument("--summary-name", default="summary_biv.json")
+    ap.add_argument("--fixed-theta", default=None,
+                    help="summary json of an earlier run: reuse its hyperparameters for the models it "
+                         "contains (no optimisation); other models are fitted")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
@@ -160,6 +232,7 @@ def main():
                 stack(Pc["W"], None), stack(None, Pu["W"]),
                 sp.bmat([[Pc["V"], None], [None, Pu["V"]]], format="csr")]
 
+    saved = json.load(open(a.fixed_theta)) if a.fixed_theta else None
     parts_tr = {o: parts(o, tr) for o in OUTS}
     parts_te = {o: parts(o, te) for o in OUTS}
     res = {"region": a.region, "box": list(REGIONS[a.region]), "rows_per_outcome": int(len(base)),
@@ -171,31 +244,78 @@ def main():
     keys = ["conflict:lag_own", "conflict:lag_other", "conflict:lag_own_nb", "conflict:lag_other_nb",
             "unrest:lag_own", "unrest:lag_other", "unrest:lag_own_nb", "unrest:lag_other_nb"]
     for model in a.models.split(","):
-        if model in ("uni_static", "uni_st"):
-            st = model == "uni_st"
-            P = parts_tr["conflict"]
-            m = LatentGaussianModel(P["y"], uni_blocks("conflict", st), uni_designs(P, st)).fit()
-            eta, sd = m.predict_eta(uni_designs(parts_te["conflict"], st), None, n_samples=50)
-            preds[f"p_conflict_{model}"] = prob_from_eta(eta, sd).astype("float32")
+        if model in ("uni_static", "uni_st", "uni_static_u", "uni_st_u"):
+            st = model.startswith("uni_st")
+            o = "unrest" if model.endswith("_u") else "conflict"
+            P = parts_tr[o]
+            m = fit_or_condition(LatentGaussianModel(P["y"], uni_blocks(o, st), uni_designs(P, st)), saved, model)
+            eta, sd = m.predict_eta(uni_designs(parts_te[o], st), None, n_samples=50)
+            preds[f"p_{o}_{model.replace('_u', '')}"] = prob_from_eta(eta, sd).astype("float32")
         else:   # biv: shared v only; biv2: shared v + unrest-specific space-time field
             bl, dz = (biv_blocks, biv_designs) if model == "biv" else (biv2_blocks, biv2_designs)
             y = np.r_[parts_tr["conflict"]["y"], parts_tr["unrest"]["y"]]
-            m = LatentGaussianModel(y, bl(), dz(parts_tr["conflict"], parts_tr["unrest"])).fit()
+            m = fit_or_condition(LatentGaussianModel(y, bl(), dz(parts_tr["conflict"], parts_tr["unrest"])), saved, model)
             Dte = dz(parts_te["conflict"], parts_te["unrest"])
             eta, sd = m.predict_eta(Dte, None, n_samples=50)
             p = prob_from_eta(eta, sd); nte = int(te.sum())
             preds[f"p_conflict_{model}"] = p[:nte].astype("float32"); preds[f"p_unrest_{model}"] = p[nte:].astype("float32")
+            je = joint_eval(m, Dte, parts_te["conflict"]["y"], parts_te["unrest"]["y"], seed=1)
+            for k in ("logj", "logi", "pc_given", "pboth"):
+                preds[f"{k}_{model}"] = je[k].astype("float32")
         fs = m.fixed_summary()
         res["models"][model] = {"hyper": m.hyper(), "log_ml": float(m.log_ml), "seconds": float(m.fit_seconds),
+                                "hyper_source": "fixed from " + a.fixed_theta
+                                if saved is not None and model in saved.get("models", {}) else "fitted",
                                 "lag_coefficients": {k: list(map(float, fs[k])) for k in keys if k in fs},
                                 "fixed": {k: list(map(float, v)) for k, v in fs.items()}}
-        sc = {"conflict": dg.scores(parts_te["conflict"]["y"], preds[f"p_conflict_{model}"])}
+        sc = {}
+        if f"p_conflict_{model}" in preds:
+            sc["conflict"] = dg.scores(parts_te["conflict"]["y"], preds[f"p_conflict_{model}"])
+        mu_name = model.replace("_u", "")
+        if model.endswith("_u") and f"p_unrest_{mu_name}" in preds:
+            sc["unrest"] = dg.scores(parts_te["unrest"]["y"], preds[f"p_unrest_{mu_name}"])
         if model in ("biv", "biv2"):
             sc["unrest"] = dg.scores(parts_te["unrest"]["y"], preds[f"p_unrest_{model}"])
         res["models"][model]["test_scores"] = sc
         print(model, json.dumps({k: res["models"][model][k] for k in ("hyper", "lag_coefficients", "test_scores")},
                                 default=float), flush=True)
         json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
+    # joint and conditional prediction (Section 5.x): per cell-week, both outcomes together
+    yc, yu = parts_te["conflict"]["y"], parts_te["unrest"]["y"]
+    cell_te = base.loc[te, "grid_id"].to_numpy(); ctry_te = base.loc[te, "ISO_A3"].astype(str).to_numpy()
+    from sklearn.metrics import average_precision_score as aps
+    J = {"n_cell_weeks": int(len(yc)), "share_both": float(np.mean(yc * yu)),
+         "share_conflict_given_unrest": float(yc[yu == 1].mean()) if yu.sum() else None,
+         "share_conflict_given_no_unrest": float(yc[yu == 0].mean())}
+    def jls(logp):   # mean joint log score (negative log-likelihood per cell-week)
+        return float(-np.mean(logp))
+    for uni in ("uni_static", "uni_st"):
+        if f"p_conflict_{uni}" in preds and f"p_unrest_{uni}" in preds:
+            preds[f"logi_{uni}"] = (_logb(yc, preds[f"p_conflict_{uni}"]) + _logb(yu, preds[f"p_unrest_{uni}"])).astype("float32")
+            J[f"joint_log_score_{uni}_product"] = jls(preds[f"logi_{uni}"])
+    for bm in ("biv", "biv2"):
+        if f"logj_{bm}" not in preds:
+            continue
+        lj, li = preds[f"logj_{bm}"].astype(float), preds[f"logi_{bm}"].astype(float)
+        J[f"joint_log_score_{bm}"] = jls(lj)
+        J[f"joint_log_score_{bm}_independent"] = jls(li)
+        mdiff, ses, ns = dg.clustered_diff(-lj, -li, cell_te, ctry_te)
+        J[f"{bm}_joint_minus_independent"] = {"mean": mdiff, "se_cell": ses[0], "se_country": ses[1]}
+        for uni in ("uni_static", "uni_st"):
+            if f"logi_{uni}" in preds:
+                mdiff, ses, ns = dg.clustered_diff(-lj, -preds[f"logi_{uni}"].astype(float), cell_te, ctry_te)
+                J[f"{bm}_joint_minus_{uni}_product"] = {"mean": mdiff, "se_cell": ses[0], "se_country": ses[1]}
+        pcg = preds[f"pc_given_{bm}"].astype(float); pc = preds[f"p_conflict_{bm}"].astype(float)
+        J[f"{bm}_conditional"] = {
+            "log_score_conflict_given_unrest": float(-np.mean(_logb(yc, pcg))),
+            "log_score_conflict_marginal": float(-np.mean(_logb(yc, pc))),
+            "auc_pr_conflict_given_unrest": float(aps(yc, pcg)), "auc_pr_conflict_marginal": float(aps(yc, pc))}
+        pb = preds[f"pboth_{bm}"].astype(float)
+        J[f"{bm}_cooccurrence"] = {"auc_pr_joint": float(aps(yc * yu, pb)),
+                                   "auc_pr_independent": float(aps(yc * yu, pc * preds[f"p_unrest_{bm}"].astype(float)))}
+    res["joint_prediction"] = J
+    print("joint_prediction", json.dumps(J, default=float), flush=True)
+    json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
     pd.DataFrame(preds).drop(columns=["events_52w_conflict"]).to_parquet(
         os.path.join(a.out, a.summary_name.replace("summary", "test_pred").replace(".json", ".parquet")), index=False)
 

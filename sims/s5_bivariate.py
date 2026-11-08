@@ -36,7 +36,7 @@ from sc.gmrf import CopyBlock, SphereLattice
 from sc.laplace import prob_from_eta
 from sc.simulate import matern_gp
 
-CKPT = os.environ.get("S5_CKPT", "s5v2_ckpt.jsonl")
+CKPT = os.environ.get("S5_CKPT", "s5v3_ckpt.jsonl")
 N_REPS = int(os.environ.get("N_REPS", 20))
 # (kappa, sd of an UNREST-ONLY space-time episode field). The *_uST scenarios add unrest
 # episodes that do not touch conflict: a joint model with a single shared space-time field
@@ -85,7 +85,9 @@ def simulate5(kappa, seed, u_sd=0.0):
     return L, df
 
 
-def fit_uni(L, d, kind, T):
+def fit_uni(L, d, kind, T, outcome="c"):
+    """Univariate model for conflict (outcome='c') or unrest ('u'); the fixed effects are
+    always named Lc and Lu (own and other history)."""
     n = L.n
     X = np.c_[np.ones(len(d)), d["Lc"], d["Lu"]]
     blocks, D = [FixedBlock(3, ["int", "Lc", "Lu"])], [X]
@@ -94,7 +96,36 @@ def fit_uni(L, d, kind, T):
     if kind == "uni_st":
         blocks.append(SpaceTimeAR1Block(L, T, name="st", sd_init=0.5, rho_init=0.8))
         D.append(de.spacetime_design(d["cell"], d["tstep"], n, T))
-    return LatentGaussianModel(d["yc"].to_numpy(), blocks, D).fit(), blocks
+    return LatentGaussianModel(d["y" + outcome].to_numpy(), blocks, D).fit(), blocks
+
+
+def uni_test_designs(L, d, kind, T):
+    D = [np.c_[np.ones(len(d)), d["Lc"], d["Lu"]]]
+    if kind in ("uni_field", "uni_st"):
+        D.append(de.index_design(d["cell"], L.n))
+    if kind == "uni_st":
+        D.append(de.spacetime_design(d["cell"], d["tstep"], L.n, T))
+    return D
+
+
+def _logb(y, p):
+    p = np.clip(p, 1e-12, 1 - 1e-12)
+    return np.where(y == 1, np.log(p), np.log1p(-p))
+
+
+def joint_eval(m, Dte_full, yc, yu, n_samples=200, seed=0):
+    """Joint/conditional predictive quantities from posterior samples (both outcomes share
+    each latent draw). Dte_full: designs of the stacked test rows (conflict, then unrest)."""
+    A = sp.hstack([sp.csr_matrix(D) for D in Dte_full], format="csr")
+    n = len(yc)
+    S = m.sample(n_samples, np.random.default_rng(seed))
+    pc = 1 / (1 + np.exp(-(A[:n] @ S))); pu = 1 / (1 + np.exp(-(A[n:] @ S)))
+    bc = np.where(yc[:, None] == 1, pc, 1 - pc); bu = np.where(yu[:, None] == 1, pu, 1 - pu)
+    mc, mu = pc.mean(1), pu.mean(1)
+    return dict(logj=np.log(np.clip((bc * bu).mean(1), 1e-300, None)),
+                logi=_logb(yc, mc) + _logb(yu, mu), pc=mc, pu=mu,
+                pc_given=(pc * bu).mean(1) / np.clip(bu.mean(1), 1e-300, None),
+                pboth=(pc * pu).mean(1))
 
 
 def biv_designs(L, d, T):
@@ -142,20 +173,22 @@ def one(arg):
     T = int(df["tstep"].max() + 1)
     d_tr, d_te = df[df.train], df[~df.train]
     out = []
-    yte = d_te["yc"].to_numpy(); onset = (d_te["ev52_c"] == 0).to_numpy()
+    yte = d_te["yc"].to_numpy(); yu_te = d_te["yu"].to_numpy(); onset = (d_te["ev52_c"] == 0).to_numpy()
+    both = yte * yu_te
+    # univariate unrest model (for the product of univariate predictions)
+    mu_uni, _ = fit_uni(L, d_tr, "uni_st", T, outcome="u")
+    eta, sd = mu_uni.predict_eta(uni_test_designs(L, d_te, "uni_st", T), None, n_samples=50)
+    pu_uni = prob_from_eta(eta, sd)
+    pc_uni = None
     for kind in ["glm", "uni_field", "uni_st", "biv_st", "biv_st2"]:
         if kind in ("biv_st", "biv_st2"):
             m, _ = (fit_biv if kind == "biv_st" else fit_biv2)(L, d_tr, T)
             n_te = len(d_te)
-            Dte = (biv_designs if kind == "biv_st" else biv2_designs)(L, d_te, T)
-            Dte = [D[:n_te] for D in Dte]                       # conflict rows only
+            Dfull = (biv_designs if kind == "biv_st" else biv2_designs)(L, d_te, T)
+            Dte = [D[:n_te] for D in Dfull]                     # conflict rows only
         else:
             m, _ = fit_uni(L, d_tr, kind, T)
-            Dte = [np.c_[np.ones(len(d_te)), d_te["Lc"], d_te["Lu"]]]
-            if kind in ("uni_field", "uni_st"):
-                Dte.append(de.index_design(d_te["cell"], L.n))
-            if kind == "uni_st":
-                Dte.append(de.spacetime_design(d_te["cell"], d_te["tstep"], L.n, T))
+            Dte = uni_test_designs(L, d_te, kind, T)
         fs = m.fixed_summary()
         est, se = fs["Lu"]
         eta, sd = m.predict_eta(Dte, None, n_samples=50)
@@ -166,10 +199,25 @@ def one(arg):
                  log_score=sc["log_score"], auc_pr=sc["auc_pr"],
                  onset_auc_pr=float(average_precision_score(yte[onset], p[onset])) if yte[onset].sum() else np.nan,
                  prevalence_c=float(df["yc"].mean()), prevalence_u=float(df["yu"].mean()))
+        if kind == "uni_st":
+            pc_uni = p
+            # joint prediction by two independent univariate space-time models
+            r["joint_log_score"] = float(-np.mean(_logb(yte, p) + _logb(yu_te, pu_uni)))
+            r["cond_log_score"] = float(-np.mean(_logb(yte, p)))      # no conditioning possible
+            r["cond_auc_pr"] = float(average_precision_score(yte, p))
+            r["both_auc_pr"] = float(average_precision_score(both, p * pu_uni)) if both.sum() else np.nan
         if kind in ("biv_st", "biv_st2"):
             h = m.hyper()
             r["loading"] = h.get("shared_st.loading"); r["st_rho"] = h.get("shared_st.rho")
             r["st_sd"] = h.get("shared_st.sd"); r["st_range"] = h.get("shared_st.range_km")
+            je = joint_eval(m, Dfull, yte, yu_te, seed=seed)
+            r["joint_log_score"] = float(-np.mean(je["logj"]))
+            r["joint_log_score_indep"] = float(-np.mean(je["logi"]))
+            r["cond_log_score"] = float(-np.mean(_logb(yte, je["pc_given"])))
+            r["cond_auc_pr"] = float(average_precision_score(yte, je["pc_given"]))
+            r["both_auc_pr"] = float(average_precision_score(both, je["pboth"])) if both.sum() else np.nan
+            r["both_auc_pr_indep"] = (float(average_precision_score(both, je["pc"] * je["pu"]))
+                                      if both.sum() else np.nan)
         out.append(r)
         print(scen, seed, kind, round(est, 3), round(se, 3), round(m.fit_seconds, 1), flush=True)
     return out
@@ -192,3 +240,25 @@ if __name__ == "__main__":
     tab["mc_se_coverage"] = np.sqrt(tab.coverage95 * (1 - tab.coverage95) / tab.n)
     tab.to_csv(os.path.join(RESULTS, "s5_summary.csv"), index=False)
     print(tab.round(3).to_string(index=False))
+    # joint and conditional prediction: paired (by replicate) differences against two
+    # independent univariate space-time models (uni_st for conflict x uni_st for unrest)
+    cols = ["joint_log_score", "joint_log_score_indep", "cond_log_score", "cond_auc_pr",
+            "both_auc_pr", "both_auc_pr_indep"]
+    pr = res[res.model.isin(["uni_st", "biv_st", "biv_st2"])].reindex(columns=["scenario", "seed", "model"] + cols)
+    ref = pr[pr.model == "uni_st"].set_index(["scenario", "seed"])
+    rows = []
+    for (sc_, mdl), g in pr.groupby(["scenario", "model"]):
+        g = g.set_index(["scenario", "seed"])
+        row = {"scenario": sc_, "model": mdl, "n": len(g)}
+        for c in cols:
+            row[c] = g[c].mean()
+        for c in ["joint_log_score", "cond_log_score", "cond_auc_pr", "both_auc_pr"]:
+            dd = (g[c] - ref.loc[g.index, c]).dropna()
+            row[f"{c}_minus_uni"] = dd.mean(); row[f"{c}_minus_uni_se"] = dd.std() / np.sqrt(max(len(dd), 1))
+        if mdl != "uni_st":
+            dd = (g["joint_log_score"] - g["joint_log_score_indep"]).dropna()
+            row["joint_minus_indep"] = dd.mean(); row["joint_minus_indep_se"] = dd.std() / np.sqrt(max(len(dd), 1))
+        rows.append(row)
+    pt = pd.DataFrame(rows)
+    pt.to_csv(os.path.join(RESULTS, "s5_prediction.csv"), index=False)
+    print(pt.round(4).to_string(index=False))
