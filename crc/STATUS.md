@@ -1255,3 +1255,10 @@ This is the pattern S5 v2 predicted, where biv_st under-estimates escalation whe
 - Conditional: conflict given unrest 0.10189 against marginal 0.10209.
 - Co-occurrence AUC-PR: joint 0.167, independent 0.166.
 - africa_me (1708150.2) is still running.
+
+## 2026-11-07 23:54 EST: region selection submitted (repo at 6062f10)
+- 20_select_region.sh: **1708445**. It runs a 2018-21 fit with 2022 validation scoring, on fixed hyperparameters, followed by joint_gain_map.
+- After 1708150.2 finishes, I'll run joint_gain_map on its test parquet with the `test2324` prefix (descriptive only).
+  That run was submitted at 167e988, before 6062f10 added iso/lon/lat to the prediction parquet. If its parquet lacks
+  those columns, I'll say so here rather than rerun anything.
+- No regional fit will be started.
