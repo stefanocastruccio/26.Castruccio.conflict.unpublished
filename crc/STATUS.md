@@ -1073,3 +1073,5 @@ KeyError: 'st_conflict.range_km'
 - **biv2 africa_me (1705023):** rss summed over the 8 FIT_JOBS workers is 285 GB, which exceeds the 251 GB node. But qhost
   shows only 63 GB physically used on d12chas219, so this is shared memory counted once per worker; there is no OOM.
   Wall time is 1 h 11 min so far.
+- 19:30 EST: task 1 (west_sahel, 1706488.1) failed the same way: `KeyError: 'st_conflict.range_km'`, same traceback.
+  Neither region has a joint-prediction result. Once you push the fix, I'll pull and resubmit `18_joint_pred.sh` (both tasks).
