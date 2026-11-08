@@ -124,5 +124,40 @@ def s5_pred():
     fig.savefig(os.path.join(FIG, "s5_prediction.png"), dpi=200)
 
 
+def s6():
+    """S6 hold-out: paired (by replicate) log-score differences from the univariate space-time
+    model of the target in the held-out block; mean and 95% interval (mean +- 1.96 SE)."""
+    r = pd.concat([pd.read_csv(os.path.join(RES, "s6_raw.csv")),
+                   pd.read_csv(os.path.join(RES, "s6_sf_raw.csv"))], ignore_index=True)
+    key = ["scenario", "seed", "target", "period"]
+    base = r[r.model == "uni_st"].set_index(key)["log_score"]
+    scen = [("no_escalation", r"$\kappa = 0$"), ("escalation", r"$\kappa = 0.4$"),
+            ("escalation_uST", r"$\kappa = 0.4$, unrest-only ep.")]
+    mods = [("uni_field", "static field only", MUTED), ("biv_st", "joint, shared space-time", LATENT),
+            ("biv_sf", "joint, + shared static", BOOST)]
+    fig, axes = plt.subplots(2, 2, figsize=(10, 5.6), constrained_layout=True, sharey=True, sharex=True)
+    for i, (tg, tl) in enumerate([("c", "conflict hidden"), ("u", "unrest hidden")]):
+        for j, (pp, pl) in enumerate([("past", "training weeks"), ("test", "test weeks (forecast)")]):
+            ax = axes[i, j]; labels = []; y = 0
+            for s, sl in scen[::-1]:
+                for m, ml, c in mods[::-1]:
+                    g = r[(r.model == m) & (r.scenario == s) & (r.target == tg) & (r.period == pp)].set_index(key)
+                    d = 1e3 * (g["log_score"] - base.loc[g.index]).to_numpy()
+                    mu, se = d.mean(), d.std(ddof=1) / np.sqrt(len(d))
+                    ax.plot([mu - 1.96 * se, mu + 1.96 * se], [y, y], color=c, lw=2, solid_capstyle="round")
+                    ax.plot(mu, y, "o", color=c, ms=5, mec="white", mew=0.8, zorder=3)
+                    labels.append(f"{sl}: {ml}"); y += 1
+                y += 0.6
+            ax.set_yticks([k + 0.6 * (k // 3) for k in range(len(labels))]); ax.set_yticklabels(labels)
+            ax.axvline(0, color=INK, lw=0.9, ls="--")
+            ax.grid(axis="x", color=GRID, lw=0.6); ax.set_axisbelow(True)
+            for sp_ in ("top", "right"):
+                ax.spines[sp_].set_visible(False)
+            ax.set_title(f"({'abcd'[2 * i + j]}) {tl}, {pl}", loc="left")
+    fig.supxlabel(r"log score in the held-out block minus that of the univariate space-time model"
+                  r" ($\times 10^{-3}$; < 0 is better)", fontsize=9, color=INK)
+    fig.savefig(os.path.join(FIG, "s6_holdout.png"), dpi=200)
+
+
 if __name__ == "__main__":
-    s2(); s4(); s5(); s5_pred()
+    s2(); s4(); s5(); s5_pred(); s6()
