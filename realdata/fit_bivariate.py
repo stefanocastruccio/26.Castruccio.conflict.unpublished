@@ -134,6 +134,20 @@ def _logb(y, p):
     return np.where(y == 1, np.log(p), np.log1p(-p))
 
 
+def mc_prob(m, D, n_samples=200, seed=1, chunk=100_000):
+    """Marginal predictive probability E[expit(eta)] by Monte Carlo over the same posterior
+    draws of the latent vector that joint_eval uses, so that univariate and joint models are
+    scored with the same approximation (the probit-matching formula of prob_from_eta is
+    not accurate enough for rare events to compare log scores at the 1e-3 level)."""
+    A = sp.hstack([sp.csr_matrix(x) for x in D], format="csr")
+    S = m.sample(n_samples, np.random.default_rng(seed))
+    out = np.empty(A.shape[0])
+    for a in range(0, A.shape[0], chunk):
+        b = min(a + chunk, A.shape[0])
+        out[a:b] = (1 / (1 + np.exp(-(A[a:b] @ S)))).mean(1)
+    return out
+
+
 def joint_eval(m, Dte, yc, yu, n_samples=200, seed=0, chunk=100_000):
     """Joint and conditional predictive quantities of a joint model on the test rows, from
     posterior samples of the latent vector (so conflict and unrest share the same draw of
@@ -272,8 +286,10 @@ def main():
             o = "unrest" if model.endswith("_u") else "conflict"
             P = parts_tr[o]
             m = fit_or_condition(LatentGaussianModel(P["y"], uni_blocks(o, st), uni_designs(P, st)), saved, model)
-            eta, sd = m.predict_eta(uni_designs(parts_te[o], st), None, n_samples=50)
-            preds[f"p_{o}_{model.replace('_u', '')}"] = prob_from_eta(eta, sd).astype("float32")
+            Dt = uni_designs(parts_te[o], st)
+            eta, sd = m.predict_eta(Dt, None, n_samples=50)
+            preds[f"p_{o}_{model.replace('_u', '')}_probit"] = prob_from_eta(eta, sd).astype("float32")
+            preds[f"p_{o}_{model.replace('_u', '')}"] = mc_prob(m, Dt).astype("float32")
         else:   # biv: shared v only; biv2: shared v + unrest-specific space-time field
             bl, dz = (biv_blocks, biv_designs) if model == "biv" else (biv2_blocks, biv2_designs)
             y = np.r_[parts_tr["conflict"]["y"], parts_tr["unrest"]["y"]]
@@ -281,8 +297,10 @@ def main():
             Dte = dz(parts_te["conflict"], parts_te["unrest"])
             eta, sd = m.predict_eta(Dte, None, n_samples=50)
             p = prob_from_eta(eta, sd); nte = int(te.sum())
-            preds[f"p_conflict_{model}"] = p[:nte].astype("float32"); preds[f"p_unrest_{model}"] = p[nte:].astype("float32")
+            preds[f"p_conflict_{model}_probit"] = p[:nte].astype("float32")
+            preds[f"p_unrest_{model}_probit"] = p[nte:].astype("float32")
             je = joint_eval(m, Dte, parts_te["conflict"]["y"], parts_te["unrest"]["y"], seed=1)
+            preds[f"p_conflict_{model}"] = je["pc"].astype("float32"); preds[f"p_unrest_{model}"] = je["pu"].astype("float32")
             for k in ("logj", "logi", "pc_given", "pboth"):
                 preds[f"{k}_{model}"] = je[k].astype("float32")
         fs = m.fixed_summary()

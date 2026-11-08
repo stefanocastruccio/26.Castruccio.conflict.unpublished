@@ -36,7 +36,7 @@ from sc.gmrf import CopyBlock, SphereLattice
 from sc.laplace import prob_from_eta
 from sc.simulate import matern_gp
 
-CKPT = os.environ.get("S5_CKPT", "s5v3_ckpt.jsonl")
+CKPT = os.environ.get("S5_CKPT", "s5v4_ckpt.jsonl")
 N_REPS = int(os.environ.get("N_REPS", 20))
 # (kappa, sd of an UNREST-ONLY space-time episode field). The *_uST scenarios add unrest
 # episodes that do not touch conflict: a joint model with a single shared space-time field
@@ -113,6 +113,14 @@ def _logb(y, p):
     return np.where(y == 1, np.log(p), np.log1p(-p))
 
 
+def mc_prob(m, D, n_samples=200, seed=0):
+    """E[expit(eta)] by Monte Carlo over posterior latent draws: the same approximation as
+    joint_eval, so univariate and joint models are scored alike."""
+    A = sp.hstack([sp.csr_matrix(x) for x in D], format="csr")
+    S = m.sample(n_samples, np.random.default_rng(seed))
+    return (1 / (1 + np.exp(-(A @ S)))).mean(1)
+
+
 def joint_eval(m, Dte_full, yc, yu, n_samples=200, seed=0):
     """Joint/conditional predictive quantities from posterior samples (both outcomes share
     each latent draw). Dte_full: designs of the stacked test rows (conflict, then unrest)."""
@@ -177,8 +185,7 @@ def one(arg):
     both = yte * yu_te
     # univariate unrest model (for the product of univariate predictions)
     mu_uni, _ = fit_uni(L, d_tr, "uni_st", T, outcome="u")
-    eta, sd = mu_uni.predict_eta(uni_test_designs(L, d_te, "uni_st", T), None, n_samples=50)
-    pu_uni = prob_from_eta(eta, sd)
+    pu_uni = mc_prob(mu_uni, uni_test_designs(L, d_te, "uni_st", T), seed=seed)
     pc_uni = None
     for kind in ["glm", "uni_field", "uni_st", "biv_st", "biv_st2"]:
         if kind in ("biv_st", "biv_st2"):
@@ -191,8 +198,7 @@ def one(arg):
             Dte = uni_test_designs(L, d_te, kind, T)
         fs = m.fixed_summary()
         est, se = fs["Lu"]
-        eta, sd = m.predict_eta(Dte, None, n_samples=50)
-        p = prob_from_eta(eta, sd)
+        p = mc_prob(m, Dte, seed=seed)   # same Monte Carlo approximation for every model
         sc = dg.scores(yte, p)
         r = dict(scenario=scen, seed=seed, model=kind, truth=kappa, est=float(est), se=float(se),
                  d_c=float(fs["Lc"][0]), log_ml=float(m.log_ml), seconds=float(m.fit_seconds),
