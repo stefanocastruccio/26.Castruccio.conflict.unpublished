@@ -1311,3 +1311,46 @@ This is the pattern S5 v2 predicted, where biv_st under-estimates escalation whe
 ## 2026-11-08 00:14 EST: region selection resubmitted with the year-dummy fix (f6c411d): **1708630**
 - I deleted the invalid, uncommitted selection files from the first run.
 - The test2324 gain map (with --lookup) follows once this job and the africa_me rescoring (1708150.2) have finished.
+
+## 2026-11-08 00:45 EST: region selection on 2022 done (1708630, rc 0, about 15 min, no Traceback). Valid this time
+- Committed `results_real/bivariate/selection/`: val2022_summary.json, val2022_by_country.csv, val2022_windows.csv and summary_val.json.
+- **Dropped covariates** (log line, for both outcomes):
+  `conflict: dropping covariates that are zero on all training rows: ['year_2022']`, and the same for unrest.
+- **2022 scores are now properly calibrated.** Validation rows: 713,388 per outcome.
+
+| model | conflict log / Brier / AUC-PR | unrest log / Brier / AUC-PR |
+|---|---|---|
+| uni_static | 0.0574 / 0.0155 / 0.546 | 0.0608 / 0.0164 / 0.535 |
+| biv | 0.0569 / 0.0154 / 0.549 | 0.0606 / 0.0163 / 0.538 |
+
+- **Joint log score on 2022:** product of uni_static 0.11823, biv 0.11752.
+  - biv − product = −0.00071 (SE cell 0.00013, country 0.00042, about 1.7 SE).
+  - Joint − independent = −0.00006 (country SE 0.00002).
+  - mean_gain is 0.00071 and mean_gain_dependence 0.00006, so nearly all of the gain comes from better marginals, not from the dependence.
+- **Selected window** (largest total gain, at least 50 cells): **lon 60-70, lat 30-40 (AFG, TKM, IRN, UZB)**.
+  200 cells, gain_sum 180.3, gain_mean 0.0173 (SE country 0.0117), dep_mean −0.00002.
+- **Top 5 windows on 2022:**
+
+| lon | lat | cells | gain_sum | gain_mean | SE country | dep_mean | both | countries |
+|---|---|---|---|---|---|---|---|---|
+| 60-70 | 30-40 | 200 | 180.3 | 0.0173 | 0.0117 | −0.00002 | 0.0013 | AFG, TKM, IRN, UZB |
+| 55-65 | 30-40 | 400 | 173.0 | 0.0083 | 0.0090 | −0.00001 | 0.0010 | IRN, TKM, AFG, UZB |
+| 0-10 | 30-40 | 278 | 167.4 | 0.0116 | 0.0017 | 0.00002 | 0.0001 | DZA, TUN, ITA, ESP, LBY |
+| 60-70 | 25-35 | 194 | 143.8 | 0.0143 | 0.0101 | 0.00004 | 0.0040 | AFG, IRN, PAK |
+| 55-65 | 25-35 | 375 | 125.1 | 0.0064 | 0.0083 | 0.00002 | 0.0021 | IRN, AFG, PAK, OMN, ARE |
+
+- **Top countries, 2022:**
+
+| country | cells | gain_sum | gain_mean |
+|---|---|---|---|
+| AFG | 104 | 173.1 | 0.0320 |
+| DZA | 854 | 171.5 | 0.0039 |
+| IRQ | 170 | 58.7 | 0.0066 |
+| NGA | 300 | 43.5 | 0.0028 |
+| GIN | 78 | 39.5 | 0.0097 |
+| SSD | 202 | 38.7 | 0.0037 |
+
+- **Note:** in every top window, dep_mean is about 0. The gains there come from biv's better marginal fit, through the
+  shared field and country effects, not from modelling the co-occurrence. Most top windows also have very few joint
+  events (both ≤ 0.4%).
+- The test2324 gain map follows once 1708150.2 finishes. It is still running, about 1 h 50 min in.
