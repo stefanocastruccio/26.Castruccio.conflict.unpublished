@@ -1052,3 +1052,24 @@ West Africa biv2 (1701825) has run 3 h 10 min, maxrss 65 GB.
 - 18_joint_pred: **1706488** (tasks 1-2, 16 slots each).
 - S5 v3: **1706489** (40 tasks × 4 slots; checkpoints `s5v3_ckpt*`). Merge **1706490** is held on it and uses the same wrapper as before.
 - The biv2 jobs 1701825 and 1705023 keep running.
+
+## 2026-11-07 19:35 EST: Round 9 joint prediction FAILED (1706488.2, africa_me), bug in fit_bivariate.py
+```
+  File "realdata/fit_bivariate.py", line 251, in main
+    m = fit_or_condition(LatentGaussianModel(P["y"], uni_blocks(o, st), uni_designs(P, st)), saved, model)
+  File "realdata/fit_bivariate.py", line 104, in fit_or_condition
+    m.theta = theta_from_hyper(m.blocks, saved["models"][model]["hyper"])
+  File "realdata/fit_bivariate.py", line 89, in theta_from_hyper
+    th += [np.log(hyper[f"{nm}.range_km"]), np.log(hyper[f"{nm}.sd"]), np.arctanh(hyper[f"{nm}.rho"])]
+KeyError: 'st_conflict.range_km'
+```
+- **Cause:** line 248 has `st = model.startswith("uni_st")`, which is **True for "uni_static"**. So uni_static is built with a
+  space-time block and then looks for `st_conflict.*` in the saved uni_static hyperparameters, which don't have them.
+  `summary_biv.json` itself is intact: uni_static has 4 hyper keys, and uni_st has the 3 `st_conflict.*` keys.
+- **Suggested fix:** `st = model in ("uni_st", "uni_st_u")`. The same pattern would also misclassify "uni_static_u".
+- Task 1 (west_sahel, 1706488.1) runs the same code, so it will very likely fail the same way. I'm leaving it running
+  and will report when it ends. I won't resubmit until you push a fix.
+- No problem with S5 v3 (1706489, 40 tasks running) or the field diffusion job.
+- **biv2 africa_me (1705023):** rss summed over the 8 FIT_JOBS workers is 285 GB, which exceeds the 251 GB node. But qhost
+  shows only 63 GB physically used on d12chas219, so this is shared memory counted once per worker; there is no OOM.
+  Wall time is 1 h 11 min so far.
