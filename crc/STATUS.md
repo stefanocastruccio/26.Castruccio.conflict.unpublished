@@ -1167,3 +1167,16 @@ on main is touched.
   solve. 7.5 s of that is the serial Takahashi loop.
 - Next: a thread-parallel selected inverse over the elimination tree. I'll report when it beats parallel finite
   differences. It needs scikit-sparse and numba, which are installed only in a separate env, `/users/scastruc/envs/conflict-dev`.
+
+## 2026-11-07 22:45 EST: warm-start biv2 submitted (repo at 914637f)
+- `19_biv2_warm.sh`: **1708086** (tasks 1-2: west_sahel, africa_me). It runs on EPYC queues, warm-started, with LAPLACE_FTOL 1e-7 /
+  GTOL 1e-3 / MAXITER 60.
+- **Submitted with 16 slots, not 32.** Stefano set the limit at 16 cores per batch job (2026-11-07). I used a copy of the
+  script with `-pe smp 16` and `FIT_JOBS=8`, keeping OMP 2 threads per worker, so 16 threads in total. Please change
+  the header in the repo to 16 / FIT_JOBS 8 so it matches.
+- Deleted 1705023, the old africa_me biv2 (cold start), after 5 h 50 min. It wrote no output.
+- Still running:
+  - 1701825, the old west_sahel biv2, as the cross-check. Whichever finishes first is committed as `summary_biv2.json`,
+    and if both finish I'll report the differences in hyperparameters and κ.
+  - 1706562.2, the africa_me joint prediction.
+- Analytic gradient: I'm continuing on the branch, and it won't be merged until it beats the parallel finite differences.
