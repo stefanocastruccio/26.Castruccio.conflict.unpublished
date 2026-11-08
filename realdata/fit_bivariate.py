@@ -184,6 +184,10 @@ def main():
     ap.add_argument("--st-step", type=int, default=13); ap.add_argument("--st-res", type=float, default=1.0)
     ap.add_argument("--models", default="uni_static,uni_st,biv")   # also: biv2
     ap.add_argument("--summary-name", default="summary_biv.json")
+    ap.add_argument("--box", type=float, nargs=4, default=None, metavar=("LON0", "LON1", "LAT0", "LAT1"),
+                    help="custom region (overrides --region's box; --region then only names it)")
+    ap.add_argument("--validation", action="store_true",
+                    help="model selection split: fit on 2018-2021, score 2022; 2023-2024 rows are dropped")
     ap.add_argument("--init-theta", default=None,
                     help="summary JSON whose fitted 'biv' hyperparameters warm-start the fit (e.g. for biv2)")
     ap.add_argument("--fixed-theta", default=None,
@@ -194,12 +198,18 @@ def main():
 
     raw = pd.read_parquet(a.table)
     raw["week_start"] = pd.to_datetime(raw["week_start"])
-    x0, x1, y0, y1 = REGIONS[a.region]
+    x0, x1, y0, y1 = a.box if a.box else REGIONS[a.region]
     raw = raw[raw.lon.between(x0, x1) & raw.lat.between(y0, y1)].copy()
     dfs, covs = {}, {}
     for o in OUTS:
         dfo, cov, _ = prepare(raw, o)
         dfs[o], covs[o] = dfo.reset_index(drop=True), cov
+    if a.validation:   # 2023-2024 never enter: train 2018-2021, score 2022
+        keep = dfs["conflict"]["train"].to_numpy().copy()
+        for o in OUTS:
+            d_ = dfs[o][keep].reset_index(drop=True)
+            d_["train"] = (d_["week_start"] < pd.Timestamp("2022-01-01")).to_numpy()
+            dfs[o] = d_
     key = ["grid_id", "week_start"]
     assert dfs["conflict"][key].equals(dfs["unrest"][key]), "prepare() rows differ between outcomes"
     base = dfs["conflict"]
@@ -272,10 +282,12 @@ def main():
     init = json.load(open(a.init_theta)) if a.init_theta else None
     parts_tr = {o: parts(o, tr) for o in OUTS}
     parts_te = {o: parts(o, te) for o in OUTS}
-    res = {"region": a.region, "box": list(REGIONS[a.region]), "rows_per_outcome": int(len(base)),
-           "cells": int(observed.sum()), "countries": nC, "st_res_deg": r, "st_step_weeks": a.st_step,
+    res = {"region": a.region, "rows_per_outcome": int(len(base)),
+           "box": [x0, x1, y0, y1], "validation": bool(a.validation), "cells": int(observed.sum()), "countries": nC, "st_res_deg": r, "st_step_weeks": a.st_step,
            "st_cells": int(Lv.n), "time_steps": T, "models": {}}
     preds = {"grid_id": base.loc[te, "grid_id"].to_numpy(), "week_start": base.loc[te, "week_start"].to_numpy(),
+             "iso": base.loc[te, "ISO_A3"].astype(str).to_numpy(),
+             "lon": base.loc[te, "lon"].to_numpy(), "lat": base.loc[te, "lat"].to_numpy(),
              "y_conflict": parts_te["conflict"]["y"].astype("int8"), "y_unrest": parts_te["unrest"]["y"].astype("int8"),
              "events_52w_conflict": np.nan * np.zeros(te.sum())}
     keys = ["conflict:lag_own", "conflict:lag_other", "conflict:lag_own_nb", "conflict:lag_other_nb",
