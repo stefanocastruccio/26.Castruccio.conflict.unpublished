@@ -246,10 +246,21 @@ joint model treats it as a shared episode. With a single event source the two ca
 be separated, so neither $v$ nor $\lambda$ should be read as a property of occurrence
 alone.
 
-\paragraph{The AME region.} \todo{Joint fit for the AME region
-(13{,}719 cells, $v$ on 3{,}637 cells of $1^\circ$): $\hat\kappa$ and SE in the univariate
-static, univariate space-time and joint models; $\hat\lambda$, range, standard deviation
-and AR(1) coefficient of the shared field; test scores. The fit is still running.}
+\paragraph{The AME region.} The joint model fitted to Africa and the Middle East has
+13{,}719 cells in 93 countries and 4.9 million cell-weeks per outcome; $v$ is defined
+on 3{,}637 cells of $1^\circ$ at 26-week steps. The pattern of the escalation
+coefficient repeats: $\hat\kappa = 0.150$ (SE 0.014) in the univariate static model,
+0.133 (0.015) in the univariate space-time model and 0.057 (0.015) in the joint model.
+Unlike in West Africa, the joint estimate remains about 3.8 SE from zero, although
+the SE shortfall of S3 and S5 applies here as well. The shared field has loading
+$\hat\lambda = 0.67$, range 486\,km, SD 1.25 and AR(1) coefficient 0.95 per 26 weeks.
+The cross-outcome neighbour coefficients are again negative ($-0.035$ for conflict and
+$-0.042$ for unrest, SE 0.006). For conflict alone the three models forecast
+similarly (log score 0.0593, 0.0600 and 0.0595; AUC-PR 0.524, 0.522 and 0.526, at a
+prevalence of 2.4\%). The joint fit took 6.4 hours, against 9 minutes for the
+univariate static model and 41 minutes for the univariate space-time model.
+\todo{Joint and conditional prediction for this region, rescored with common Monte
+Carlo draws.}
 
 \subsection{Residual spatial structure and the hybrid model}\label{sec:app-hybrid}
 
