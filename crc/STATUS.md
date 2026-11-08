@@ -1530,3 +1530,7 @@ What the numbers show:
 - **1708140 (FD half stuck): not yet killed.** Claude Code's automatic safety check blocked my `qdel 1708140`, so it needs the owner to run
   `qdel 1708140`, or to allow it. Otherwise it ends at h_rt (about 23:03 tonight). The analytic result above stands. The FD half has
   written no output since 23:26 yesterday.
+
+## 2026-11-08 14:00 EST: submitted 24_biv3 (repo at 62e6542)
+- `24_biv3.sh`: **1711845** (tasks 1-2: west_sahel, africa_me). 16 slots, EPYC queues.
+- 1708140: the owner will run `qdel 1708140` themselves.
