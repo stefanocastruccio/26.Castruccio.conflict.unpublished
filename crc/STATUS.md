@@ -1601,3 +1601,8 @@ What the numbers show:
 - The analytic half finished (1,358 s, log-ML −180,888.63; hyperparameters look degenerate, see 13:00 entry). The FD half was
   stuck: no output from 23:26 to 15:20, low CPU. **No analytic-vs-FD comparison was obtained.** Branch `analytic-grad` is untouched
   and not merged. To redo it, run the FD half on its own with a timeout, and check first that it isn't hanging in the worker pool.
+
+## 2026-11-08 16:15 EST: submitted 25_holdout_refit (repo at 1e41294)
+- `25_holdout_refit.sh`: **1712445** (20 tasks; west_sahel and africa_me × conflict and unrest targets × folds 0-4; per-fold refits with
+  --zero-frac 0.25). 16 slots, EPYC queues. `26_s6.sh` is on hold, waiting for the go-ahead.
+- 1708140 was killed at 15:20 (see above).
