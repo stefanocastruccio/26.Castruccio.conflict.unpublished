@@ -40,12 +40,14 @@ import scipy.sparse as sp
 from sc import design as de, diagnostics as dg
 from sc.gmrf import CopyBlock, FixedBlock, IIDBlock, MaternBlock, SpaceTimeAR1Block
 from sc.laplace import LatentGaussianModel
-from fit_bivariate import (REGIONS, OUTS, neighbour_mean, stack, theta_from_hyper, mc_prob, joint_eval, _logb)
+from fit_bivariate import (REGIONS, OUTS, neighbour_mean, stack, theta_from_hyper, theta0_from_init, subsample,
+                           mc_prob, joint_eval, _logb)
 from fit_acled import build_lattice, sea_cells
 from fit_glmm import prepare
 
-# conflict-history columns per outcome (unknown where conflict is unobserved)
-CONFLICT_HIST = {"conflict": ["lag_own", "h_init"], "unrest": ["lag_other"]}
+# history columns that are unknown where the TARGET outcome is unobserved, per outcome
+UNKNOWN_HIST = {"conflict": {"conflict": ["lag_own", "h_init"], "unrest": ["lag_other"]},
+                "unrest": {"unrest": ["lag_own", "h_init"], "conflict": ["lag_other"]}}
 
 
 def collinear(X, names, tol=1e-9):
@@ -72,24 +74,55 @@ def condition(m, hyper):
     return m
 
 
+def refit(make, P_by_outcome, designs_fn, hyper_init, r, seed):
+    """Re-estimate the hyperparameters on this fold's data (all events + a fraction r of the
+    non-events, offset -log r; warm start from hyper_init), then the latent posterior on all
+    of the fold's fitting rows at those hyperparameters."""
+    t0 = time.time()
+    rng = np.random.default_rng(seed)
+    S = {o: subsample(P, r, rng) for o, P in P_by_outcome.items()}
+    ys = np.concatenate([S[o]["y"] for o in S]); off = np.concatenate([S[o]["off"] for o in S])
+    blocks = make()
+    th0 = theta0_from_init(blocks, hyper_init) if hyper_init else None
+    ms = LatentGaussianModel(ys, blocks, designs_fn(S), offset=off).fit(theta0=th0)
+    yf = np.concatenate([P_by_outcome[o]["y"] for o in P_by_outcome])
+    m = LatentGaussianModel(yf, make(), designs_fn(P_by_outcome))
+    m.theta = ms.theta
+    m.x_hat, m.f_hat, m.lu = m.mode(m.theta)
+    m.fit_seconds = time.time() - t0
+    m.hyper_fold = m.hyper()
+    return m
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("table"); ap.add_argument("--region", default="west_sahel")
     ap.add_argument("--box", type=float, nargs=4, default=None)
     ap.add_argument("--land", required=True); ap.add_argument("--out", required=True)
     ap.add_argument("--st-step", type=int, default=13); ap.add_argument("--st-res", type=float, default=1.0)
-    ap.add_argument("--fixed-theta", required=True, help="summary with uni_static, uni_st, biv hyperparameters")
+    ap.add_argument("--fixed-theta", required=True,
+                    help="summary with the uni_static(_u), uni_st(_u), biv hyperparameters (starting values with --refit)")
     ap.add_argument("--fixed-theta2", default=None, help="summary with biv2 hyperparameters (optional)")
     ap.add_argument("--folds", type=int, default=5); ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--min-events", type=int, default=20,
                     help="countries with fewer conflict events (2018-2024) are never held out")
     ap.add_argument("--only-fold", type=int, default=None)
+    ap.add_argument("--target", choices=("conflict", "unrest"), default="conflict",
+                    help="the outcome treated as unobserved in the held-out countries")
+    ap.add_argument("--refit", action="store_true",
+                    help="re-estimate the hyperparameters in every fold (no information from the held-out "
+                         "countries' target), with --zero-frac subsampling and a warm start from the saved values")
+    ap.add_argument("--zero-frac", type=float, default=0.25)
     a = ap.parse_args()
+    tg = a.target; ot = "unrest" if tg == "conflict" else "conflict"
     os.makedirs(a.out, exist_ok=True)
     saved = json.load(open(a.fixed_theta))["models"]
     if a.fixed_theta2:
         saved.update(json.load(open(a.fixed_theta2))["models"])
-    models = [m for m in ("uni_static", "uni_st", "biv", "biv2") if m in saved]
+    sfx = "" if tg == "conflict" else "_u"         # saved univariate unrest models: uni_static_u, uni_st_u
+    models = [m for m in ("uni_static", "uni_st", "biv", "biv2")
+              if a.refit or (m + sfx if m.startswith("uni") else m) in saved]
+    hyper_of = lambda m: (saved.get(m + sfx if m.startswith("uni") else m) or {}).get("hyper")   # noqa: E731
     print("models:", models, flush=True)
 
     raw = pd.read_parquet(a.table)
@@ -120,8 +153,8 @@ def main():
     tstep = wk // a.st_step
     T = int(tstep.max() + 1)
 
-    # folds: countries with enough conflict events, shuffled, split into K groups
-    ev = pd.Series(dfs0["conflict"]["y"].to_numpy()).groupby(iso).sum()
+    # folds: countries with enough target events, shuffled, split into K groups
+    ev = pd.Series(dfs0[tg]["y"].to_numpy()).groupby(iso).sum()
     elig = sorted(ev[ev >= a.min_events].index)
     rng = np.random.default_rng(a.seed)
     perm = list(rng.permutation(elig))
@@ -129,12 +162,12 @@ def main():
     print("folds:", folds, flush=True)
 
     def blocks(model, names_c, names_u):
-        if model in ("uni_static", "uni_st"):
-            b = [FixedBlock(len(names_c), names_c), IIDBlock(nC, name="country_conflict"),
-                 IIDBlock(L.n, name="cell_conflict", sd_init=0.5),
-                 MaternBlock(L, name="field_conflict", range_init=300.0, barrier=barrier)]
+        if model in ("uni_static", "uni_st"):    # univariate model of the target (names_c = its names)
+            b = [FixedBlock(len(names_c), names_c), IIDBlock(nC, name=f"country_{tg}"),
+                 IIDBlock(L.n, name=f"cell_{tg}", sd_init=0.5),
+                 MaternBlock(L, name=f"field_{tg}", range_init=300.0, barrier=barrier)]
             if model == "uni_st":
-                b.append(SpaceTimeAR1Block(Lv, T, name="st_conflict", sd_init=0.5, rho_init=0.8))
+                b.append(SpaceTimeAR1Block(Lv, T, name=f"st_{tg}", sd_init=0.5, rho_init=0.8))
             return b
         names = names_c + names_u
         b = [FixedBlock(len(names), names),
@@ -168,9 +201,9 @@ def main():
         t0 = time.time()
         hold = np.isin(iso, fold)
         dfs = {}
-        for o in OUTS:   # conflict history unknown in the held-out countries
+        for o in OUTS:   # target history unknown in the held-out countries
             d_ = dfs0[o].copy()
-            for c in CONFLICT_HIST[o]:
+            for c in UNKNOWN_HIST[tg][o]:
                 if c in d_:
                     d_.loc[hold, c] = 0.0
             d_["cell"] = cell; d_["country_id"] = country_id
@@ -190,34 +223,47 @@ def main():
             return dict(X=X, names=[f"{o}:{n}" for n in names], C=de.index_design(dd["country_id"], nC),
                         E=de.index_design(dd["cell"], L.n), W=de.index_design(dd["cell"], L.n),
                         V=de.spacetime_design(cell_v[rows], tstep[rows], Lv.n, T), y=dd["y"].to_numpy())
-        fit_c = tr & ~hold          # conflict likelihood: training rows outside the fold
-        fit_u = tr                  # unrest likelihood: all training rows
-        Pc, Pu = parts("conflict", fit_c), parts("unrest", fit_u)
+        fit_rows = {tg: tr & ~hold, ot: tr}   # target: training rows outside the fold; other: all
+        P = {o: parts(o, fit_rows[o]) for o in OUTS}
         # without the fold's countries some country-level covariates can become collinear on
-        # the conflict rows (e.g. a national indicator equal to a combination of others): drop them
-        drop = collinear(Pc["X"], Pc["names"])
+        # the target's rows (e.g. a national indicator equal to a combination of others): drop them
+        drop = collinear(P[tg]["X"], P[tg]["names"])
         if drop:
-            print(f"fold {k}: dropping collinear conflict covariates {drop}", flush=True)
-            cv["conflict"] = [c for c in cv["conflict"] if f"conflict:{c}" not in drop]
-            Pc = parts("conflict", fit_c)
+            print(f"fold {k}: dropping collinear {tg} covariates {drop}", flush=True)
+            cv[tg] = [c for c in cv[tg] if f"{tg}:{c}" not in drop]
+            P[tg] = parts(tg, fit_rows[tg])
+        Pc, Pu = P["conflict"], P["unrest"]
         Hc, Hu = parts("conflict", hold), parts("unrest", hold)   # held-out rows, all weeks
+        H = {"conflict": Hc, "unrest": Hu}
         yc, yu = Hc["y"], Hu["y"]
         out = {"grid_id": base.loc[hold, "grid_id"].to_numpy(), "week_start": base.loc[hold, "week_start"].to_numpy(),
                "iso": iso[hold], "period": np.where(tr[hold], "past", "test"), "fold": k,
                "y_conflict": yc.astype("int8"), "y_unrest": yu.astype("int8")}
-        info = {"fold": k, "countries": fold, "rows": int(hold.sum()), "conflict_events": int(yc.sum())}
+        out["y_target"] = H[tg]["y"].astype("int8")
+        info = {"fold": k, "countries": fold, "rows": int(hold.sum()), "target_events": int(H[tg]["y"].sum())}
         for model in models:
             if model in ("uni_static", "uni_st"):
-                m = condition(LatentGaussianModel(Pc["y"], blocks(model, Pc["names"], None), designs(model, Pc, None)),
-                              saved[model]["hyper"])
-                out[f"p_{model}"] = mc_prob(m, designs(model, Hc, None)).astype("float32")
+                mk = lambda: blocks(model, P[tg]["names"], None)                         # noqa: E731
+                if a.refit:
+                    m = refit(mk, {tg: P[tg]}, lambda S: designs(model, S[tg], None), hyper_of(model),
+                              a.zero_frac, 100 + k)
+                else:
+                    m = condition(LatentGaussianModel(P[tg]["y"], mk(), designs(model, P[tg], None)), hyper_of(model))
+                out[f"p_{model}"] = mc_prob(m, designs(model, H[tg], None)).astype("float32")
             else:
-                y = np.r_[Pc["y"], Pu["y"]]
-                m = condition(LatentGaussianModel(y, blocks(model, Pc["names"], Pu["names"]), designs(model, Pc, Pu)),
-                              saved[model]["hyper"])
+                mk = lambda: blocks(model, Pc["names"], Pu["names"])                     # noqa: E731
+                if a.refit:
+                    m = refit(mk, {"conflict": Pc, "unrest": Pu},
+                              lambda S: designs(model, S["conflict"], S["unrest"]), hyper_of(model), a.zero_frac, 100 + k)
+                else:
+                    m = condition(LatentGaussianModel(np.r_[Pc["y"], Pu["y"]], mk(), designs(model, Pc, Pu)),
+                                  hyper_of(model))
                 je = joint_eval(m, designs(model, Hc, Hu), yc, yu, seed=1)
-                out[f"p_{model}"] = je["pc"].astype("float32")
-                out[f"pcg_{model}"] = je["pc_given"].astype("float32")
+                out[f"p_{model}"] = (je["pc"] if tg == "conflict" else je["pu"]).astype("float32")
+                if tg == "conflict":
+                    out[f"pcg_{model}"] = je["pc_given"].astype("float32")
+            if hasattr(m, "hyper_fold"):
+                info[f"hyper_{model}"] = m.hyper_fold
             info[f"seconds_{model}"] = float(m.fit_seconds)
             print(f"fold {k} {model}: {m.fit_seconds:.0f} s", flush=True)
         info["seconds"] = time.time() - t0
@@ -236,7 +282,7 @@ def score(d):
     res = {}
     for per in ("past", "test", "all"):
         s = d if per == "all" else d[d.period == per]
-        y = s.y_conflict.to_numpy(); cl = s.grid_id.to_numpy(); ct = s.iso.to_numpy()
+        y = s.y_target.to_numpy(); cl = s.grid_id.to_numpy(); ct = s.iso.to_numpy()
         R = {"rows": int(len(s)), "events": int(y.sum())}
         cols = [c for c in s.columns if c.startswith("p_") or c.startswith("pcg_")]
         for c in cols:
@@ -253,7 +299,7 @@ def score(d):
                 R[f"{c}_minus_{b}"] = {"mean": md, "se_cell": ses[0], "se_country": ses[1]}
         by = {}
         for cc, g in s.groupby("iso"):
-            yy = g.y_conflict.to_numpy()
+            yy = g.y_target.to_numpy()
             by[cc] = {"events": int(yy.sum()), **{c: float(-np.mean(_logb(yy, g[c].to_numpy().astype(float))))
                                                   for c in cols}}
         R["by_country"] = by
