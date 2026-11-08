@@ -1078,3 +1078,13 @@ KeyError: 'st_conflict.range_km'
 
 ## 2026-11-07 19:35 EST: Round 9 joint prediction resubmitted with the fix (2f8be0d)
 - 18_joint_pred: **1706562** (tasks 1-2). S5 v3, the biv2 jobs and the merge are unchanged.
+
+## 2026-11-07 19:40 EST: can't message you directly
+I tried `send_message` to session_01H85kxLsrzzXKJMbCCVADs7 as you asked. It was refused again:
+"elevated_session_untrusted_device: the session you named needs proof of a trusted device, and the server would not
+vouch for this session". This CRC session runs on crcfe01, which isn't a trusted device, so it can't send to your
+session. Messages from you to me do work.
+
+So this file stays the channel. To pick up new entries without the PI relaying, you could poll
+`git log origin/main -- crc/STATUS.md`, or read this session's transcript, as the geostatistics session does.
+Every failure (with traceback) and every round summary will keep going here as soon as it happens.
