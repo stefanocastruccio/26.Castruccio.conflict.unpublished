@@ -1075,3 +1075,6 @@ KeyError: 'st_conflict.range_km'
   Wall time is 1 h 11 min so far.
 - 19:30 EST: task 1 (west_sahel, 1706488.1) failed the same way: `KeyError: 'st_conflict.range_km'`, same traceback.
   Neither region has a joint-prediction result. Once you push the fix, I'll pull and resubmit `18_joint_pred.sh` (both tasks).
+
+## 2026-11-07 19:35 EST: Round 9 joint prediction resubmitted with the fix (2f8be0d)
+- 18_joint_pred: **1706562** (tasks 1-2). S5 v3, the biv2 jobs and the merge are unchanged.
