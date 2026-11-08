@@ -17,7 +17,8 @@ the other outcome's history (Lu or Lc), so they see the same data as the joint m
 any gain of the joint models comes from the latent structure linking the two outcomes.
 
 Models of the target:  uni_field (static field), uni_st (+ space-time field),
-                       biv_st (joint, shared space-time field), biv_st2 (+ unrest-only field)
+                       biv_st (joint, shared space-time field), biv_st2 (+ unrest-only field),
+                       biv_sf (biv_st + shared static field; run with S6_MODELS=biv_sf S6_TAG=_sf)
 Scores in the block: log score and AUC-PR; paired differences across replicates.
 """
 from common import *  # noqa: F401,F403
@@ -32,6 +33,9 @@ CKPT = os.environ.get("S6_CKPT", "s6_ckpt.jsonl")
 N_REPS = int(os.environ.get("N_REPS", 20))
 HOLD = int(os.environ.get("S6_HOLD", 6))          # 6 x 6 of the 16 x 14 cells (16%)
 TARGETS = ("c", "u")
+# biv_sf: biv_st + a shared static field (loading on unrest), the generator's structure
+MODELS = os.environ.get("S6_MODELS", "uni_field,uni_st,biv_st,biv_st2").split(",")
+TAG = os.environ.get("S6_TAG", "")
 
 
 def block_mask(L, seed):
@@ -54,7 +58,7 @@ def uni(L, dfit, dpred, kind, T, target):
     return m, mc_prob(m, D(dpred), seed=1)
 
 
-def biv(L, dc, du, dpred, T, target, two):
+def biv(L, dc, du, dpred, T, target, two, sfield=False):
     """Joint model; conflict rows dc, unrest rows du (different sets). Returns the predicted
     probability of the target on the rows of dpred."""
     n = L.n
@@ -71,6 +75,8 @@ def biv(L, dc, du, dpred, T, target, two):
              sp.bmat([[Sc, None], [None, Su]], format="csr")]
         if two:
             D.append(sp.vstack([sp.csr_matrix((mc, n * T)), Su], format="csr"))
+        if sfield:
+            D.append(sp.bmat([[Wc, None], [None, Wu]], format="csr"))
         return D
 
     blocks = [FixedBlock(5, ["int_c", "Lc", "Lu", "int_u", "Lu_u"]),
@@ -78,6 +84,8 @@ def biv(L, dc, du, dpred, T, target, two):
               CopyBlock(SpaceTimeAR1Block(L, T, name="st", sd_init=0.5, rho_init=0.8), name="shared_st")]
     if two:
         blocks.append(SpaceTimeAR1Block(L, T, name="st_u", sd_init=0.3, rho_init=0.8))
+    if sfield:
+        blocks.append(CopyBlock(MaternBlock(L, name="sfield"), name="shared_field"))
     y = np.r_[dc["yc"].to_numpy(), du["yu"].to_numpy()]
     m = LatentGaussianModel(y, blocks, designs(dc, du)).fit()
     Dp = designs(dpred, dpred)
@@ -100,13 +108,13 @@ def one(arg):
     dpred = d[hold]
     y = dpred["y" + target].to_numpy(); per = np.where(dpred.train, "past", "test")
     out = []
-    for kind in ("uni_field", "uni_st", "biv_st", "biv_st2"):
+    for kind in MODELS:
         if kind.startswith("uni"):
             m, p = uni(L, fit_target, dpred, kind, T, target)
             lam = None
         else:
             dc, du = (fit_target, fit_other) if target == "c" else (fit_other, fit_target)
-            m, p = biv(L, dc, du, dpred, T, target, kind == "biv_st2")
+            m, p = biv(L, dc, du, dpred, T, target, kind == "biv_st2", sfield=kind == "biv_sf")
             lam = m.hyper().get("shared_st.loading")
         for pp in ("past", "test"):
             s = per == pp
@@ -125,7 +133,9 @@ if __name__ == "__main__":
     res = pd.DataFrame([r for rows in run_parallel(one, args, checkpoint=os.path.join(RESULTS, CKPT)) for r in rows])
     if os.environ.get("SHARD"):
         sys.exit(0)
-    res.to_csv(os.path.join(RESULTS, "s6_raw.csv"), index=False)
+    res.to_csv(os.path.join(RESULTS, f"s6{TAG}_raw.csv"), index=False)
+    if TAG:   # add the base models from the main run
+        res = pd.concat([pd.read_csv(os.path.join(RESULTS, "s6_raw.csv")), res], ignore_index=True)
     key = ["scenario", "seed", "target", "period"]
     rows = []
     for base in ("uni_field", "uni_st"):
@@ -141,5 +151,5 @@ if __name__ == "__main__":
                              d_aucpr=da.mean(), d_aucpr_se=da.std() / np.sqrt(len(da)),
                              loading=g["loading"].mean()))
     tab = pd.DataFrame(rows)
-    tab.to_csv(os.path.join(RESULTS, "s6_summary.csv"), index=False)
+    tab.to_csv(os.path.join(RESULTS, f"s6{TAG}_summary.csv"), index=False)
     print(tab.round(4).to_string(index=False))
