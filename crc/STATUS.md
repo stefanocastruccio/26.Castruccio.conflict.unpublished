@@ -1683,3 +1683,7 @@ held-out block minus the base model's (negative = better), with the replicate SE
 - **κ 0.061 (0.015) against 0.057 (0.015).** All lag coefficients are within 0.5 SE.
 - **Test scores are identical to the full fit:** conflict log 0.05848 against 0.05853 (MC), AUC-PR 0.526 against 0.526; unrest 0.06313 against 0.06318.
 - africa_me biv2 r=0.10 (1711777.4) is still running, about 4 h 45 min so far.
+
+## 2026-11-08 18:00 EST: submitted 28_s6_sf (repo at fd8b2d3)
+- `28_s6_sf.sh`: **1712703** (40 tasks, 4 slots, EPYC queues via `-q` override). The merge (`S6_MODELS=biv_sf S6_TAG=_sf S6_CKPT=s6sf_ckpt.jsonl`)
+  follows when all 40 are done.
