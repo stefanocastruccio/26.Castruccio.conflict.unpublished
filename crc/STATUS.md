@@ -1200,3 +1200,9 @@ on main is touched.
 - **Co-occurrence AUC-PR:** joint 0.416, independent 0.417.
 - **Univariate unrest models:** uni_static_u AUC-PR 0.545 / log 0.0634; uni_st_u 0.532 / 0.0646.
 - **Round 9 is complete:** S5 v3, joint prediction for west_sahel and for africa_me.
+
+## 2026-11-07 23:02 EST: rescoring submitted (repo at 167e988, Monte Carlo scoring for every model)
+- 18_joint_pred: **1708150** (tasks 1-2, `--fixed-theta`). It will overwrite `summary_jointpred.json` for both regions.
+- S5 v4: **1708152** (40 tasks, checkpoints `s5v4_ckpt*`), with merge **1708153** held on it.
+- The biv2 jobs keep running: 1708086 (warm, both regions) and 1701825 (west_sahel cold start, the cross-check).
+- Thanks for the 19_biv2_warm.sh header fix (smp 16 / FIT_JOBS 8).
