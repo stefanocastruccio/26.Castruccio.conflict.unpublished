@@ -159,7 +159,7 @@ previous four weeks ($\kappa$); neighbour terms: the same histories averaged ove
 rook neighbours of the cell. In the joint model the space-time field is shared by the
 two outcomes and enters unrest with loading $\lambda$; its AR(1) coefficient is per
 step of 13 weeks. Full results in Table~S12 of the Supplementary
-Material.}\label{tab:app-joint}
+Material. Test scores here use the probit approximation to $E\{\operatorname{expit}(\eta)\}$; the model comparisons in the text use common Monte Carlo draws.}\label{tab:app-joint}
 \centering\small
 \input{tables/real_joint}
 \end{table}
@@ -238,7 +238,7 @@ against 0.04 under no escalation and 0.45--0.47 against 0.39--0.43 under escalat
 so part of this rise may reflect the model rather than the data. The evidence for
 short-run escalation in West Africa is therefore moderate and depends on how unrest-only
 episodes are modelled: shared episodes account for about a third to two thirds of the
-univariate association. \todo{Extended model for the AME region (fit running).} Three further limits
+univariate association. In the AME region the extended model gives the same picture with more precision (below). Three further limits
 apply. First, $\kappa$ is
 the short-run, local part of escalation. Escalation that unfolds over several months
 and over hundreds of kilometres cannot be told apart from a shared episode, and the
@@ -261,17 +261,71 @@ alone.
 13{,}719 cells in 93 countries and 4.9 million cell-weeks per outcome; $v$ is defined
 on 3{,}637 cells of $1^\circ$ at 26-week steps. The pattern of the escalation
 coefficient repeats: $\hat\kappa = 0.150$ (SE 0.014) in the univariate static model,
-0.133 (0.015) in the univariate space-time model and 0.057 (0.015) in the joint model.
-Unlike in West Africa, the joint estimate remains about 3.8 SE from zero, although
-the SE shortfall of S3 and S5 applies here as well. The shared field has loading
-$\hat\lambda = 0.67$, range 486\,km, SD 1.25 and AR(1) coefficient 0.95 per 26 weeks.
-The cross-outcome neighbour coefficients are again negative ($-0.035$ for conflict and
-$-0.042$ for unrest, SE 0.006). For conflict alone the three models forecast
-similarly (log score 0.0593, 0.0600 and 0.0595; AUC-PR 0.524, 0.522 and 0.526, at a
-prevalence of 2.4\%). The joint fit took 6.4 hours, against 9 minutes for the
-univariate static model and 41 minutes for the univariate space-time model.
-\todo{Joint and conditional prediction for this region, rescored with common Monte
-Carlo draws.}
+0.133 (0.015) in the univariate space-time model and 0.057 (0.015) in the joint model
+with one shared field. That model has loading $\hat\lambda = 0.67$, range 486\,km, SD
+1.25 and AR(1) coefficient 0.95 per 26 weeks, and its cross-outcome neighbour
+coefficients are again negative ($-0.035$ for conflict and $-0.042$ for unrest, SE
+0.006). The extended model raises the log marginal likelihood by 692. Its
+unrest-specific field has range 697\,km, SD 0.43 and AR(1) coefficient 0.70 per 26
+weeks; the shared loading falls to 0.44, the negative neighbour coefficients shrink
+($-0.015$ and $-0.008$), and $\hat\kappa = 0.105$ (SE 0.015). The two regions thus
+agree. Once both shared and unrest-specific episodes are modelled, the short-run effect of recent
+unrest on conflict is about 0.10 (West Africa 0.095, AME 0.105), against 0.13--0.15
+in the univariate models: shared episodes account for about a quarter to a third of
+the univariate association, and the model with one shared field, which attributes
+unrest-only episodes to $v$, understates the remainder. With the SE shortfall of S3 and
+S5, the AME estimate is still several SE from zero.
+
+For prediction, scored with the same Monte Carlo draws for every model on 1{,}426{,}776
+test cell-weeks, the joint model with one shared field and the product of the
+univariate static models are equivalent. The joint log scores are 0.12168 and 0.12170
+(difference $-0.00002$, SE $0.0006$ clustered by country), and the product of the
+univariate space-time models is worse (0.12257). For conflict alone the log scores
+are 0.0585 (joint), 0.0590 (univariate static) and 0.0589 (univariate space-time), and
+AUC-PR is 0.526, 0.524 and 0.522, at a prevalence of 2.4\%. Drawing the outcomes
+jointly improves the joint log score by $0.00004$ (SE $0.00003$). Conditioning on
+same-week unrest barely changes the conflict forecast (log score 0.05849 against
+0.05853). The joint fit took 6.4 hours with one shared field and 4.7 hours for the
+extended model (warm-started), against 9 minutes for the univariate static model and 41 minutes for the univariate
+space-time model.
+
+\paragraph{Where the joint model predicts better.} The average gain hides
+heterogeneity. To locate it without using the test period, we conditioned the AME
+models on 2018--2021 at the hyperparameters of the main fit, scored 2022, and ranked
+$10^\circ \times 10^\circ$ windows, moved in steps of $5^\circ$ and with at least 50
+cells, by the total gain in joint log score of the joint model over the product of the
+univariate static models. We then evaluated the main fit on 2023--2024 in the windows
+selected on 2022. The best window on 2022 covers Afghanistan and its borders
+($60$--$70^\circ$E, $30$--$40^\circ$N; 200 cells), with a gain of 0.0173 per
+cell-week (SE 0.0117, clustered by country). On 2023--2024 the same window keeps a
+gain of 0.0148 (SE 0.0110), against an average over the region of 0.00002. Among
+the five windows selected on 2022, all keep a positive gain on 2023--2024 (0.007 to
+0.016), but only the window over northern Algeria and Tunisia is precise (0.0103, SE
+0.0018). By country, Afghanistan (0.029 per cell-week) and Algeria (0.0035) have the
+largest total gains in both periods, followed in 2023--2024 by Nigeria (0.0057),
+Burkina Faso (0.0090) and Kenya (0.0045). In every selected window, the part of the
+gain due to the dependence between the outcomes is about zero ($|{\cdot}| \le 0.0003$).
+The joint model predicts better there because the unrest data sharpen the latent
+fields that also drive conflict, and vice versa, not because it predicts co-occurrence
+better. In Afghanistan, for example, the change of regime in August 2021
+shifted both outcomes together, a shared episode that a univariate model must learn from one
+outcome alone. The joint
+model also predicts worse in some places, most of all in Yemen ($-0.027$ per
+cell-week), where both events occur together in 6\% of cell-weeks, and in Sudan
+($-0.005$), where war broke out in April 2023 (Figure~\ref{fig:gain-map}). These
+losses offset the gains, so over the whole region the two models predict equally well.
+A latent field shared by the two outcomes helps where the 2018--2022 relation between
+them persists, and hurts where it breaks.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.85\textwidth]{figures/real_gain_map.png}
+\caption{Gain in joint log score per cell-week of the joint model over the product of
+the univariate static models, by country, on the 2023--2024 test period (blue: the
+joint model predicts better). Boxes: the five $10^\circ \times 10^\circ$ windows with
+the largest total gain on the 2022 validation year, selected without the test period;
+solid: the first.}\label{fig:gain-map}
+\end{figure}
 
 \subsection{Residual spatial structure and the hybrid model}\label{sec:app-hybrid}
 

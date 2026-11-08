@@ -118,7 +118,7 @@ def s5_pred():
             for m, ml, c in mods:
                 b = r[(r.model == m) & (r.scenario == s)].merge(u, on=["scenario", "seed"], suffixes=("", "_u"))
                 rows.append((f"{sl}: {ml}", 1e3 * (b[col] - b[col + "_u"]).to_numpy(), None, c))
-        dots(ax, rows, 0.0, xlim=(-6, 4))
+        dots(ax, rows, 0.0, xlim=(-4, 4))
         ax.set_title(title, loc="left")
         ax.set_xlabel(r"difference from univariate models ($\times 10^{-3}$; < 0 is better)")
     fig.savefig(os.path.join(FIG, "s5_prediction.png"), dpi=200)

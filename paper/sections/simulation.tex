@@ -643,31 +643,32 @@ escalation the ratio is 0.89. With 20 replicates these ratios are imprecise, but
 together with S3 they indicate that plug-in intervals for $\kappa$ near zero are too
 short.
 
-\paragraph{Prediction.} \todo{Numbers in this paragraph are being recomputed: the univariate products were scored with the probit approximation and the joint model by Monte Carlo; all models now use the same Monte Carlo draws.} For conflict alone, the joint models forecast no better than
-the univariate space-time model. Paired by replicate, the log score of the joint model
-with one shared field differs from it by $+0.0001$ to $+0.0003$ (SE $0.0004$--$0.0005$)
-across the four scenarios, and its AUC-PR by $-0.001$ to $-0.002$ (SE $0.002$). Onset
-AUC-PR is also similar (0.033 against 0.034 without escalation, 0.042 against 0.045
-with escalation). The latent models forecast conflict better than logistic regression;
-without escalation, for example, the joint model improves on it by $-0.003$ in log
-score (SE $0.001$) and by $+0.025$ in AUC-PR (SE $0.004$).
+\paragraph{Prediction.} All predictive probabilities are posterior means of
+$\operatorname{expit}(\eta)$ over the same 200 posterior draws for every model. For conflict alone, the
+joint models forecast no better than the univariate space-time model. Paired by
+replicate, the log score of the joint model with one shared field differs from it by
+$+0.0001$ to $+0.0003$ (SE $0.0004$--$0.0005$) across the four scenarios, and its
+AUC-PR by $-0.002$ (SE $0.002$). Onset AUC-PR is also similar (0.034 against 0.036
+without escalation, 0.044 against 0.045 with escalation). The latent models forecast
+conflict better than logistic regression, by $0.0036$ in log score (SE $0.0007$) and
+$0.027$ in AUC-PR (SE $0.005$).
 
-The two outcomes together are predicted better by the joint models
-(Figure~\ref{fig:s5-pred}). Against the product of the univariate space-time models,
-the joint log score improves by $0.0009$--$0.0014$ (SE about $0.0005$; better in 12--16
-of 20 replicates) with one shared field and by $0.0010$--$0.0013$ with the extended
-model. About $0.0002$ of the gain (SE $0.0001$; better in 13--16 of 20 replicates)
-comes from drawing the two outcomes jointly rather than independently from the same
-fitted model, which is the part due to the shared field alone. The log score of
-conflict given same-week unrest improves by $0.0004$--$0.0007$ (SE about $0.0005$),
-and the co-occurrence of both events is not ranked better (AUC-PR differences
-$-0.001$ to $-0.004$, SE $0.002$--$0.004$). The gains are of the same size with and
-without escalation, and in the scenarios with unrest-only episodes. The joint and
-conditional scores therefore show that the outcomes share space-time structure, but
-they do not separate escalation from shared episodes; only the estimate of $\kappa$
-does. The cost of the joint models is computational. A fit takes a median of about
-135 seconds with one shared field and 825 seconds with the extended model, against 44
-seconds for the univariate space-time model, on four cores.
+Nor do the joint models predict the two outcomes together better
+(Figure~\ref{fig:s5-pred}). Against the product of the univariate space-time models
+of conflict and unrest, the joint log score differs by $-0.0003$ to $+0.0001$ (SE
+$0.0005$) with one shared field and by $-0.0002$ to $-0.0001$ with the extended model,
+and the log score of conflict given same-week unrest by $-0.0002$ to $+0.0001$ (SE
+$0.0004$--$0.0005$). Within a joint model, drawing the two outcomes jointly rather
+than independently improves the joint log score by $0.0002$ (SE $0.0001$; better in
+13--16 of 20 replicates), but the univariate models recover the same amount in their
+marginals. The co-occurrence of both events is not ranked better (AUC-PR differences
+$-0.002$ to $-0.005$, SE $0.002$--$0.004$). In this design, the dependence between
+the outcomes within a week is weak once both histories are included, so
+prediction cannot reveal the shared episodes, and it cannot separate escalation from
+shared episodes; only the estimate of $\kappa$ does. The cost of the joint models is
+computational. A fit takes a median of about 135 seconds with one shared field and
+825 seconds with the extended model, against 44 seconds for the univariate space-time
+model, on four cores.
 
 \begin{figure}
 \centering
@@ -678,7 +679,8 @@ space-time models of conflict and unrest, in (a) the joint log score of
 $(C_{st}, U_{st})$ and (b) the log score of conflict given same-week unrest. Negative
 values favour the joint model. Dots are means and lines span the 5th to 95th
 percentiles over 20 replicates. Blue: one shared space-time field; red: shared and
-unrest-specific space-time fields.}\label{fig:s5-pred}
+unrest-specific space-time fields. All probabilities are Monte Carlo averages over
+the same posterior draws for every model.}\label{fig:s5-pred}
 \end{figure}
 
 These results hold for a single shared episode process whose loading is constant in
