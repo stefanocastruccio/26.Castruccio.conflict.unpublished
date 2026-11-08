@@ -1262,3 +1262,48 @@ This is the pattern S5 v2 predicted, where biv_st under-estimates escalation whe
   That run was submitted at 167e988, before 6062f10 added iso/lon/lat to the prediction parquet. If its parquet lacks
   those columns, I'll say so here rather than rerun anything.
 - No regional fit will be started.
+
+## 2026-11-08 00:25 EST: region selection (1708445) ran, but the result is INVALID because of a bug in --validation; selection not committed
+- Job 1708445: rc 0 at 00:11. Its files were written into results_real/bivariate/selection/ on the CRC, but I have
+  **not** committed them.
+- **Symptom:** on 2022, every model's calibration collapses while ranking is fine.
+
+| model | log score | Brier | AUC-ROC | AUC-PR |
+|---|---|---|---|---|
+| uni_static, conflict | 0.547 | 0.178 | 0.961 | 0.546 |
+| uni_static_u, unrest | 0.546 | 0.177 | 0.959 | 0.534 |
+| biv, conflict | 0.612 | 0.210 | 0.961 | 0.543 |
+| biv, unrest | 0.536 | 0.172 | 0.959 | 0.535 |
+
+  The log scores are about 10x the usual 0.06 at prevalence 2.4-2.5%, but AUC is unchanged.
+  - mean_gain = −0.058 (biv − product). Every window has a negative gain; the "selected" one is lon 30-40, lat −35 to −25
+    (ZAF/MOZ/SWZ), at −0.047.
+- **Cause:** `fit_glmm.prepare()` builds the year dummies on the original training years:
+  `yr = week_start.year.clip(upper=2022)`, `years = sorted(yr[df.train].unique())`, giving year_2019 to year_2022.
+  - `fit_bivariate --validation` then sets train = before 2022, so **year_2022 is 0 on every training row and 1 only
+    on the 2022 rows**.
+  - Its coefficient is unidentified, so it keeps the FixedBlock vague prior (prec 1e-4, sd 100).
+  - The Monte Carlo predictive draws (`mc_prob`) then add a common N(0, about 100²) shift to every 2022 eta.
+  - The probabilities go to about 0 or 1 at random: calibration is destroyed and ranking is untouched.
+- **Fix (suggested):**
+  - In validation mode, give 2022 the 2021 year effect, mirroring the "test years take the 2022 effect" convention.
+    For example, pass a `last_train_year` to `prepare` and use `clip(upper=last_train_year)`. Or, after the train
+    split, drop any year dummy that is constant on the training rows.
+  - The same trap applies to any covariate level absent from the training rows (biome levels are already handled).
+  - A general guard: in `fit_or_condition`, warn if a fixed-effect column is all zero on the training rows.
+- **On hold:** the test2324 gain map, since the window selection it was meant to accompany is void. I'll rerun 20_select_region.sh
+  once you push a fix.
+
+## 2026-11-08 00:25 EST: west_sahel biv2 warm start done (1708086.1): reproduces the cold fit about 6× faster
+`results_real/bivariate_warm/west_sahel/summary_biv2.json` is committed. The canonical results_real/bivariate/west_sahel/summary_biv2.json is still the cold run.
+
+| | cold (1701825) | warm (1708086.1) |
+|---|---|---|
+| fit seconds | 29,652 (d12chas, old engine settings) | **4,932** (EPYC, warm, looser tol.) |
+| log-ML | −76,461.03 | −76,461.32 |
+
+- Lag coefficients are identical to 3 decimals in both fits: conflict:lag_other 0.095 (0.032), unrest:lag_other 0.111 (0.031).
+- Most hyperparameters agree within 0-3%: shared loading 0.580 against 0.590, st_unrest 787 against 791 km, rho 0.687 against 0.698.
+- **Exception, the weakly identified field_unrest:** range 497 against 371 km, sd 0.344 against 0.224. The likelihood
+  is flat in that direction, which is why log-ML is unchanged.
+- africa_me warm (1708086.2) is still running, at 2 h 37 min.
