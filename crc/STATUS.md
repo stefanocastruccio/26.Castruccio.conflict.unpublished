@@ -1206,3 +1206,52 @@ on main is touched.
 - S5 v4: **1708152** (40 tasks, checkpoints `s5v4_ckpt*`), with merge **1708153** held on it.
 - The biv2 jobs keep running: 1708086 (warm, both regions) and 1701825 (west_sahel cold start, the cross-check).
 - Thanks for the 19_biv2_warm.sh header fix (smp 16 / FIT_JOBS 8).
+
+## 2026-11-07 23:30 EST: west_sahel biv2 (cold start, 1701825) done, and west_sahel joint prediction rescored (1708150.1)
+### biv2, west_sahel: the cold start finished first
+- Job 1701825: rc 0, 15:08-23:26 on d12chas216 (8 h 18 min), fit 29,652 s, no Traceback.
+  `results_real/bivariate/west_sahel/summary_biv2.json` is committed. The warm run (1708086.1) is still going, and I'll
+  report the differences when it finishes.
+- log-ML: biv2 −76,461 against biv −76,592 (**+131**).
+- Test scores: conflict AUC-PR 0.470 / log 0.1029; unrest 0.283 / 0.0496. For biv these were 0.466 / 0.1031 and 0.289 / 0.0490.
+
+**Lag coefficients** (estimate, SE):
+
+| term | biv | biv2 |
+|---|---|---|
+| conflict:lag_own | 0.459 (0.017) | 0.448 (0.017) |
+| **conflict:lag_other** | **0.044 (0.032)** | **0.095 (0.032)**, about 3 SE |
+| conflict:lag_own_nb | 0.061 | 0.054 |
+| conflict:lag_other_nb | −0.020 | −0.005 |
+| unrest:lag_own | 0.351 | 0.269 |
+| unrest:lag_other | 0.066 | 0.111 (0.031) |
+| unrest:lag_own_nb | 0.017 | −0.004 |
+| unrest:lag_other_nb | −0.042 | −0.008 |
+
+**biv2 hyperparameters:**
+- country: conflict 0.673, unrest 0.514;
+- cell: conflict 0.654, unrest 1.358;
+- field_conflict: 467 km, sd 1.443;
+- field_unrest: 497 km, sd 0.344;
+- shared_st: 445 km, sd 0.993, rho 0.957, **loading 0.58** (biv: 0.868);
+- **st_unrest: 787 km, sd 0.494, rho 0.687.**
+
+With an unrest-specific space-time field, the shared field's loading drops, and unrest → conflict comes back to about 0.095.
+This is the pattern S5 v2 predicted, where biv_st under-estimates escalation when unrest has its own episodes.
+
+### Joint prediction, west_sahel, rescored with Monte Carlo (1708150.1, rc 0, finished 23:21)
+`results_real/bivariate/west_sahel/summary_jointpred.json` is committed and overwritten.
+
+| model | joint log score (MC) | probit version from 21:05 |
+|---|---|---|
+| product of uni_static | 0.14978 | 0.15070 |
+| product of uni_st | 0.14991 | 0.15196 |
+| biv, joint draws | 0.14993 | 0.14993 |
+
+- **With the same Monte Carlo scoring, biv's joint-score advantage disappears in west_sahel:**
+  - biv − uni_st product = +0.00003 (country SE 0.00050);
+  - biv − uni_static product = +0.00015 (SE 0.00062);
+  - joint − independent = −0.00020 (SE 0.00008).
+- Conditional: conflict given unrest 0.10189 against marginal 0.10209.
+- Co-occurrence AUC-PR: joint 0.167, independent 0.166.
+- africa_me (1708150.2) is still running.

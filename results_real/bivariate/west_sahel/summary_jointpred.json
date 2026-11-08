@@ -22,7 +22,7 @@
     "field_conflict.sd": 1.6977371399129324
    },
    "log_ml": -49530.06084418722,
-   "seconds": 35.241140842437744,
+   "seconds": 9.032573461532593,
    "hyper_source": "fixed from /groups/scastruc/conflict_spatial_work/bivariate/west_sahel/summary_biv.json",
    "lag_coefficients": {
     "conflict:lag_own": [
@@ -234,10 +234,10 @@
    },
    "test_scores": {
     "conflict": {
-     "log_score": 0.10196171445259015,
-     "brier": 0.029131313603749105,
-     "auc_pr": 0.47029608134452305,
-     "auc_roc": 0.9403455698148001,
+     "log_score": 0.10164072140916643,
+     "brier": 0.029134729800738324,
+     "auc_pr": 0.470153871443836,
+     "auc_roc": 0.9403608284943303,
      "prevalence": 0.04224243820052203
     }
    }
@@ -253,7 +253,7 @@
     "st_conflict.rho": 0.9045301984860576
    },
    "log_ml": -49080.564542567154,
-   "seconds": 230.5393717288971,
+   "seconds": 86.71524715423584,
    "hyper_source": "fixed from /groups/scastruc/conflict_spatial_work/bivariate/west_sahel/summary_biv.json",
    "lag_coefficients": {
     "conflict:lag_own": [
@@ -465,10 +465,10 @@
    },
    "test_scores": {
     "conflict": {
-     "log_score": 0.10262547754792661,
-     "brier": 0.029023505083789147,
-     "auc_pr": 0.471004035634178,
-     "auc_roc": 0.940491075357707,
+     "log_score": 0.10170558597184502,
+     "brier": 0.029026862915620417,
+     "auc_pr": 0.4703167405071069,
+     "auc_roc": 0.940481035526049,
      "prevalence": 0.04224243820052203
     }
    }
@@ -481,7 +481,7 @@
     "field_unrest.sd": 0.688109908485659
    },
    "log_ml": -27692.36041863438,
-   "seconds": 225.88259410858154,
+   "seconds": 53.16541361808777,
    "hyper_source": "fitted",
    "lag_coefficients": {
     "unrest:lag_own": [
@@ -693,10 +693,10 @@
    },
    "test_scores": {
     "unrest": {
-     "log_score": 0.048737346870349335,
-     "brier": 0.011712685837297293,
-     "auc_pr": 0.28614429936755986,
-     "auc_roc": 0.9316790056566413,
+     "log_score": 0.04814081708161133,
+     "brier": 0.011706690054358867,
+     "auc_pr": 0.2864909277143457,
+     "auc_roc": 0.9326102091085618,
      "prevalence": 0.014056502379855673
     }
    }
@@ -712,7 +712,7 @@
     "st_unrest.rho": 0.7070413471455212
    },
    "log_ml": -27409.77623632311,
-   "seconds": 1850.0868439674377,
+   "seconds": 726.5898776054382,
    "hyper_source": "fitted",
    "lag_coefficients": {
     "unrest:lag_own": [
@@ -924,10 +924,10 @@
    },
    "test_scores": {
     "unrest": {
-     "log_score": 0.049330539842355324,
-     "brier": 0.011595364032282689,
-     "auc_pr": 0.2841266712810143,
-     "auc_roc": 0.9310538097712933,
+     "log_score": 0.04820192335944498,
+     "brier": 0.01158643398713519,
+     "auc_pr": 0.28392178648545785,
+     "auc_roc": 0.9317274825028224,
      "prevalence": 0.014056502379855673
     }
    }
@@ -948,7 +948,7 @@
     "shared_st.loading": 0.8682867698478576
    },
    "log_ml": -76591.7637812723,
-   "seconds": 402.593318939209,
+   "seconds": 155.0644826889038,
    "hyper_source": "fixed from /groups/scastruc/conflict_spatial_work/bivariate/west_sahel/summary_biv.json",
    "lag_coefficients": {
     "conflict:lag_own": [
@@ -1364,17 +1364,17 @@
    },
    "test_scores": {
     "conflict": {
-     "log_score": 0.10305594247089497,
-     "brier": 0.02914769593782998,
-     "auc_pr": 0.466187760933015,
-     "auc_roc": 0.939771806646102,
+     "log_score": 0.10208658148044632,
+     "brier": 0.029179700961233415,
+     "auc_pr": 0.4643039492578694,
+     "auc_roc": 0.9400350240575303,
      "prevalence": 0.04224243820052203
     },
     "unrest": {
-     "log_score": 0.04898559766955044,
-     "brier": 0.011527514032670856,
-     "auc_pr": 0.28853743054778414,
-     "auc_roc": 0.9301294348377951,
+     "log_score": 0.04804629654138875,
+     "brier": 0.01154196371108597,
+     "auc_pr": 0.2863986412979645,
+     "auc_roc": 0.9311845961518097,
      "prevalence": 0.014056502379855673
     }
    }
@@ -1385,8 +1385,8 @@
   "share_both": 0.003523721787194841,
   "share_conflict_given_unrest": 0.2506826870562534,
   "share_conflict_given_no_unrest": 0.03927072545920314,
-  "joint_log_score_uni_static_product": 0.15069904923439026,
-  "joint_log_score_uni_st_product": 0.15195602178573608,
+  "joint_log_score_uni_static_product": 0.14978154003620148,
+  "joint_log_score_uni_st_product": 0.14990749955177307,
   "joint_log_score_biv": 0.14993281044157006,
   "joint_log_score_biv_independent": 0.15013287755747445,
   "biv_joint_minus_independent": {
@@ -1395,24 +1395,24 @@
    "se_country": 8.060698726091979e-05
   },
   "biv_joint_minus_uni_static_product": {
-   "mean": -0.0007662508320435093,
-   "se_cell": 0.00032615772992635356,
-   "se_country": 0.0005654931668960315
+   "mean": 0.00015127209247888304,
+   "se_cell": 0.00033193925381529626,
+   "se_country": 0.0006180045274868829
   },
   "biv_joint_minus_uni_st_product": {
-   "mean": -0.0020232067384037475,
-   "se_cell": 0.000206016725678364,
-   "se_country": 0.0007357567253097468
+   "mean": 2.5301206686606056e-05,
+   "se_cell": 0.00018733320325684354,
+   "se_country": 0.0005049303640947652
   },
   "biv_conditional": {
    "log_score_conflict_given_unrest": 0.10188651402834521,
-   "log_score_conflict_marginal": 0.10305594223501044,
+   "log_score_conflict_marginal": 0.10208658119019287,
    "auc_pr_conflict_given_unrest": 0.46646076063693803,
-   "auc_pr_conflict_marginal": 0.466187760933015
+   "auc_pr_conflict_marginal": 0.4643039492578694
   },
   "biv_cooccurrence": {
    "auc_pr_joint": 0.16705600139728694,
-   "auc_pr_independent": 0.16809089291795187
+   "auc_pr_independent": 0.16630318414772444
   }
  }
 }
