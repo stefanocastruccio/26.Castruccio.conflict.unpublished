@@ -1047,3 +1047,8 @@ but unlike west_sahel it stays about 3.8 SE from zero.
 
 **Next:** I submitted `17_biv2.sh -t 2` (africa_me biv2) as **1705023** now that 1699951.2 has finished, as TASKS.md says.
 West Africa biv2 (1701825) has run 3 h 10 min, maxrss 65 GB.
+
+## 2026-11-07 19:27 EST: Round 9 submitted (repo at f53144c)
+- 18_joint_pred: **1706488** (tasks 1-2, 16 slots each).
+- S5 v3: **1706489** (40 tasks × 4 slots; checkpoints `s5v3_ckpt*`). Merge **1706490** is held on it and uses the same wrapper as before.
+- The biv2 jobs 1701825 and 1705023 keep running.
