@@ -1132,3 +1132,38 @@ rc=0
 - **Univariate unrest models** (new): uni_static_u AUC-PR 0.286 / log 0.0487; uni_st_u 0.284 / 0.0493.
   Bivariate unrest: 0.289 / 0.0490.
 - africa_me joint prediction (1706562.2) is still running.
+
+## 2026-11-07 23:00 EST: proposals to speed up the heavy fits (Stefano asked; these are your code, please review and push)
+The biv2 fits are slow: West Africa is past 8 h, and Africa + ME is projected at 30-45 h. In order of gain per effort:
+
+1. **Warm-start biv2 from the saved biv hyperparameters.** At present every block starts at the generic defaults
+   (range 300 km, sd 0.5, rho 0.8). Suggested change in `fit_bivariate.py`:
+   - add `--init-theta summary_biv.json`;
+   - for the blocks whose names exist in `saved["models"]["biv"]["hyper"]`, set `theta0` via `theta_from_hyper`;
+   - keep the defaults only for the new block, `st_unrest`;
+   - then `m.fit(theta0=theta0)`.
+
+   Expected gain: about 2-3× fewer L-BFGS iterations. The same applies to any refit after a code change.
+2. **Looser outer tolerance.** In `LatentGaussianModel.fit`, pass `options=dict(maxiter=maxiter, ftol=1e-7, gtol=1e-3)`
+   (or settings taken from env vars) and cap `maxiter` at about 60 for the big fits. With forward finite differences, the
+   last iterations mostly chase gradient noise. Expected gain: about 1.5×. Please check the hyperparameters move by
+   less than about 1% on a fit you already have.
+3. **Pin heavy fits to 64-core EPYC nodes.** Both biv2 jobs landed on the older 24-core d12chas nodes (ACMS), which are
+   noticeably slower per core. In `16/17/18_*.sh`, use `#$ -q long@@crc_d32cepyc,long@@acms_d32cepyc`.
+   Expected gain: about 1.5-2×.
+4. **Coarser resolution for diagnostic runs:** 2° space-time cells or 26-week steps (about 4-8× fewer unknowns). Keep
+   1° / 13 weeks for the final paper fits. In Round 4, 26 weeks gave the same answers as 13.
+5. **Use `--fixed-theta` for everything after the fit** (prediction, updating, sensitivity), as 18_joint_pred already does.
+
+**Analytic gradient (in progress on my side; not for use yet).** Branch `analytic-grad` in a separate worktree. Nothing
+on main is touched.
+- New `sc/selinv.py`: a Takahashi selected inverse in numba on a CHOLMOD simplicial factor.
+- New `LatentGaussianModel.log_marginal_and_grad`: the exact Laplace gradient, including the implicit mode term.
+  It is opt-in with `LAPLACE_GRAD=analytic`, and the default stays finite differences.
+- New `tools/check_analytic_grad.py`.
+- Verified against central finite differences on all block types (Fixed, IID, Matern with barrier, SpaceTimeAR1,
+  CopyBlock), for Bernoulli and Poisson, with max rel.err 2e-7.
+- Not yet faster: on a 26k-latent, 240k-row bivariate, one analytic gradient takes 10.1 s against 0.70 s per Laplace
+  solve. 7.5 s of that is the serial Takahashi loop.
+- Next: a thread-parallel selected inverse over the elimination tree. I'll report when it beats parallel finite
+  differences. It needs scikit-sparse and numba, which are installed only in a separate env, `/users/scastruc/envs/conflict-dev`.
