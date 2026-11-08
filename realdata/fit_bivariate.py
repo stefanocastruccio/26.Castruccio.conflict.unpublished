@@ -245,7 +245,7 @@ def main():
             "unrest:lag_own", "unrest:lag_other", "unrest:lag_own_nb", "unrest:lag_other_nb"]
     for model in a.models.split(","):
         if model in ("uni_static", "uni_st", "uni_static_u", "uni_st_u"):
-            st = model.startswith("uni_st")
+            st = model in ("uni_st", "uni_st_u")
             o = "unrest" if model.endswith("_u") else "conflict"
             P = parts_tr[o]
             m = fit_or_condition(LatentGaussianModel(P["y"], uni_blocks(o, st), uni_designs(P, st)), saved, model)
