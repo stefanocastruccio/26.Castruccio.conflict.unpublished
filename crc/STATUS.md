@@ -1354,3 +1354,26 @@ This is the pattern S5 v2 predicted, where biv_st under-estimates escalation whe
   shared field and country effects, not from modelling the co-occurrence. Most top windows also have very few joint
   events (both ≤ 0.4%).
 - The test2324 gain map follows once 1708150.2 finishes. It is still running, about 1 h 50 min in.
+
+## 2026-11-08 00:52 EST: S5 v4 done (1708152, 40 tasks, no Tracebacks; merge 1708153 rc 0). All prediction scores now use Monte Carlo
+Committed `results/s5_raw.csv`, `s5_summary.csv` (estimates unchanged) and `s5_prediction.csv`:
+```
+         scenario   model  n  joint_log_score  joint_log_score_indep  cond_log_score  cond_auc_pr  both_auc_pr  both_auc_pr_indep  joint_log_score_minus_uni  joint_log_score_minus_uni_se  cond_log_score_minus_uni  cond_log_score_m
+       escalation  biv_st 20           0.2890                 0.2892          0.1394       0.1038       0.0275             0.0273                     0.0001                        0.0005                    0.0001                  
+       escalation biv_st2 20           0.2889                 0.2891          0.1392       0.1052       0.0275             0.0277                    -0.0001                        0.0005                   -0.0001                  
+       escalation  uni_st 20           0.2889                    NaN          0.1393       0.1049       0.0324                NaN                     0.0000                        0.0000                    0.0000                  
+   escalation_uST  biv_st 20           0.3063                 0.3064          0.1399       0.1044       0.0321             0.0329                    -0.0001                        0.0005                    0.0001                  
+   escalation_uST biv_st2 20           0.3063                 0.3065          0.1397       0.1062       0.0325             0.0333                    -0.0001                        0.0005                   -0.0001                  
+   escalation_uST  uni_st 20           0.3064                    NaN          0.1398       0.1073       0.0359                NaN                     0.0000                        0.0000                    0.0000                  
+    no_escalation  biv_st 20           0.2832                 0.2834          0.1335       0.0884       0.0242             0.0240                    -0.0001                        0.0005                   -0.0001                  
+    no_escalation biv_st2 20           0.2831                 0.2833          0.1334       0.0897       0.0249             0.0243                    -0.0002                        0.0005                   -0.0002                  
+    no_escalation  uni_st 20           0.2833                    NaN          0.1336       0.0900       0.0273                NaN                     0.0000                        0.0000                    0.0000                  
+no_escalation_uST  biv_st 20           0.3000                 0.3002          0.1336       0.0882       0.0273             0.0269                    -0.0003                        0.0005                   -0.0001                  
+no_escalation_uST biv_st2 20           0.3002                 0.3004          0.1336       0.0892       0.0260             0.0266                    -0.0002                        0.0005                   -0.0001                  
+no_escalation_uST  uni_st 20           0.3003                    NaN          0.1337       0.0897       0.0294                NaN                     0.0000                        0.0000                    0.0000                  
+rc=0
+```
+- With identical Monte Carlo scoring, **biv_st and biv_st2 no longer beat uni_st on the joint or conditional log score**
+  in any scenario. The differences are −0.0003 to +0.0001 (SE 0.0005); in S5 v3 they were about −0.001.
+- Joint against independent draws is about −0.0002 in every case. The S5 v3 joint gain was the same scoring artefact as
+  in the application.
