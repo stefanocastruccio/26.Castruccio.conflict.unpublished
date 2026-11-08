@@ -1180,3 +1180,23 @@ on main is touched.
     and if both finish I'll report the differences in hyperparameters and κ.
   - 1706562.2, the africa_me joint prediction.
 - Analytic gradient: I'm continuing on the branch, and it won't be merged until it beats the parallel finite differences.
+
+## 2026-11-07 23:20 EST: Round 9 joint prediction africa_me done (1706562.2, rc 0, about 2 h 40 min, finished 22:16)
+`results_real/bivariate/africa_me/summary_jointpred.json` is committed. Test set: 1,426,776 cell-weeks.
+- **Observed:** both events in the same cell-week 0.36%. P(conflict | unrest) = 0.135, against P(conflict | no unrest) = 0.021.
+- **Joint log score** (lower is better):
+
+| model | joint log score |
+|---|---|
+| product of uni_static | 0.12268 |
+| product of uni_st | 0.12455 |
+| biv, joint draws | **0.12168** |
+| biv, treated as independent | 0.12172 |
+
+  - biv − uni_st product: −0.00287 (SE cell 0.00011, country 0.00033; **about 8.8 SE**).
+  - biv − uni_static product: −0.00101 (country SE 0.00063, about 1.6 SE).
+  - biv joint − independent: −0.00004 (country SE 0.00003).
+- **Conditional:** for conflict given same-week unrest, the log score is 0.05849 against 0.05950 marginal; AUC-PR 0.526.
+- **Co-occurrence AUC-PR:** joint 0.416, independent 0.417.
+- **Univariate unrest models:** uni_static_u AUC-PR 0.545 / log 0.0634; uni_st_u 0.532 / 0.0646.
+- **Round 9 is complete:** S5 v3, joint prediction for west_sahel and for africa_me.
