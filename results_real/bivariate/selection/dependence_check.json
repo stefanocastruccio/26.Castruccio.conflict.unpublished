@@ -1,0 +1,877 @@
+{
+ "description": "Dependence diagnostic on existing 2023-24 joint-prediction parquets (no refitting).",
+ "test_period": "2023-2024",
+ "models": [
+  "biv",
+  "uni_static",
+  "uni_st"
+ ],
+ "windows": {
+  "afghanistan": {
+   "lon": [
+    60.0,
+    70.0
+   ],
+   "lat": [
+    30.0,
+    40.0
+   ],
+   "countries": "AFG,TKM,IRN,UZB"
+  },
+  "maghreb": {
+   "lon": [
+    0.0,
+    10.0
+   ],
+   "lat": [
+    30.0,
+    40.0
+   ],
+   "countries": "DZA,TUN,ITA,ESP,LBY"
+  }
+ },
+ "notes": [
+  "y_unrest_lag1 = y_unrest of the same cell in the previous week; the first test week (2023-01-03) has no lag inside the test file and is dropped from that regression.",
+  "west_sahel P(both) and pc*pu come from its Monte Carlo rescoring (1708150.1); africa_me from 1708150.2.",
+  "Country-clustered SEs for regions and windows; single-country subsets are clustered by cell."
+ ],
+ "regions": {
+  "africa_me": {
+   "name": "Africa-Middle East",
+   "overall": {
+    "rates": {
+     "n": 1426776,
+     "mean_y_conflict": 0.02416707317756957,
+     "mean_y_unrest": 0.026831822234183924,
+     "obs_both": 0.003625656725372448,
+     "biv_mean_pboth": 0.0033259002307360255,
+     "biv_mean_pc": 0.02474959875414177,
+     "biv_mean_pu": 0.025939118496206028,
+     "biv_mean_pc_pu": 0.00301654704450207,
+     "uni_static_mean_pc": 0.02447561895653628,
+     "uni_static_mean_pu": 0.026352243468144562,
+     "uni_static_mean_pc_pu": 0.003349463054498197,
+     "uni_st_mean_pc": 0.0259843942502155,
+     "uni_st_mean_pu": 0.02608727239945993,
+     "uni_st_mean_pc_pu": 0.003257747402510015,
+     "obs_over_biv_pboth": 1.0901279274303686,
+     "obs_over_biv_pc_pu": 1.2019228183364603,
+     "obs_over_uni_static_pc_pu": 1.0824590886301413,
+     "obs_over_uni_st_pc_pu": 1.1129336555004135
+    },
+    "odds_ratio": {
+     "biv": {
+      "y_unrest_same_week": {
+       "n": 1426776,
+       "n_conflict": 34481,
+       "n_x": 38283,
+       "n_both": 5173,
+       "cluster": "iso",
+       "n_clusters": 93,
+       "slope_logit_p": 1.0459782694650945,
+       "slope_se": 0.028758442737093316,
+       "log_or": 0.27761502735287463,
+       "log_or_se": 0.07141960743976818,
+       "odds_ratio": 1.3199779439803359,
+       "or_ci95": [
+        1.1475538578204414,
+        1.5183093679836506
+       ],
+       "z": 3.8870981976063317
+      },
+      "y_unrest_last_week": {
+       "n": 1413057,
+       "n_conflict": 34137,
+       "n_x": 38073,
+       "n_both": 4779,
+       "cluster": "iso",
+       "n_clusters": 93,
+       "slope_logit_p": 1.0520280611772732,
+       "slope_se": 0.029297121462705317,
+       "log_or": 0.06777323780085609,
+       "log_or_se": 0.07406512732647466,
+       "odds_ratio": 1.0701226176051344,
+       "or_ci95": [
+        0.9255247437672025,
+        1.2373115083329504
+       ],
+       "z": 0.9150492309574478
+      }
+     },
+     "uni_static": {
+      "y_unrest_same_week": {
+       "n": 1426776,
+       "n_conflict": 34481,
+       "n_x": 38283,
+       "n_both": 5173,
+       "cluster": "iso",
+       "n_clusters": 93,
+       "slope_logit_p": 0.9533660862490221,
+       "slope_se": 0.022491618606610343,
+       "log_or": 0.1745781756378066,
+       "log_or_se": 0.08628704000465526,
+       "odds_ratio": 1.1907438259045897,
+       "or_ci95": [
+        1.0054704859897667,
+        1.4101566169136965
+       ],
+       "z": 2.023225916990407
+      },
+      "y_unrest_last_week": {
+       "n": 1413057,
+       "n_conflict": 34137,
+       "n_x": 38073,
+       "n_both": 4779,
+       "cluster": "iso",
+       "n_clusters": 93,
+       "slope_logit_p": 0.9597910593168745,
+       "slope_se": 0.022818036286751178,
+       "log_or": -0.07827705408341468,
+       "log_or_se": 0.08315761528720107,
+       "odds_ratio": 0.9247081968685299,
+       "or_ci95": [
+        0.7856326359910215,
+        1.0884034218833294
+       ],
+       "z": -0.9413095098154219
+      }
+     },
+     "uni_st": {
+      "y_unrest_same_week": {
+       "n": 1426776,
+       "n_conflict": 34481,
+       "n_x": 38283,
+       "n_both": 5173,
+       "cluster": "iso",
+       "n_clusters": 93,
+       "slope_logit_p": 1.0283509098002046,
+       "slope_se": 0.02945531259469477,
+       "log_or": 0.13373497727521128,
+       "log_or_se": 0.07723724690778654,
+       "odds_ratio": 1.1430898347148,
+       "or_ci95": [
+        0.9825048226864499,
+        1.3299215841562397
+       ],
+       "z": 1.7314829648819217
+      },
+      "y_unrest_last_week": {
+       "n": 1413057,
+       "n_conflict": 34137,
+       "n_x": 38073,
+       "n_both": 4779,
+       "cluster": "iso",
+       "n_clusters": 93,
+       "slope_logit_p": 1.0357311776936455,
+       "slope_se": 0.029783548066677153,
+       "log_or": -0.1028423811729624,
+       "log_or_se": 0.08002090301540213,
+       "odds_ratio": 0.9022691768835879,
+       "or_ci95": [
+        0.7712957771124624,
+        1.0554831125900033
+       ],
+       "z": -1.285193959297956
+      }
+     }
+    }
+   },
+   "subsets": {
+    "window_afghanistan": {
+     "rates": {
+      "n": 20800,
+      "mean_y_conflict": 0.010769230769230769,
+      "mean_y_unrest": 0.004423076923076923,
+      "obs_both": 0.0008173076923076923,
+      "biv_mean_pboth": 0.0005313371785475054,
+      "biv_mean_pc": 0.01805284432926188,
+      "biv_mean_pu": 0.003008819904372593,
+      "biv_mean_pc_pu": 0.00043143413876567583,
+      "uni_static_mean_pc": 0.0369547199592559,
+      "uni_static_mean_pu": 0.004590889518093928,
+      "uni_static_mean_pc_pu": 0.0008565346486718372,
+      "uni_st_mean_pc": 0.020990033202533245,
+      "uni_st_mean_pu": 0.00584545984709306,
+      "uni_st_mean_pc_pu": 0.000957676340123872,
+      "obs_over_biv_pboth": 1.5382091171220742,
+      "obs_over_biv_pc_pu": 1.894397357255948,
+      "obs_over_uni_static_pc_pu": 0.9542027208998828,
+      "obs_over_uni_st_pc_pu": 0.853427883790025
+     },
+     "odds_ratio": {
+      "biv": {
+       "y_unrest_same_week": {
+        "n": 20800,
+        "n_conflict": 224,
+        "n_x": 92,
+        "n_both": 17,
+        "cluster": "iso",
+        "n_clusters": 4,
+        "slope_logit_p": 1.1682938222833756,
+        "slope_se": 0.0741724939055363,
+        "log_or": 1.3907005728317177,
+        "log_or_se": 0.18251927433236773,
+        "odds_ratio": 4.017663733343674,
+        "or_ci95": [
+         2.80937712518744,
+         5.74562301711205
+        ],
+        "z": 7.619472397743873
+       },
+       "y_unrest_last_week": {
+        "n": 20600,
+        "n_conflict": 221,
+        "n_x": 92,
+        "n_both": 16,
+        "cluster": "iso",
+        "n_clusters": 4,
+        "slope_logit_p": 1.1660053821933871,
+        "slope_se": 0.0807549366748202,
+        "log_or": 1.2076599263468586,
+        "log_or_se": 0.3749610018590173,
+        "odds_ratio": 3.345646426057837,
+        "or_ci95": [
+         1.6043783532433833,
+         6.976752076943257
+        ],
+        "z": 3.2207614134787548
+       }
+      },
+      "uni_static": {
+       "y_unrest_same_week": {
+        "n": 20800,
+        "n_conflict": 224,
+        "n_x": 92,
+        "n_both": 17,
+        "cluster": "iso",
+        "n_clusters": 4,
+        "slope_logit_p": 1.2739401229366636,
+        "slope_se": 0.14898570487731505,
+        "log_or": 1.4703895188919658,
+        "log_or_se": 0.2540394397490426,
+        "odds_ratio": 4.3509295803024095,
+        "or_ci95": [
+         2.644474098465671,
+         7.158545520916265
+        ],
+        "z": 5.788036378699766
+       },
+       "y_unrest_last_week": {
+        "n": 20600,
+        "n_conflict": 221,
+        "n_x": 92,
+        "n_both": 16,
+        "cluster": "iso",
+        "n_clusters": 4,
+        "slope_logit_p": 1.268094425851966,
+        "slope_se": 0.1596775161996652,
+        "log_or": 1.1972575081386216,
+        "log_or_se": 0.480613406553419,
+        "odds_ratio": 3.3110240034249068,
+        "or_ci95": [
+         1.2907910290979956,
+         8.493148545444072
+        ],
+        "z": 2.491103019211241
+       }
+      },
+      "uni_st": {
+       "y_unrest_same_week": {
+        "n": 20800,
+        "n_conflict": 224,
+        "n_x": 92,
+        "n_both": 17,
+        "cluster": "iso",
+        "n_clusters": 4,
+        "slope_logit_p": 1.1485342227126134,
+        "slope_se": 0.07191996822327151,
+        "log_or": 1.4484108116302468,
+        "log_or_se": 0.17504611484355687,
+        "odds_ratio": 4.256345003601622,
+        "or_ci95": [
+         3.0201920634603803,
+         5.998450565070213
+        ],
+        "z": 8.274452780198681
+       },
+       "y_unrest_last_week": {
+        "n": 20600,
+        "n_conflict": 221,
+        "n_x": 92,
+        "n_both": 16,
+        "cluster": "iso",
+        "n_clusters": 4,
+        "slope_logit_p": 1.1466925596700925,
+        "slope_se": 0.07900015630678058,
+        "log_or": 1.2299137710180355,
+        "log_or_se": 0.3679569339196804,
+        "odds_ratio": 3.4209345398684956,
+        "or_ci95": [
+         1.6631579597813453,
+         7.036489262633741
+        ],
+        "z": 3.34254815615598
+       }
+      }
+     }
+    },
+    "window_maghreb": {
+     "rates": {
+      "n": 28912,
+      "mean_y_conflict": 0.0009684560044272275,
+      "mean_y_unrest": 0.029053680132816822,
+      "obs_both": 0.0001383508577753182,
+      "biv_mean_pboth": 0.0005955938155708508,
+      "biv_mean_pc": 0.0016666714141980814,
+      "biv_mean_pu": 0.03593732781989013,
+      "biv_mean_pc_pu": 0.00041106774144956276,
+      "uni_static_mean_pc": 0.0028212494349854696,
+      "uni_static_mean_pu": 0.05333543608526584,
+      "uni_static_mean_pc_pu": 0.0005478047904079392,
+      "uni_st_mean_pc": 0.0018085440177977874,
+      "uni_st_mean_pu": 0.04229973782131216,
+      "uni_st_mean_pc_pu": 0.000408410435269533,
+      "obs_over_biv_pboth": 0.23229062182708346,
+      "obs_over_biv_pc_pu": 0.33656461897848433,
+      "obs_over_uni_static_pc_pu": 0.25255503456311706,
+      "obs_over_uni_st_pc_pu": 0.3387544632252423
+     },
+     "odds_ratio": {
+      "biv": {
+       "y_unrest_same_week": {
+        "n": 28912,
+        "n_conflict": 28,
+        "n_x": 840,
+        "n_both": 4,
+        "cluster": "iso",
+        "n_clusters": 5,
+        "slope_logit_p": 1.0135011262017393,
+        "slope_se": 0.1122359288147306,
+        "log_or": -0.6401299835152141,
+        "log_or_se": 0.7718741335830518,
+        "odds_ratio": 0.5272238891745238,
+        "or_ci95": [
+         0.11613484741224704,
+         2.3934678996874243
+        ],
+        "z": -0.8293191281637081
+       },
+       "y_unrest_last_week": {
+        "n": 28634,
+        "n_conflict": 28,
+        "n_x": 839,
+        "n_both": 2,
+        "cluster": "iso",
+        "n_clusters": 5,
+        "slope_logit_p": 1.0491744536733427,
+        "slope_se": 0.12601410549263503,
+        "log_or": -1.5022897632477568,
+        "log_or_se": 0.7050329927298347,
+        "odds_ratio": 0.22261982939952504,
+        "or_ci95": [
+         0.05590203870027266,
+         0.8865434891846246
+        ],
+        "z": -2.130807747636042
+       }
+      },
+      "uni_static": {
+       "y_unrest_same_week": {
+        "n": 28912,
+        "n_conflict": 28,
+        "n_x": 840,
+        "n_both": 4,
+        "cluster": "iso",
+        "n_clusters": 5,
+        "slope_logit_p": 1.288141627366893,
+        "slope_se": 0.15467842352993114,
+        "log_or": -0.028690345126343553,
+        "log_or_se": 0.4839941953247329,
+        "odds_ratio": 0.9717173148866725,
+        "or_ci95": [
+         0.37631866999305524,
+         2.5091355155671393
+        ],
+        "z": -0.05927828350729277
+       },
+       "y_unrest_last_week": {
+        "n": 28634,
+        "n_conflict": 28,
+        "n_x": 839,
+        "n_both": 2,
+        "cluster": "iso",
+        "n_clusters": 5,
+        "slope_logit_p": 1.3178929645383988,
+        "slope_se": 0.15598524641598027,
+        "log_or": -0.9775653587437764,
+        "log_or_se": 0.4082910240719534,
+        "odds_ratio": 0.37622595996398445,
+        "or_ci95": [
+         0.16900689502534086,
+         0.8375159660178259
+        ],
+        "z": -2.394285696007609
+       }
+      },
+      "uni_st": {
+       "y_unrest_same_week": {
+        "n": 28912,
+        "n_conflict": 28,
+        "n_x": 840,
+        "n_both": 4,
+        "cluster": "iso",
+        "n_clusters": 5,
+        "slope_logit_p": 1.3159701663944845,
+        "slope_se": 0.21202485200670995,
+        "log_or": -0.9077108526653997,
+        "log_or_se": 0.9653953116069937,
+        "odds_ratio": 0.4034467167462249,
+        "or_ci95": [
+         0.06081701583760134,
+         2.676376849662414
+        ],
+        "z": -0.9402478360438974
+       },
+       "y_unrest_last_week": {
+        "n": 28634,
+        "n_conflict": 28,
+        "n_x": 839,
+        "n_both": 2,
+        "cluster": "iso",
+        "n_clusters": 5,
+        "slope_logit_p": 1.3750398950339755,
+        "slope_se": 0.20998208990403078,
+        "log_or": -1.8243555366354964,
+        "log_or_se": 0.8728465801588438,
+        "odds_ratio": 0.1613215764818294,
+        "or_ci95": [
+         0.029154825669982627,
+         0.8926361396623728
+        ],
+        "z": -2.0901216526545747
+       }
+      }
+     }
+    },
+    "yemen": {
+     "rates": {
+      "n": 16120,
+      "mean_y_conflict": 0.13833746898263027,
+      "mean_y_unrest": 0.14280397022332506,
+      "obs_both": 0.05973945409429281,
+      "biv_mean_pboth": 0.030689610341521553,
+      "biv_mean_pc": 0.1457216723321641,
+      "biv_mean_pu": 0.07064780999168871,
+      "biv_mean_pc_pu": 0.028484737469022726,
+      "uni_static_mean_pc": 0.1577765249224003,
+      "uni_static_mean_pu": 0.08621260226305826,
+      "uni_static_mean_pc_pu": 0.03992215279025314,
+      "uni_st_mean_pc": 0.1675867191726902,
+      "uni_st_mean_pu": 0.06457813011042768,
+      "uni_st_mean_pc_pu": 0.030540666711500686,
+      "obs_over_biv_pboth": 1.94656932523735,
+      "obs_over_biv_pc_pu": 2.0972443280988537,
+      "obs_over_uni_static_pc_pu": 1.4963986137761085,
+      "obs_over_uni_st_pc_pu": 1.956062539780664
+     },
+     "odds_ratio": {
+      "biv": {
+       "y_unrest_same_week": {
+        "n": 16120,
+        "n_conflict": 2230,
+        "n_x": 2302,
+        "n_both": 963,
+        "cluster": "grid_id",
+        "n_clusters": 155,
+        "slope_logit_p": 1.1231604103802049,
+        "slope_se": 0.058725307425235886,
+        "log_or": 0.43455045307419476,
+        "log_or_se": 0.1301299873990289,
+        "odds_ratio": 1.5442686816469895,
+        "or_ci95": [
+         1.196613732019043,
+         1.9929286262593044
+        ],
+        "z": 3.339356759804294
+       },
+       "y_unrest_last_week": {
+        "n": 15965,
+        "n_conflict": 2208,
+        "n_x": 2263,
+        "n_both": 906,
+        "cluster": "grid_id",
+        "n_clusters": 155,
+        "slope_logit_p": 1.1329223893098783,
+        "slope_se": 0.05970977245503238,
+        "log_or": 0.2218480350427114,
+        "log_or_se": 0.12111497472758598,
+        "odds_ratio": 1.248381653184291,
+        "or_ci95": [
+         0.9845827659434965,
+         1.5828600762818763
+        ],
+        "z": 1.8317143321186835
+       }
+      },
+      "uni_static": {
+       "y_unrest_same_week": {
+        "n": 16120,
+        "n_conflict": 2230,
+        "n_x": 2302,
+        "n_both": 963,
+        "cluster": "grid_id",
+        "n_clusters": 155,
+        "slope_logit_p": 0.9880864279423166,
+        "slope_se": 0.04305381494625433,
+        "log_or": 0.15885526735640926,
+        "log_or_se": 0.12097149713548375,
+        "odds_ratio": 1.1721682833887175,
+        "or_ci95": [
+         0.9247342620360127,
+         1.4858089950699203
+        ],
+        "z": 1.313162778985012
+       },
+       "y_unrest_last_week": {
+        "n": 15965,
+        "n_conflict": 2208,
+        "n_x": 2263,
+        "n_both": 906,
+        "cluster": "grid_id",
+        "n_clusters": 155,
+        "slope_logit_p": 1.0049535951315576,
+        "slope_se": 0.04455490074298365,
+        "log_or": -0.10824330749025803,
+        "log_or_se": 0.11291732846255415,
+        "odds_ratio": 0.8974092234797256,
+        "or_ci95": [
+         0.7192392151239064,
+         1.11971552364222
+        ],
+        "z": -0.9586066989368587
+       }
+      },
+      "uni_st": {
+       "y_unrest_same_week": {
+        "n": 16120,
+        "n_conflict": 2230,
+        "n_x": 2302,
+        "n_both": 963,
+        "cluster": "grid_id",
+        "n_clusters": 155,
+        "slope_logit_p": 1.0667393272050336,
+        "slope_se": 0.05607767613757824,
+        "log_or": 0.12469609977637726,
+        "log_or_se": 0.12784898343600826,
+        "odds_ratio": 1.1328041413193999,
+        "or_ci95": [
+         0.8817136745068042,
+         1.4553990254355302
+        ],
+        "z": 0.975339000945525
+       },
+       "y_unrest_last_week": {
+        "n": 15965,
+        "n_conflict": 2208,
+        "n_x": 2263,
+        "n_both": 906,
+        "cluster": "grid_id",
+        "n_clusters": 155,
+        "slope_logit_p": 1.0853285424754857,
+        "slope_se": 0.057968768712790206,
+        "log_or": -0.12362893416482608,
+        "log_or_se": 0.11976976979981924,
+        "odds_ratio": 0.8837076937849275,
+        "or_ci95": [
+         0.6988090968627452,
+         1.1175287951468402
+        ],
+        "z": -1.0322215227720397
+       }
+      }
+     }
+    },
+    "sudan": {
+     "rates": {
+      "n": 65312,
+      "mean_y_conflict": 0.034878735913767764,
+      "mean_y_unrest": 0.005956026457618814,
+      "obs_both": 0.0015923566878980893,
+      "biv_mean_pboth": 0.0027520128248719735,
+      "biv_mean_pc": 0.01762708937089787,
+      "biv_mean_pu": 0.017554704716002564,
+      "biv_mean_pc_pu": 0.002502794203303297,
+      "uni_static_mean_pc": 0.01812951100998833,
+      "uni_static_mean_pu": 0.015428925184591963,
+      "uni_static_mean_pc_pu": 0.002908470266169536,
+      "uni_st_mean_pc": 0.01945129744446166,
+      "uni_st_mean_pu": 0.01637741742322808,
+      "uni_st_mean_pc_pu": 0.002666146306243755,
+      "obs_over_biv_pboth": 0.5786152860578211,
+      "obs_over_biv_pc_pu": 0.6362315710162775,
+      "obs_over_uni_static_pc_pu": 0.5474894161442564,
+      "obs_over_uni_st_pc_pu": 0.5972503024942797
+     },
+     "odds_ratio": {
+      "biv": {
+       "y_unrest_same_week": {
+        "n": 65312,
+        "n_conflict": 2278,
+        "n_x": 389,
+        "n_both": 104,
+        "cluster": "grid_id",
+        "n_clusters": 628,
+        "slope_logit_p": 0.8910471887107081,
+        "slope_se": 0.046742058976267514,
+        "log_or": 0.6239629398392921,
+        "log_or_se": 0.21211712151872605,
+        "odds_ratio": 1.8663094782756144,
+        "or_ci95": [
+         1.2314759158936166,
+         2.8284037257633963
+        ],
+        "z": 2.9415963000620278
+       },
+       "y_unrest_last_week": {
+        "n": 64684,
+        "n_conflict": 2263,
+        "n_x": 389,
+        "n_both": 91,
+        "cluster": "grid_id",
+        "n_clusters": 628,
+        "slope_logit_p": 0.8926151528773134,
+        "slope_se": 0.047056890067271144,
+        "log_or": 0.27357355524748256,
+        "log_or_se": 0.16007464489885306,
+        "odds_ratio": 1.3146540553601564,
+        "or_ci95": [
+         0.9606234783087716,
+         1.7991599459110612
+        ],
+        "z": 1.7090374020217034
+       }
+      },
+      "uni_static": {
+       "y_unrest_same_week": {
+        "n": 65312,
+        "n_conflict": 2278,
+        "n_x": 389,
+        "n_both": 104,
+        "cluster": "grid_id",
+        "n_clusters": 628,
+        "slope_logit_p": 0.840690249012873,
+        "slope_se": 0.03966927405665287,
+        "log_or": 0.6957260327238263,
+        "log_or_se": 0.2163142278092602,
+        "odds_ratio": 2.0051643605267997,
+        "or_ci95": [
+         1.3122590874511666,
+         3.0639407653379815
+        ],
+        "z": 3.216274952275899
+       },
+       "y_unrest_last_week": {
+        "n": 64684,
+        "n_conflict": 2263,
+        "n_x": 389,
+        "n_both": 91,
+        "cluster": "grid_id",
+        "n_clusters": 628,
+        "slope_logit_p": 0.8420024506067846,
+        "slope_se": 0.039967103583059896,
+        "log_or": 0.28208050339771973,
+        "log_or_se": 0.1648210679017403,
+        "odds_ratio": 1.3258854539745422,
+        "or_ci95": [
+         0.9598590869802697,
+         1.8314899144122119
+        ],
+        "z": 1.7114347515688029
+       }
+      },
+      "uni_st": {
+       "y_unrest_same_week": {
+        "n": 65312,
+        "n_conflict": 2278,
+        "n_x": 389,
+        "n_both": 104,
+        "cluster": "grid_id",
+        "n_clusters": 628,
+        "slope_logit_p": 0.841359310195702,
+        "slope_se": 0.048867525555421384,
+        "log_or": 0.7930479405889989,
+        "log_or_se": 0.1908076979416086,
+        "odds_ratio": 2.210122492775689,
+        "or_ci95": [
+         1.5205389625334482,
+         3.2124408209405386
+        ],
+        "z": 4.156268060168564
+       },
+       "y_unrest_last_week": {
+        "n": 64684,
+        "n_conflict": 2263,
+        "n_x": 389,
+        "n_both": 91,
+        "cluster": "grid_id",
+        "n_clusters": 628,
+        "slope_logit_p": 0.8421551727986761,
+        "slope_se": 0.04923273211497291,
+        "log_or": 0.43398522631562475,
+        "log_or_se": 0.14282549572871373,
+        "odds_ratio": 1.5433960663017046,
+        "or_ci95": [
+         1.1665460102429968,
+         2.0419866825307467
+        ],
+        "z": 3.038569718252174
+       }
+      }
+     }
+    }
+   }
+  },
+  "west_sahel": {
+   "name": "West Africa and Sahel",
+   "overall": {
+    "rates": {
+     "n": 260520,
+     "mean_y_conflict": 0.04224243820052203,
+     "mean_y_unrest": 0.014056502379855673,
+     "obs_both": 0.003523721787194841,
+     "biv_mean_pboth": 0.0027272657202265602,
+     "biv_mean_pc": 0.043796350114809576,
+     "biv_mean_pu": 0.014982127721942084,
+     "biv_mean_pc_pu": 0.0022694859491105804,
+     "uni_static_mean_pc": 0.043699892275563944,
+     "uni_static_mean_pu": 0.016162814090637585,
+     "uni_static_mean_pc_pu": 0.0034641772904771477,
+     "uni_st_mean_pc": 0.045143419413048634,
+     "uni_st_mean_pu": 0.016243960400329268,
+     "uni_st_mean_pc_pu": 0.002785772797903254,
+     "obs_over_biv_pboth": 1.292034641531782,
+     "obs_over_biv_pc_pu": 1.5526519512384733,
+     "obs_over_uni_static_pc_pu": 1.017188640108397,
+     "obs_over_uni_st_pc_pu": 1.2648992013444216
+    },
+    "odds_ratio": {
+     "biv": {
+      "y_unrest_same_week": {
+       "n": 260520,
+       "n_conflict": 11005,
+       "n_x": 3662,
+       "n_both": 918,
+       "cluster": "iso",
+       "n_clusters": 22,
+       "slope_logit_p": 1.0935526457032996,
+       "slope_se": 0.03952588614853282,
+       "log_or": 0.5263015766903616,
+       "log_or_se": 0.09497348192403082,
+       "odds_ratio": 1.6926605427383612,
+       "or_ci95": [
+        1.4051633398075287,
+        2.03897983371511
+       ],
+       "z": 5.54156345569545
+      },
+      "y_unrest_last_week": {
+       "n": 258015,
+       "n_conflict": 10884,
+       "n_x": 3662,
+       "n_both": 828,
+       "cluster": "iso",
+       "n_clusters": 22,
+       "slope_logit_p": 1.0991075835959485,
+       "slope_se": 0.04062655025878393,
+       "log_or": 0.2836135941403619,
+       "log_or_se": 0.06018545697878478,
+       "odds_ratio": 1.3279197156452638,
+       "or_ci95": [
+        1.1801600896401905,
+        1.4941792954013704
+       ],
+       "z": 4.7123276681331
+      }
+     },
+     "uni_static": {
+      "y_unrest_same_week": {
+       "n": 260520,
+       "n_conflict": 11005,
+       "n_x": 3662,
+       "n_both": 918,
+       "cluster": "iso",
+       "n_clusters": 22,
+       "slope_logit_p": 0.9580041996786274,
+       "slope_se": 0.035959723659453394,
+       "log_or": 0.3647741347965215,
+       "log_or_se": 0.10851092090765103,
+       "odds_ratio": 1.4401886829008625,
+       "or_ci95": [
+        1.1642681938037633,
+        1.7814997037575317
+       ],
+       "z": 3.3616352321529464
+      },
+      "y_unrest_last_week": {
+       "n": 258015,
+       "n_conflict": 10884,
+       "n_x": 3662,
+       "n_both": 828,
+       "cluster": "iso",
+       "n_clusters": 22,
+       "slope_logit_p": 0.9641190753178319,
+       "slope_se": 0.03682283468550931,
+       "log_or": 0.06326781356011373,
+       "log_or_se": 0.05839279045309033,
+       "odds_ratio": 1.0653121060581938,
+       "or_ci95": [
+        0.9501056826045136,
+        1.1944880491642615
+       ],
+       "z": 1.0834867295978898
+      }
+     },
+     "uni_st": {
+      "y_unrest_same_week": {
+       "n": 260520,
+       "n_conflict": 11005,
+       "n_x": 3662,
+       "n_both": 918,
+       "cluster": "iso",
+       "n_clusters": 22,
+       "slope_logit_p": 1.0876044029929586,
+       "slope_se": 0.03665619967959568,
+       "log_or": 0.37760780531357907,
+       "log_or_se": 0.08772766979702237,
+       "odds_ratio": 1.4587907007065453,
+       "or_ci95": [
+        1.2283374304929529,
+        1.7324802254164495
+       ],
+       "z": 4.304318195014861
+      },
+      "y_unrest_last_week": {
+       "n": 258015,
+       "n_conflict": 10884,
+       "n_x": 3662,
+       "n_both": 828,
+       "cluster": "iso",
+       "n_clusters": 22,
+       "slope_logit_p": 1.0949070649958927,
+       "slope_se": 0.038014105248821844,
+       "log_or": 0.09023059821980756,
+       "log_or_se": 0.06588234550234429,
+       "odds_ratio": 1.0944266274410819,
+       "or_ci95": [
+        0.9618480442388719,
+        1.2452794908990825
+       ],
+       "z": 1.3695717347615817
+      }
+     }
+    }
+   },
+   "subsets": {}
+  }
+ }
+}

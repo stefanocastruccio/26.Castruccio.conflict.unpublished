@@ -1457,3 +1457,68 @@ Same pattern as west_sahel. With an unrest-specific space-time field, the shared
 about 0.10 in both regions (west_sahel 0.095 (0.032), africa_me 0.105 (0.015)).
 
 All conflict jobs are now finished. Only my analytic-gradient comparison (1708140) is still running.
+
+## 2026-11-08 13:00 EST: new CRC session; 1708140 status; dependence diagnostic on 2023-24 (1711662, rc 0)
+### 1708140 (analytic vs finite-difference fit comparison, branch `analytic-grad`, not merged): **still running**
+- Script `~/conflict_check/fitcmp.sh`; log `~/conflict_check/fitcmp.log`. Test: `tools/compare_fit.py`, 80×60 grid, T=14,
+  4 reps, bivariate. Analytic first (OMP 16), then finite differences (FIT_JOBS 8 × OMP 2).
+- **Analytic half done:** wall 1,358 s, 48 L-BFGS iterations / 56 evaluations, log-ML −180,888.63, converged.
+  The hyperparameters look degenerate: c1.sd 0.012, c2.sd 0.022, shared range 27 km, rho 0.995,
+  loading 0.9996. Check whether the FD fit lands at the same point before reading anything into the speed.
+- **FD half:** started about 23:26 and has written nothing in roughly 13 h. qstat: cpu 5.5 h over 13.3 h wall on 16 slots,
+  so it is mostly idle (perhaps stuck in the worker pool). h_rt is 24 h, so it is killed at about 23:03 tonight if it
+  doesn't finish. **No speed comparison exists yet.** I'll report when it ends.
+
+### Dependence diagnostic, 2023-24 test parquets (no refit)
+`realdata/dependence_check.py`, job `crc/jobs/21_dependence.sh` (1711662, rc 0); output
+`results_real/bivariate/selection/dependence_check.json`. The inputs are the MC-rescored `test_pred_jointpred.parquet` files (west_sahel
+= West Africa and Sahel, africa_me = AME). Model: logit y_conflict ~ logit(p_conflict_model) + x, where x is either y_unrest
+of the same cell-week or the cell's y_unrest the week before (first test week dropped). SEs are country-clustered;
+Yemen and Sudan are clustered by cell.
+
+**(a) Co-occurrence rate, mean(y_c·y_u), against the forecasts**
+
+| subset | observed | biv P(both) | biv pc·pu | uni_static pc·pu | uni_st pc·pu |
+|---|---|---|---|---|---|
+| AME | 0.00363 | 0.00333 | 0.00302 | 0.00335 | 0.00326 |
+| West Africa | 0.00352 | 0.00273 | 0.00227 | 0.00346 | 0.00279 |
+| AFG window | 0.00082 | 0.00053 | 0.00043 | 0.00086 | 0.00096 |
+| Maghreb window | 0.00014 | 0.00060 | 0.00041 | 0.00055 | 0.00041 |
+| Yemen | 0.0597 | 0.0307 | 0.0285 | 0.0399 | 0.0305 |
+| Sudan | 0.00159 | 0.00275 | 0.00250 | 0.00291 | 0.00267 |
+
+**(b, c) Odds ratio for unrest, conditional on the model's conflict forecast** (95% CI; n_both = joint events)
+
+| subset | model | same-week y_unrest | last-week y_unrest |
+|---|---|---|---|
+| AME (93 countries, n_both 5,173) | biv | **1.32** [1.15, 1.52] | 1.07 [0.93, 1.24] |
+| | uni_static | 1.19 [1.01, 1.41] | 0.92 [0.79, 1.09] |
+| | uni_st | 1.14 [0.98, 1.33] | 0.90 [0.77, 1.06] |
+| West Africa (22 countries, n_both 918) | biv | **1.69** [1.41, 2.04] | **1.33** [1.18, 1.49] |
+| | uni_static | 1.44 [1.16, 1.78] | 1.07 [0.95, 1.19] |
+| | uni_st | 1.46 [1.23, 1.73] | 1.09 [0.96, 1.25] |
+| AFG window (4 countries, n_both 17) | biv | 4.0 [2.8, 5.8] | 3.4 [1.6, 7.0] |
+| | uni_static | 4.4 [2.6, 7.2] | 3.3 [1.3, 8.5] |
+| | uni_st | 4.3 [3.0, 6.0] | 3.4 [1.7, 7.0] |
+| Maghreb window (5 countries, n_both 4) | biv | 0.53 [0.12, 2.4] | 0.22 [0.06, 0.89] |
+| | uni_static | 0.97 [0.38, 2.5] | 0.38 [0.17, 0.84] |
+| | uni_st | 0.40 [0.06, 2.7] | 0.16 [0.03, 0.89] |
+| Yemen (155 cells, n_both 963) | biv | **1.54** [1.20, 1.99] | 1.25 [0.98, 1.58] |
+| | uni_static | 1.17 [0.92, 1.49] | 0.90 [0.72, 1.12] |
+| | uni_st | 1.13 [0.88, 1.46] | 0.88 [0.70, 1.12] |
+| Sudan (628 cells, n_both 104) | biv | 1.87 [1.23, 2.83] | 1.31 [0.96, 1.80] |
+| | uni_static | 2.01 [1.31, 3.06] | 1.33 [0.96, 1.83] |
+| | uni_st | **2.21** [1.52, 3.21] | **1.54** [1.17, 2.04] |
+
+What the numbers show:
+- **Same-week dependence remains after each model's conflict forecast:** OR about 1.15-1.3 in AME and 1.4-1.7 in West
+  Africa. Observed co-occurrence is above biv's P(both) (AME +9%, West Africa +29%, Yemen about 2×). The univariate
+  product is no worse overall: uni_static pc·pu is close to the observed rate in both regions. biv's marginals
+  under-predict joint events.
+- **Last week's unrest adds little to the univariate forecasts** (OR 0.9-1.1, not significant in AME or West Africa). Sudan
+  is the exception, with uni_st 1.54. So the lag_other signal is mostly absorbed already.
+- **Unexpected:** the residual ORs are *larger* for biv than for the univariate models (West Africa last-week 1.33 against
+  1.07; Yemen same-week 1.54 against 1.17). biv's conflict marginal seems less sharp where unrest is high, even though it has
+  lag_other. Worth checking how biv's test-time conflict forecast uses the observed lagged unrest.
+- **The windows are not informative:** AFG has 17 joint events and only 4 country clusters, and Maghreb has 4 joint events. The
+  large AFG odds ratios (about 4) are consistent across models, but their SEs rest on 4 clusters and should not be relied on.
