@@ -82,27 +82,47 @@ def s5():
     r["covers"] = (r.est - 1.96 * r.se <= r.truth) & (r.truth <= r.est + 1.96 * r.se)
     labels = [("glm", "Logistic regression", MUTED), ("uni_field", "+ static field", MUTED),
               ("uni_st", "+ static + space-time field", MUTED),
-              ("biv_st", "Joint model, shared space-time field", LATENT)]
-    scen = [("no_escalation", r"(a) No escalation, $\kappa = 0$"),
-            ("escalation", r"(b) Escalation, $\kappa = 0.4$")]
-    fig, axes = plt.subplots(1, 3, figsize=(11, 2.5), constrained_layout=True,
-                             gridspec_kw={"width_ratios": [1, 1, 0.8]})
-    for ax, (s, title) in zip(axes[:2], scen):
+              ("biv_st", "Joint, shared field", LATENT),
+              ("biv_st2", "Joint, shared + unrest field", BOOST)]
+    scen = [("no_escalation", r"(a) $\kappa = 0$, shared episodes only"),
+            ("escalation", r"(b) $\kappa = 0.4$, shared episodes only"),
+            ("no_escalation_uST", r"(c) $\kappa = 0$, with unrest-only episodes"),
+            ("escalation_uST", r"(d) $\kappa = 0.4$, with unrest-only episodes")]
+    fig, axes = plt.subplots(2, 2, figsize=(10, 4.6), constrained_layout=True, sharex=True)
+    for ax, (s, title) in zip(axes.flat, scen):
         d = r[r.scenario == s]
         rows = [(lab, d[d.model == m].est.to_numpy(), d[d.model == m].covers.mean(), col)
                 for m, lab, col in labels]
-        dots(ax, rows, d.truth.iloc[0], xlim=(-0.35, 1.35))
+        dots(ax, rows, d.truth.iloc[0], xlim=(-0.4, 1.4))
         ax.set_title(title, loc="left")
+    for ax in axes[:, 1]:
+        ax.set_yticklabels([])
+    for ax in axes[1]:
         ax.set_xlabel(r"estimate of $\kappa$")
-    axes[1].set_yticklabels([])
-    b = r[r.model == "biv_st"]
-    rows = [(lab, b[b.scenario == s].loading.to_numpy(), None, LATENT)
-            for s, lab in [("no_escalation", r"$\kappa = 0$"), ("escalation", r"$\kappa = 0.4$")]]
-    dots(axes[2], rows, 0.8, xlim=(0.4, 1.2))
-    axes[2].set_title(r"(c) Loading $\lambda$, joint model", loc="left")
-    axes[2].set_xlabel(r"estimate of $\lambda$")
     fig.savefig(os.path.join(FIG, "s5_estimates.png"), dpi=200)
 
 
+def s5_pred():
+    """Paired (by replicate) differences from the product of the univariate space-time models."""
+    r = pd.read_csv(os.path.join(RES, "s5_raw.csv"))
+    u = r[r.model == "uni_st"][["scenario", "seed", "joint_log_score", "cond_log_score"]]
+    scen = [("no_escalation", r"$\kappa = 0$"), ("escalation", r"$\kappa = 0.4$"),
+            ("no_escalation_uST", r"$\kappa = 0$, unrest-only episodes"),
+            ("escalation_uST", r"$\kappa = 0.4$, unrest-only episodes")]
+    mods = [("biv_st", "shared field", LATENT), ("biv_st2", "shared + unrest field", BOOST)]
+    fig, axes = plt.subplots(1, 2, figsize=(10, 3.0), constrained_layout=True, sharey=True)
+    for ax, (col, title) in zip(axes, [("joint_log_score", "(a) Joint log score of (conflict, unrest)"),
+                                        ("cond_log_score", "(b) Log score of conflict given unrest")]):
+        rows = []
+        for s, sl in scen:
+            for m, ml, c in mods:
+                b = r[(r.model == m) & (r.scenario == s)].merge(u, on=["scenario", "seed"], suffixes=("", "_u"))
+                rows.append((f"{sl}: {ml}", 1e3 * (b[col] - b[col + "_u"]).to_numpy(), None, c))
+        dots(ax, rows, 0.0, xlim=(-6, 4))
+        ax.set_title(title, loc="left")
+        ax.set_xlabel(r"difference from univariate models ($\times 10^{-3}$; < 0 is better)")
+    fig.savefig(os.path.join(FIG, "s5_prediction.png"), dpi=200)
+
+
 if __name__ == "__main__":
-    s2(); s4(); s5()
+    s2(); s4(); s5(); s5_pred()

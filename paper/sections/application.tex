@@ -126,10 +126,10 @@ in both directions and the neighbour histories of both outcomes. A single shared
 also carries a risk that S5 cannot detect. Episodes of unrest that do not involve
 conflict are forced into $v$, which enters the conflict equation with loading one.
 Conditioning on $v$ then removes part of the variation in the unrest history through
-which escalation would act, and $\hat\kappa$ is biased towards zero.
-\todo{biv2 and S5 extension results: joint model with an additional unrest-specific
-space-time field, and S5 scenarios with unrest-only episodes, with and without
-escalation.}
+which escalation would act, and $\hat\kappa$ could be biased towards zero. In the S5
+scenarios with unrest-only episodes this attenuation did not occur, but the loading
+was overestimated; we therefore also fit the extended model with a space-time field
+for unrest alone. \todo{biv2 results for both regions (fits running).}
 
 \paragraph{Region and models.} The region is West Africa and the Sahel, longitude
 $18^\circ$W to $16^\circ$E and latitude $4^\circ$N to $25^\circ$N. It has 2{,}505 cells
@@ -194,13 +194,23 @@ possible reading is that the shared field over-absorbs regional variation, and t
 neighbour terms compensate. We take them as a possible sign of misspecification of
 the joint model.
 
-The joint model does not forecast conflict better. Its test log score for conflict is
-0.1031, against 0.1020 for the univariate static model and 0.1026 for the univariate
-space-time model, and its AUC-PR is 0.466 against 0.470 and 0.471, at a conflict
-prevalence of 4.2\%. We have not computed standard errors for these differences, so
-we do not read their order as evidence for one model. As in S5, the three models
-predict conflict similarly and disagree about $\kappa$. Predictive accuracy cannot
-decide between escalation and shared episodes. The joint fit took about 4.5 hours,
+\paragraph{Prediction.} The joint model does not forecast conflict alone better.
+Its test log score for conflict is 0.1031, against 0.1020 for the univariate static
+model and 0.1026 for the univariate space-time model, and its AUC-PR is 0.466 against
+0.470 and 0.471, at a conflict prevalence of 4.2\%. It does predict the two outcomes
+together better. In the test period, both events occur in 0.35\% of the 260{,}520
+cell-weeks, and conflict occurs in 25.1\% of cell-weeks with unrest against 3.9\% of
+those without. The joint log score of the joint model is 0.14993, against 0.15196 for
+the product of the univariate space-time models of conflict and unrest (difference
+$-0.0020$, SE $0.0007$ clustered by country) and 0.15070 for the product of the
+univariate static models ($-0.0008$, SE $0.0006$). Drawing the two outcomes jointly
+rather than independently from the fitted joint model accounts for $-0.0002$ (SE
+$0.0001$). Given same-week unrest, the log score of conflict is 0.1019 against 0.1031
+without conditioning, though AUC-PR barely changes (0.4665 against 0.4662), and the
+co-occurrence of both events is ranked no better than under independence (AUC-PR 0.167
+against 0.168). These gains match S5 in direction and size, where they appeared with
+and without escalation. Prediction thus supports the shared space-time structure, but
+cannot decide between escalation and shared episodes. The joint fit took about 4.5 hours,
 against 8 minutes for the univariate static model and 43 minutes for the univariate space-time model.
 
 \paragraph{Interpretation.} Under this model, and pending the extended model described
@@ -217,7 +227,7 @@ field, the shared field has a larger standard deviation (1.01 against 0.69) and 
 episodes would produce, but also what a field that absorbs unrest-specific episodes
 would produce, with $\hat\kappa$ attenuated towards zero. The two readings cannot be
 separated with a single shared field, and we leave the conclusion open until the
-extended model is fitted. \todo{biv2 and S5 extension results.} Three further limits
+extended model is fitted. \todo{biv2 results.} Three further limits
 apply. First, $\kappa$ is
 the short-run, local part of escalation. Escalation that unfolds over several months
 and over hundreds of kilometres cannot be told apart from a shared episode, and the

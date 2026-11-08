@@ -248,13 +248,10 @@ proportion of replicates whose interval excludes zero; mean estimate of the own-
 coefficient $d_c$ (truth 0.3); mean and SD of the estimated loading $\lambda$ of the
 shared space-time field (truth 0.8, joint model only); and mean log score, AUC-PR and
 onset AUC-PR of the conflict forecasts over the 26 test weeks. Onset rows are those of
-cells without a conflict event in the previous 52 weeks. In both scenarios reported
-here the data contain a single shared space-time field and no unrest-specific
-space-time variation, so the joint model is correctly specified and the table cannot
-show attenuation of $\kappa$ by unrest-only episodes absorbed into the shared field.
-\todo{biv2 and S5 extension results: scenarios with unrest-only episodes, with and
-without escalation, and the joint model with an unrest-specific space-time
-field.}}\label{tab:s5}
+cells without a conflict event in the previous 52 weeks. The last two scenarios add
+unrest-only episodes (AR(1) with coefficient 0.95, Mat\'ern innovations of range
+200\,km, marginal SD 0.6), which the joint model with one shared field must absorb
+into that field.}\label{tab:s5}
 \centering\small
 \resizebox{\textwidth}{!}{\input{tables/s5}}
 \end{table}
@@ -275,8 +272,8 @@ rule of Remark~1 of the main paper. SEs are plug-in values; in S3 and S5 such SE
 too small when a space-time field is fitted (ratio of empirical SD to mean SE up to
 1.66 in S3 and 1.20 in S5 without escalation), so intervals from these models are
 likely too narrow. With a single shared space-time field, unrest-only episodes are
-absorbed into $v$, which can bias $\kappa$ towards zero. \todo{biv2 and S5 extension
-results.}}\label{tab:app-joint-full}
+absorbed into $v$, which can bias $\kappa$ towards zero; in S5 they inflated
+$\hat\lambda$ instead. \todo{biv2 results.}}\label{tab:app-joint-full}
 \centering\small
 \input{tables/real_joint_full}
 \end{table}

@@ -546,12 +546,16 @@ whose innovations are Mat\'ern fields with range 300\,km, scaled to a marginal S
 field is drawn from the continuous Mat\'ern covariance, not from the lattice GMRF.
 The escalation effect is $\kappa = 0$ (no escalation) or $\kappa = 0.4$ (escalation).
 Shared episodes raise both outcomes together, so recent unrest predicts conflict even
-when $\kappa = 0$. The data-generating process has a single shared space-time field
-and no space-time field specific to either outcome, so the joint model below is
-correctly specified in this respect. Event weeks make up about 3.4\% (no escalation) and 3.7\%
+when $\kappa = 0$. In two further scenarios, unrest also has episodes of its own:
+a second AR(1) process with the same coefficient, Mat\'ern innovations of range
+200\,km and marginal SD 0.6, which enters unrest only. Without these unrest-only
+episodes, the data-generating process has a single shared space-time field, so the
+joint model with one shared field is correctly specified in this respect. With them,
+that model must absorb the unrest-only episodes into the shared field, which can bias
+$\hat\kappa$ towards zero. Event weeks make up about 3.4\% (no escalation) and 3.7\%
 (escalation) of conflict rows and 3.9\% of unrest rows.
 
-We compare four estimators of $\kappa$, fitted to the training weeks, each with 20
+We compare five estimators of $\kappa$, fitted to the training weeks, each with 20
 replicates per scenario:
 \begin{itemize}
 \item logistic regression of conflict on $L^c$ and $L^u$;
@@ -561,7 +565,9 @@ replicates per scenario:
 \item the joint model of both outcomes (Section~\ref{sec:methods-joint}), with
 outcome-specific intercepts, lags and static fields, and a space-time field at
 four-week steps shared by the two outcomes, which enters unrest with an estimated
-loading $\lambda$.
+loading $\lambda$;
+\item the extended joint model, which adds a space-time field for unrest alone at the
+same four-week steps.
 \end{itemize}
 The joint model is not the data-generating process. It has no shared static field, so
 $a$ must be absorbed by the two outcome-specific fields, and its space-time field is
@@ -569,17 +575,28 @@ piecewise constant over four weeks while $e$ changes weekly. The application dif
 from this design: it uses steps of 13 weeks on a $1^\circ$ lattice, cross-lags in both
 directions and neighbour histories of both outcomes (Section~\ref{sec:app-joint}). We also forecast conflict
 over the 26 test weeks and score the forecasts on all test rows and on onset rows,
-those of cells without a conflict event in the previous 52 weeks.
+those of cells without a conflict event in the previous 52 weeks. For the two outcomes
+together we score
+\begin{itemize}
+\item the joint predictive distribution of $(C_{st}, U_{st})$, by the joint log score;
+\item the prediction of conflict given unrest in the same week, by the log score of
+$P(C_{st} = 1 \mid U_{st})$.
+\end{itemize}
+Both are computed from the same posterior draws of the latent fields for the two
+outcomes. The univariate benchmark is the product of the univariate space-time models
+of conflict and of unrest, which treats the outcomes as independent given their
+histories.
 
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{figures/s5_estimates.png}
-\caption{S5: estimates of the escalation effect $\kappa$ of recent unrest on conflict
-(a, b) and of the loading $\lambda$ of the shared space-time field in the joint model
-(c), over 20 replicates per scenario. Dots are means and lines span the 5th to 95th
-percentiles of the estimates across replicates; the number above each line is the
-coverage of the nominal 95\% intervals for $\kappa$. Grey: univariate models of
-conflict; blue: the joint model. The dashed line marks the true value. Full results are
+\caption{S5: estimates of the escalation effect $\kappa$ of recent unrest on
+conflict, over 20 replicates per scenario, without (a, b) and with (c, d) unrest-only
+episodes. Dots are means and lines span the 5th to 95th percentiles of the estimates
+across replicates; the number above each line is the coverage of the nominal 95\%
+intervals for $\kappa$. Grey: univariate models of conflict; blue: the joint model
+with one shared space-time field; red: the extended joint model with an additional
+space-time field for unrest. The dashed line marks the true value. Full results are
 in Table~S11 of the Supplementary Material.}\label{fig:s5}
 \end{figure}
 
@@ -597,7 +614,18 @@ rejection rate of 0.10.
 and 0.66), with coverage 0.00, 0.10 and 0.50. The joint model gives 0.43 (SD 0.11,
 Monte Carlo SE of the mean 0.025), with coverage 0.95 (Monte Carlo SE 0.05), and it
 rejects $\kappa = 0$ in 95\% of replicates.
+\item \emph{Unrest-only episodes.} The univariate models are biased as before
+($\hat\kappa = 0.68$, 0.41 and 0.28 without escalation; 1.02, 0.79 and 0.68 with
+escalation). The attenuation feared for the joint model with one shared field does not
+appear: it gives $-0.01$ (SD 0.17, coverage 0.85) without escalation and 0.39 (SD
+0.12, coverage 0.90) with escalation. Its loading absorbs the unrest-only episodes
+instead: $\hat\lambda$ has mean 1.17--1.19 (SD 0.29--0.32) against a true 0.8, and
+$\hat d_c$ rises to 0.44--0.47. The extended model recovers the loading (0.81) and
+$d_c$ (0.35--0.37), and gives $\hat\kappa = 0.06$ and 0.47, with coverage 0.85 in both
+scenarios.
 \end{itemize}
+In the scenarios with shared episodes only, the extended model gives 0.06 and 0.45 (coverage 0.85 and 0.95), close to
+the model with one shared field.
 A space-time field for conflict alone removes most of the bias in the own-lag
 coefficient $d_c$ (0.37--0.38 against 0.3, compared with 1.52--1.54 for logistic
 regression and 0.80--0.82 with the static field), but not the bias in $\kappa$. A
@@ -615,30 +643,48 @@ escalation the ratio is 0.89. With 20 replicates these ratios are imprecise, but
 together with S3 they indicate that plug-in intervals for $\kappa$ near zero are too
 short.
 
-The joint model does not forecast conflict better than the univariate latent models.
-Paired by replicate, its log score differs from that of the univariate space-time model
-by $+0.0002$ (SE $0.0005$) without escalation and $+0.0003$ (SE $0.0005$) with
-escalation, and its AUC-PR by $-0.002$ (SE $0.002$) and $-0.001$ (SE $0.002$). Onset
+\paragraph{Prediction.} For conflict alone, the joint models forecast no better than
+the univariate space-time model. Paired by replicate, the log score of the joint model
+with one shared field differs from it by $+0.0001$ to $+0.0003$ (SE $0.0004$--$0.0005$)
+across the four scenarios, and its AUC-PR by $-0.001$ to $-0.002$ (SE $0.002$). Onset
 AUC-PR is also similar (0.033 against 0.034 without escalation, 0.042 against 0.045
-with escalation). The latent models forecast better than logistic regression. Without escalation, for
-example, the joint model improves on it by $-0.003$ in log score (SE $0.001$) and by
-$+0.025$ in AUC-PR (SE $0.004$).
-Predictive accuracy therefore cannot show whether unrest escalates into conflict: the
-models predict equally well and disagree about $\kappa$. The cost of the joint model is
-computational. A fit takes about 310--320 seconds, against about 80 seconds for the
-univariate space-time model.
+with escalation). The latent models forecast conflict better than logistic regression;
+without escalation, for example, the joint model improves on it by $-0.003$ in log
+score (SE $0.001$) and by $+0.025$ in AUC-PR (SE $0.004$).
+
+The two outcomes together are predicted better by the joint models
+(Figure~\ref{fig:s5-pred}). Against the product of the univariate space-time models,
+the joint log score improves by $0.0009$--$0.0014$ (SE about $0.0005$; better in 12--16
+of 20 replicates) with one shared field and by $0.0010$--$0.0013$ with the extended
+model. About $0.0002$ of the gain (SE $0.0001$; better in 13--16 of 20 replicates)
+comes from drawing the two outcomes jointly rather than independently from the same
+fitted model, which is the part due to the shared field alone. The log score of
+conflict given same-week unrest improves by $0.0004$--$0.0007$ (SE about $0.0005$),
+and the co-occurrence of both events is not ranked better (AUC-PR differences
+$-0.001$ to $-0.004$, SE $0.002$--$0.004$). The gains are of the same size with and
+without escalation, and in the scenarios with unrest-only episodes. The joint and
+conditional scores therefore show that the outcomes share space-time structure, but
+they do not separate escalation from shared episodes; only the estimate of $\kappa$
+does. The cost of the joint models is computational. A fit takes a median of about
+135 seconds with one shared field and 825 seconds with the extended model, against 44
+seconds for the univariate space-time model, on four cores.
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{figures/s5_prediction.png}
+\caption{S5: joint and conditional prediction over the 26 test weeks. Paired
+differences, by replicate, between the joint models and the product of the univariate
+space-time models of conflict and unrest, in (a) the joint log score of
+$(C_{st}, U_{st})$ and (b) the log score of conflict given same-week unrest. Negative
+values favour the joint model. Dots are means and lines span the 5th to 95th
+percentiles over 20 replicates. Blue: one shared space-time field; red: shared and
+unrest-specific space-time fields.}\label{fig:s5-pred}
+\end{figure}
 
 These results hold for a single shared episode process whose loading is constant in
 space, with one direction of escalation. Faster episodes, a loading that varies by
 region, escalation that runs in both directions, and the 13-week steps of the
-application are not covered. S5 also cannot detect the opposite failure. If unrest
-has episodes of its own that do not involve conflict, a joint model with a single
-shared field must place them in $v$, which enters the conflict equation with loading
-one. Conditioning on $v$ then removes part of the variation in the unrest history
-through which escalation would act, and $\hat\kappa$ is biased towards zero. Because
-both scenarios of S5 contain only shared episodes, this attenuation is not tested
-here. The recovery of $\kappa$ in S5 therefore supports the joint model only when
-unrest has no specific space-time variation.
-\todo{biv2 and S5 extension results: S5 scenarios with unrest-only episodes, with and
-without escalation, fitted with the single-field joint model and with the extended
-model that has an additional unrest-specific space-time field.}
+application are not covered. Unrest-only episodes were tested at one strength (SD
+0.6, range 200\,km); with them, the model with one shared field still recovers
+$\kappa$ but misestimates $\lambda$ and $d_c$, so its loading should not be
+interpreted when unrest may have episodes of its own.
