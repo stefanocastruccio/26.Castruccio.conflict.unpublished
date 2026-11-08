@@ -63,14 +63,15 @@ def neighbour_mean(df, L, col):
     return out
 
 
-def stack(Dc, Du):
-    """Rows of conflict on top of rows of unrest; Dc / Du may be None (zero block)."""
+def stack(Dc, Du, nc=None, nu=None):
+    """Rows of conflict on top of rows of unrest; Dc / Du may be None (zero block with nc /
+    nu rows; by default the other outcome's row count)."""
     Dc = sp.csr_matrix(Dc) if Dc is not None else None
     Du = sp.csr_matrix(Du) if Du is not None else None
     if Dc is None:
-        Dc = sp.csr_matrix((Du.shape[0], Du.shape[1]))
+        Dc = sp.csr_matrix((Du.shape[0] if nc is None else nc, Du.shape[1]))
     if Du is None:
-        Du = sp.csr_matrix((Dc.shape[0], Dc.shape[1]))
+        Du = sp.csr_matrix((Dc.shape[0] if nu is None else nu, Dc.shape[1]))
     return sp.vstack([Dc, Du], format="csr")
 
 
@@ -126,6 +127,37 @@ def fit_or_condition(m, saved, model, init=None):
     m.log_ml = m.log_marginal(m.theta)
     m.x_hat, m.f_hat, m.lu = m.mode(m.theta, x0=m._x)
     m.fit_seconds = time.time() - t0
+    return m
+
+
+def subsample(P, r, rng):
+    """All events and a fraction r of the non-events of one outcome's training parts; the
+    offset -log r makes the logistic likelihood of the retained rows exact (case-control
+    sampling on the outcome: logit P(y=1 | kept) = eta - log r)."""
+    keep = (P["y"] == 1) | (rng.random(len(P["y"])) < r)
+    Q = {k: (v[keep] if k != "names" else v) for k, v in P.items()}
+    Q["off"] = np.full(int(keep.sum()), -np.log(r))
+    return Q
+
+
+def fit_subsampled(make, y_sub, D_sub, off_sub, y_full, D_full, model, saved, init):
+    """--zero-frac: hyperparameters from the case-control subsample, latent posterior on
+    all training rows at those hyperparameters (one Laplace mode)."""
+    import time
+    t0 = time.time()
+    ms = fit_or_condition(LatentGaussianModel(y_sub, make(), D_sub, offset=off_sub), saved, model, init)
+    t_sub = time.time() - t0
+    m = LatentGaussianModel(y_full, make(), D_full)
+    m.theta = ms.theta
+    m.mode(m.theta)
+    m.log_ml = m.log_marginal(m.theta)
+    m.x_hat, m.f_hat, m.lu = m.mode(m.theta, x0=m._x)
+    m.fit_seconds = time.time() - t0
+    m.sub_info = {"rows": int(len(y_sub)), "rows_full": int(len(y_full)), "seconds_hyper": float(t_sub),
+                  "log_ml_subsample": float(ms.log_ml),
+                  "n_evals": int(ms.n_evals), "nit": int(getattr(getattr(ms, "opt", None), "nit", -1))}
+    print(f"{model}: subsample {len(y_sub):,}/{len(y_full):,} rows, hyperparameters in {t_sub:.0f} s, "
+          f"total {m.fit_seconds:.0f} s", flush=True)
     return m
 
 
@@ -193,6 +225,12 @@ def main():
     ap.add_argument("--fixed-theta", default=None,
                     help="summary json of an earlier run: reuse its hyperparameters for the models it "
                          "contains (no optimisation); other models are fitted")
+    ap.add_argument("--zero-frac", type=float, default=None,
+                    help="speed-up: estimate the hyperparameters on all training events and a random "
+                         "fraction r of the training non-events of each outcome, with offset -log r "
+                         "(exact for the logistic likelihood); the latent posterior is then computed "
+                         "on all training rows at those hyperparameters")
+    ap.add_argument("--zero-seed", type=int, default=0)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
@@ -282,22 +320,27 @@ def main():
         return biv_blocks() + [SpaceTimeAR1Block(Lv, T, name="st_unrest", sd_init=0.3, rho_init=0.8)]
 
     def biv2_designs(Pc, Pu):
-        return biv_designs(Pc, Pu) + [stack(None, Pu["V"])]
+        return biv_designs(Pc, Pu) + [stack(None, Pu["V"], nc=len(Pc["y"]))]
 
     def biv_designs(Pc, Pu):
         Xc, Xu = sp.csr_matrix(Pc["X"]), sp.csr_matrix(Pu["X"])
         X = sp.bmat([[Xc, None], [None, Xu]], format="csr")
-        return [X, stack(Pc["C"], None), stack(None, Pu["C"]), stack(Pc["E"], None), stack(None, Pu["E"]),
-                stack(Pc["W"], None), stack(None, Pu["W"]),
+        nc, nu = len(Pc["y"]), len(Pu["y"])
+        return [X, stack(Pc["C"], None, nu=nu), stack(None, Pu["C"], nc=nc),
+                stack(Pc["E"], None, nu=nu), stack(None, Pu["E"], nc=nc),
+                stack(Pc["W"], None, nu=nu), stack(None, Pu["W"], nc=nc),
                 sp.bmat([[Pc["V"], None], [None, Pu["V"]]], format="csr")]
 
     saved = json.load(open(a.fixed_theta)) if a.fixed_theta else None
     init = json.load(open(a.init_theta)) if a.init_theta else None
     parts_tr = {o: parts(o, tr) for o in OUTS}
     parts_te = {o: parts(o, te) for o in OUTS}
+    if a.zero_frac:
+        rng_s = np.random.default_rng(a.zero_seed)
+        parts_sub = {o: subsample(parts_tr[o], a.zero_frac, rng_s) for o in OUTS}
     res = {"region": a.region, "rows_per_outcome": int(len(base)),
            "box": [x0, x1, y0, y1], "validation": bool(a.validation), "cells": int(observed.sum()), "countries": nC, "st_res_deg": r, "st_step_weeks": a.st_step,
-           "st_cells": int(Lv.n), "time_steps": T, "models": {}}
+           "st_cells": int(Lv.n), "time_steps": T, "zero_frac": a.zero_frac, "models": {}}
     preds = {"grid_id": base.loc[te, "grid_id"].to_numpy(), "week_start": base.loc[te, "week_start"].to_numpy(),
              "iso": base.loc[te, "ISO_A3"].astype(str).to_numpy(),
              "lon": base.loc[te, "lon"].to_numpy(), "lat": base.loc[te, "lat"].to_numpy(),
@@ -310,7 +353,12 @@ def main():
             st = model in ("uni_st", "uni_st_u")
             o = "unrest" if model.endswith("_u") else "conflict"
             P = parts_tr[o]
-            m = fit_or_condition(LatentGaussianModel(P["y"], uni_blocks(o, st), uni_designs(P, st)), saved, model)
+            if a.zero_frac:
+                Ps = parts_sub[o]
+                m = fit_subsampled(lambda: uni_blocks(o, st), Ps["y"], uni_designs(Ps, st), Ps["off"],
+                                   P["y"], uni_designs(P, st), model, saved, None)
+            else:
+                m = fit_or_condition(LatentGaussianModel(P["y"], uni_blocks(o, st), uni_designs(P, st)), saved, model)
             Dt = uni_designs(parts_te[o], st)
             eta, sd = m.predict_eta(Dt, None, n_samples=50)
             preds[f"p_{o}_{model.replace('_u', '')}_probit"] = prob_from_eta(eta, sd).astype("float32")
@@ -318,7 +366,12 @@ def main():
         else:   # biv: shared v only; biv2: shared v + unrest-specific space-time field
             bl, dz = (biv_blocks, biv_designs) if model == "biv" else (biv2_blocks, biv2_designs)
             y = np.r_[parts_tr["conflict"]["y"], parts_tr["unrest"]["y"]]
-            m = fit_or_condition(LatentGaussianModel(y, bl(), dz(parts_tr["conflict"], parts_tr["unrest"])), saved, model, init)
+            if a.zero_frac:
+                Sc, Su = parts_sub["conflict"], parts_sub["unrest"]
+                m = fit_subsampled(bl, np.r_[Sc["y"], Su["y"]], dz(Sc, Su), np.r_[Sc["off"], Su["off"]],
+                                   y, dz(parts_tr["conflict"], parts_tr["unrest"]), model, saved, init)
+            else:
+                m = fit_or_condition(LatentGaussianModel(y, bl(), dz(parts_tr["conflict"], parts_tr["unrest"])), saved, model, init)
             Dte = dz(parts_te["conflict"], parts_te["unrest"])
             eta, sd = m.predict_eta(Dte, None, n_samples=50)
             p = prob_from_eta(eta, sd); nte = int(te.sum())
@@ -343,6 +396,8 @@ def main():
         if model in ("biv", "biv2"):
             sc["unrest"] = dg.scores(parts_te["unrest"]["y"], preds[f"p_unrest_{model}"])
         res["models"][model]["test_scores"] = sc
+        if hasattr(m, "sub_info"):
+            res["models"][model]["subsample"] = dict(m.sub_info, zero_frac=a.zero_frac)
         print(model, json.dumps({k: res["models"][model][k] for k in ("hyper", "lag_coefficients", "test_scores")},
                                 default=float), flush=True)
         json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
