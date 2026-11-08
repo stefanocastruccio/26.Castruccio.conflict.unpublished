@@ -1424,3 +1424,36 @@ rc=0
 | LBY | 592 | 55.5 | 0.0009 | | |
 
   AFG and DZA also topped 2022.
+
+## 2026-11-08 03:35 EST: africa_me biv2, warm start, done (1708086.2, rc 0, 22:48-03:30, **4 h 42 min**; fit 16,742 s; no Traceback)
+- This was the only africa_me biv2 run (the cold one, 1705023, was deleted). Committed as
+  `results_real/bivariate/africa_me/summary_biv2.json`, with a copy in `results_real/bivariate_warm/africa_me/`.
+- Setup: 26-week space-time steps, as in the job script. biv had v on 14 steps.
+- log-ML: biv2 −353,977 against biv −354,669 (**+692**).
+- Test scores: conflict AUC-PR 0.525 / log 0.0597; unrest 0.534 / 0.0646.
+
+**Lag coefficients** (estimate, SE):
+
+| term | biv | biv2 |
+|---|---|---|
+| **conflict:lag_other** | **0.057 (0.015)** | **0.105 (0.015)**, about 7 SE |
+| unrest:lag_other | 0.025 (0.014) | 0.074 (0.014) |
+| conflict:lag_own | 0.626 | 0.608 |
+| conflict:lag_own_nb | 0.083 | 0.073 |
+| conflict:lag_other_nb | −0.035 | −0.015 |
+| unrest:lag_own | 0.585 | 0.542 |
+| unrest:lag_own_nb | 0.071 | 0.057 |
+| unrest:lag_other_nb | −0.042 | −0.008 |
+
+**biv2 hyperparameters:**
+- country sd: conflict 0.519, unrest 0.925;
+- cell sd: conflict 0.987, unrest 1.318;
+- field_conflict: 598 km, sd 1.214;
+- field_unrest: 417 km, sd 0.476;
+- shared_st: 472 km, sd 1.260, rho 0.948, **loading 0.44** (biv: 0.668);
+- **st_unrest: 697 km, sd 0.429, rho 0.696.**
+
+Same pattern as west_sahel. With an unrest-specific space-time field, the shared loading falls and unrest → conflict is
+about 0.10 in both regions (west_sahel 0.095 (0.032), africa_me 0.105 (0.015)).
+
+All conflict jobs are now finished. Only my analytic-gradient comparison (1708140) is still running.
