@@ -732,6 +732,43 @@ forming $\bH$ grows with the number of cell-weeks and the number of fixed effect
 the joint model both are doubled, since each outcome has its own rows and its own
 fixed effects.
 
+\paragraph{Run times and approximations.} The full fits of the joint models, on one
+node with 16 cores (AMD EPYC) and eight parallel gradient workers, take hours. The
+joint model~\eqref{eq:joint} took 4.5 hours for West Africa and the Sahel (906{,}810
+cell-weeks per outcome) and 6.4 hours for Africa and the Middle East (4{,}921{,}758
+cell-weeks per outcome). The extended model with an unrest-specific space-time field
+took 8.2 hours for West Africa from the default starting values. All estimates and
+maps reported in Sections~\ref{sec:app-joint} come from full fits. The repeated refits
+of the hold-out experiments, one per fold, use three approximations, each checked
+against a full fit.
+
+First, \emph{warm starts}: an extended model starts from the fitted hyperparameters of
+the model it extends, and its new components from their defaults. For the extended
+model in West Africa this reached the same optimum as the cold start in 1.4 hours
+instead of 8.2. Second, \emph{looser outer tolerances} for L-BFGS-B (relative change
+of the objective $10^{-7}$, projected gradient $10^{-3}$). In a simulation replicate of
+S5 these moved the hyperparameters by at most 0.3\% and $\hat\kappa$ by $10^{-4}$, and
+the fit was 1.25 times faster. Third, \emph{case-control subsampling of
+non-events}. Events are rare, so most of the $10^6$--$10^7$ rows are zeros, and the
+cost of every evaluation grows with the number of rows. For the hyperparameters only,
+we keep every event and a random fraction $r$ of the non-events of each outcome. For
+the retained rows,
+\[
+\operatorname{logit} P(y_{st} = 1 \mid \text{retained}) = \eta_{st} - \log r,
+\]
+so adding the offset $-\log r$ gives the exact likelihood of the subsample under the
+same model \citep{prentice1979logistic}. Only $\hat\btheta$ is computed on the
+subsample. The latent posterior, and therefore every coefficient and prediction, is
+then computed on all rows at $\hat\btheta$, with one Newton solve. For the joint model
+in West Africa, $r = 0.25$ made the fit 5.6 times faster (49 minutes instead of 4.5
+hours). The Laplace log marginal likelihood of all rows at the subsample estimate was
+within 0.6 of its maximum, $\hat\kappa$ was 0.047 against 0.044 (0.1 standard errors),
+every other coefficient moved by less than 0.1 standard errors, and the test log score
+changed by 0.06\%. With $r = 0.10$ the fit was 6.0 times faster but the loading moved
+from 0.87 to 0.77 and $\hat\kappa$ by 0.3 standard errors, so we use $r = 0.25$
+\todo{add the same check for Africa and the Middle East (job 1711777.3) and for one
+hold-out fold refitted in full}.
+
 \paragraph{Prediction.} For a new cell-week with design row $\bm{a}$ and
 offset $o$, the posterior predictive probability is
 $\E\{\expit(o + \bm{a}^\top\bm{\xi})\} \approx \expit\{m/\sqrt{1 + \pi s^2/8}\}$, where
