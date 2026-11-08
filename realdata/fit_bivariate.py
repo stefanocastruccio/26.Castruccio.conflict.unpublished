@@ -115,9 +115,10 @@ def fit_or_condition(m, saved, model, init=None):
     With `init` (a saved summary, --init-theta), the fit is warm-started from the
     hyperparameters of the joint model `biv` in that summary."""
     if saved is None or model not in saved.get("models", {}):
-        if init is not None and "biv" in init.get("models", {}):
-            th0 = theta0_from_init(m.blocks, init["models"]["biv"]["hyper"])
-            print(f"warm start for {model} from saved biv: {np.round(th0, 3)}", flush=True)
+        src = next((k for k in (model, "biv2", "biv") if init is not None and k in init.get("models", {})), None)
+        if src is not None:
+            th0 = theta0_from_init(m.blocks, init["models"][src]["hyper"])
+            print(f"warm start for {model} from saved {src}: {np.round(th0, 3)}", flush=True)
             return m.fit(theta0=th0)
         return m.fit()
     import time
@@ -159,6 +160,22 @@ def fit_subsampled(make, y_sub, D_sub, off_sub, y_full, D_full, model, saved, in
     print(f"{model}: subsample {len(y_sub):,}/{len(y_full):,} rows, hyperparameters in {t_sub:.0f} s, "
           f"total {m.fit_seconds:.0f} s", flush=True)
     return m
+
+
+def calibration(yc, yu, pc, pu, pboth):
+    """Observed / predicted ratios, overall and in the top 1% and 10% of predicted
+    co-occurrence (the hotspots, where the joint model under-predicted)."""
+    both = yc * yu
+    out = {"obs_conflict": float(yc.mean()), "pred_conflict": float(pc.mean()),
+           "obs_unrest": float(yu.mean()), "pred_unrest": float(pu.mean()),
+           "obs_both": float(both.mean()), "pred_both": float(pboth.mean())}
+    for q in (0.90, 0.99):
+        top = pboth >= np.quantile(pboth, q)
+        out[f"top{int(round(100 * (1 - q)))}"] = {
+            "obs_both": float(both[top].mean()), "pred_both": float(pboth[top].mean()),
+            "obs_conflict": float(yc[top].mean()), "pred_conflict": float(pc[top].mean()),
+            "obs_unrest": float(yu[top].mean()), "pred_unrest": float(pu[top].mean())}
+    return out
 
 
 def _logb(y, p):
@@ -319,6 +336,13 @@ def main():
     def biv2_blocks():
         return biv_blocks() + [SpaceTimeAR1Block(Lv, T, name="st_unrest", sd_init=0.3, rho_init=0.8)]
 
+    def biv3_blocks():   # biv2 + a shared STATIC field (persistent shared hotspots do not decay in forecasts)
+        return biv2_blocks() + [CopyBlock(MaternBlock(L, name="sfield", range_init=300.0, barrier=barrier),
+                                          name="shared_field", lam_init=0.5)]
+
+    def biv3_designs(Pc, Pu):
+        return biv2_designs(Pc, Pu) + [sp.bmat([[Pc["W"], None], [None, Pu["W"]]], format="csr")]
+
     def biv2_designs(Pc, Pu):
         return biv_designs(Pc, Pu) + [stack(None, Pu["V"], nc=len(Pc["y"]))]
 
@@ -364,7 +388,8 @@ def main():
             preds[f"p_{o}_{model.replace('_u', '')}_probit"] = prob_from_eta(eta, sd).astype("float32")
             preds[f"p_{o}_{model.replace('_u', '')}"] = mc_prob(m, Dt).astype("float32")
         else:   # biv: shared v only; biv2: shared v + unrest-specific space-time field
-            bl, dz = (biv_blocks, biv_designs) if model == "biv" else (biv2_blocks, biv2_designs)
+            bl, dz = {"biv": (biv_blocks, biv_designs), "biv2": (biv2_blocks, biv2_designs),
+                      "biv3": (biv3_blocks, biv3_designs)}[model]
             y = np.r_[parts_tr["conflict"]["y"], parts_tr["unrest"]["y"]]
             if a.zero_frac:
                 Sc, Su = parts_sub["conflict"], parts_sub["unrest"]
@@ -393,7 +418,7 @@ def main():
         mu_name = model.replace("_u", "")
         if model.endswith("_u") and f"p_unrest_{mu_name}" in preds:
             sc["unrest"] = dg.scores(parts_te["unrest"]["y"], preds[f"p_unrest_{mu_name}"])
-        if model in ("biv", "biv2"):
+        if model in ("biv", "biv2", "biv3"):
             sc["unrest"] = dg.scores(parts_te["unrest"]["y"], preds[f"p_unrest_{model}"])
         res["models"][model]["test_scores"] = sc
         if hasattr(m, "sub_info"):
@@ -414,7 +439,15 @@ def main():
         if f"p_conflict_{uni}" in preds and f"p_unrest_{uni}" in preds:
             preds[f"logi_{uni}"] = (_logb(yc, preds[f"p_conflict_{uni}"]) + _logb(yu, preds[f"p_unrest_{uni}"])).astype("float32")
             J[f"joint_log_score_{uni}_product"] = jls(preds[f"logi_{uni}"])
-    for bm in ("biv", "biv2"):
+    for bm in ("uni_static", "uni_st"):    # calibration of co-occurrence (product of the univariate forecasts)
+        if f"p_conflict_{bm}" in preds and f"p_unrest_{bm}" in preds:
+            pc, pu = preds[f"p_conflict_{bm}"].astype(float), preds[f"p_unrest_{bm}"].astype(float)
+            J[f"{bm}_calibration"] = calibration(yc, yu, pc, pu, pc * pu)
+    for bm in ("biv", "biv2", "biv3"):
+        if f"logj_{bm}" in preds:
+            J[f"{bm}_calibration"] = calibration(yc, yu, preds[f"p_conflict_{bm}"].astype(float),
+                                                 preds[f"p_unrest_{bm}"].astype(float), preds[f"pboth_{bm}"].astype(float))
+    for bm in ("biv", "biv2", "biv3"):
         if f"logj_{bm}" not in preds:
             continue
         lj, li = preds[f"logj_{bm}"].astype(float), preds[f"logi_{bm}"].astype(float)
