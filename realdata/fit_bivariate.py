@@ -209,7 +209,20 @@ def main():
         for o in OUTS:
             d_ = dfs[o][keep].reset_index(drop=True)
             d_["train"] = (d_["week_start"] < pd.Timestamp("2022-01-01")).to_numpy()
+            # the validation year takes the last training year's effect (as the test years
+            # take 2022's in the main fit); year_2022 would otherwise be unidentified
+            if "year_2022" in d_:
+                v22 = d_["year_2022"].to_numpy() == 1
+                if "year_2021" in d_:
+                    d_.loc[v22, "year_2021"] = 1
+                d_["year_2022"] = 0
             dfs[o] = d_
+    for o in OUTS:   # guard: drop fixed effects that are constant zero on the training rows
+        tr_o = dfs[o]["train"].to_numpy()
+        dead = [c for c in covs[o] if c in dfs[o] and not np.any(dfs[o].loc[tr_o, c].to_numpy() != 0)]
+        if dead:
+            print(f"{o}: dropping covariates that are zero on all training rows: {dead}", flush=True)
+            covs[o] = [c for c in covs[o] if c not in dead]
     key = ["grid_id", "week_start"]
     assert dfs["conflict"][key].equals(dfs["unrest"][key]), "prepare() rows differ between outcomes"
     base = dfs["conflict"]
