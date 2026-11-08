@@ -265,6 +265,13 @@ class LatentGaussianModel:
         in parallel forked processes, warm-started at the current mode."""
         import os
         t0 = time.time()
+        # Outer tolerances (env overrides for the large real-data fits; defaults = scipy's).
+        maxiter = int(os.environ.get("LAPLACE_MAXITER", maxiter))
+        lopts = dict(maxiter=maxiter)
+        if os.environ.get("LAPLACE_FTOL"):
+            lopts["ftol"] = float(os.environ["LAPLACE_FTOL"])
+        if os.environ.get("LAPLACE_GTOL"):
+            lopts["gtol"] = float(os.environ["LAPLACE_GTOL"])
         theta0 = (np.concatenate([b.theta0() for b in self.blocks])
                   if theta0 is None else np.asarray(theta0, float))
         n_jobs = int(n_jobs or os.environ.get("FIT_JOBS", 1))
@@ -306,12 +313,12 @@ class LatentGaussianModel:
 
                 try:
                     res = minimize(fg, theta0, method="L-BFGS-B", jac=True, bounds=bounds,
-                                   options=dict(maxiter=maxiter))
+                                   options=lopts)
                 finally:
                     pool.close(); pool.join(); _PAR_MODEL = None
             else:
                 res = minimize(nlp, theta0, method="L-BFGS-B", bounds=bounds,
-                               options=dict(maxiter=maxiter, eps=eps))
+                               options=dict(lopts, eps=eps))
             self.theta, self.opt = res.x, res
         self.x_hat, self.f_hat, self.lu = self.mode(self.theta)
         self.log_ml = self.log_marginal(self.theta)

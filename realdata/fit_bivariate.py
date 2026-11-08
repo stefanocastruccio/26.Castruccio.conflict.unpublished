@@ -94,10 +94,30 @@ def theta_from_hyper(blocks, hyper):
     return np.array(th, float)
 
 
-def fit_or_condition(m, saved, model):
+def theta0_from_init(blocks, hyper):
+    """Starting values: saved hyperparameters for every block named in `hyper` (e.g. the
+    fitted biv model when fitting biv2), the generic defaults for the others."""
+    th = []
+    for b in blocks:
+        try:
+            th.append(theta_from_hyper([b], hyper))
+        except KeyError:
+            th.append(np.asarray(b.theta0(), float))
+    th = np.concatenate(th)
+    lo, hi = zip(*[bd for b in blocks for bd in b.bounds()])
+    return np.clip(th, np.array(lo) + 1e-6, np.array(hi) - 1e-6)
+
+
+def fit_or_condition(m, saved, model, init=None):
     """Full empirical-Bayes fit, or (with --fixed-theta) the posterior at the saved
-    hyperparameters of the same model: one Laplace mode instead of the optimisation."""
+    hyperparameters of the same model: one Laplace mode instead of the optimisation.
+    With `init` (a saved summary, --init-theta), the fit is warm-started from the
+    hyperparameters of the joint model `biv` in that summary."""
     if saved is None or model not in saved.get("models", {}):
+        if init is not None and "biv" in init.get("models", {}):
+            th0 = theta0_from_init(m.blocks, init["models"]["biv"]["hyper"])
+            print(f"warm start for {model} from saved biv: {np.round(th0, 3)}", flush=True)
+            return m.fit(theta0=th0)
         return m.fit()
     import time
     t0 = time.time()
@@ -150,6 +170,8 @@ def main():
     ap.add_argument("--st-step", type=int, default=13); ap.add_argument("--st-res", type=float, default=1.0)
     ap.add_argument("--models", default="uni_static,uni_st,biv")   # also: biv2
     ap.add_argument("--summary-name", default="summary_biv.json")
+    ap.add_argument("--init-theta", default=None,
+                    help="summary JSON whose fitted 'biv' hyperparameters warm-start the fit (e.g. for biv2)")
     ap.add_argument("--fixed-theta", default=None,
                     help="summary json of an earlier run: reuse its hyperparameters for the models it "
                          "contains (no optimisation); other models are fitted")
@@ -233,6 +255,7 @@ def main():
                 sp.bmat([[Pc["V"], None], [None, Pu["V"]]], format="csr")]
 
     saved = json.load(open(a.fixed_theta)) if a.fixed_theta else None
+    init = json.load(open(a.init_theta)) if a.init_theta else None
     parts_tr = {o: parts(o, tr) for o in OUTS}
     parts_te = {o: parts(o, te) for o in OUTS}
     res = {"region": a.region, "box": list(REGIONS[a.region]), "rows_per_outcome": int(len(base)),
@@ -254,7 +277,7 @@ def main():
         else:   # biv: shared v only; biv2: shared v + unrest-specific space-time field
             bl, dz = (biv_blocks, biv_designs) if model == "biv" else (biv2_blocks, biv2_designs)
             y = np.r_[parts_tr["conflict"]["y"], parts_tr["unrest"]["y"]]
-            m = fit_or_condition(LatentGaussianModel(y, bl(), dz(parts_tr["conflict"], parts_tr["unrest"])), saved, model)
+            m = fit_or_condition(LatentGaussianModel(y, bl(), dz(parts_tr["conflict"], parts_tr["unrest"])), saved, model, init)
             Dte = dz(parts_te["conflict"], parts_te["unrest"])
             eta, sd = m.predict_eta(Dte, None, n_samples=50)
             p = prob_from_eta(eta, sd); nte = int(te.sum())
