@@ -129,7 +129,7 @@ Conditioning on $v$ then removes part of the variation in the unrest history thr
 which escalation would act, and $\hat\kappa$ could be biased towards zero. In the S5
 scenarios with unrest-only episodes this attenuation did not occur, but the loading
 was overestimated; we therefore also fit the extended model with a space-time field
-for unrest alone. \todo{biv2 results for both regions (fits running).}
+for unrest alone (results below).
 
 \paragraph{Region and models.} The region is West Africa and the Sahel, longitude
 $18^\circ$W to $16^\circ$E and latitude $4^\circ$N to $25^\circ$N. It has 2{,}505 cells
@@ -194,28 +194,29 @@ possible reading is that the shared field over-absorbs regional variation, and t
 neighbour terms compensate. We take them as a possible sign of misspecification of
 the joint model.
 
-\paragraph{Prediction.} \todo{Numbers in this paragraph are being recomputed: the univariate products were scored with the probit approximation and the joint model by Monte Carlo; all models now use the same Monte Carlo draws.} The joint model does not forecast conflict alone better.
-Its test log score for conflict is 0.1031, against 0.1020 for the univariate static
-model and 0.1026 for the univariate space-time model, and its AUC-PR is 0.466 against
-0.470 and 0.471, at a conflict prevalence of 4.2\%. It does predict the two outcomes
-together better. In the test period, both events occur in 0.35\% of the 260{,}520
-cell-weeks, and conflict occurs in 25.1\% of cell-weeks with unrest against 3.9\% of
-those without. The joint log score of the joint model is 0.14993, against 0.15196 for
-the product of the univariate space-time models of conflict and unrest (difference
-$-0.0020$, SE $0.0007$ clustered by country) and 0.15070 for the product of the
-univariate static models ($-0.0008$, SE $0.0006$). Drawing the two outcomes jointly
-rather than independently from the fitted joint model accounts for $-0.0002$ (SE
-$0.0001$). Given same-week unrest, the log score of conflict is 0.1019 against 0.1031
-without conditioning, though AUC-PR barely changes (0.4665 against 0.4662), and the
-co-occurrence of both events is ranked no better than under independence (AUC-PR 0.167
-against 0.168). These gains match S5 in direction and size, where they appeared with
-and without escalation. Prediction thus supports the shared space-time structure, but
-cannot decide between escalation and shared episodes. The joint fit took about 4.5 hours,
+\paragraph{Prediction.} All predictive probabilities below are posterior means of
+$\operatorname{expit}(\eta)$ over the same 200 posterior draws for every model. The joint model does not
+forecast either outcome alone better. Its test log score for conflict is 0.1021,
+against 0.1016 for the univariate static model and 0.1017 for the univariate
+space-time model (AUC-PR 0.464, 0.470 and 0.470, at a conflict prevalence of 4.2\%),
+and for unrest 0.0481 against 0.0481 and 0.0482. In the test period both events occur
+in 0.35\% of the 260{,}520 cell-weeks, and conflict occurs in 25.1\% of cell-weeks
+with unrest against 3.9\% of those without. Even so, the joint model does not predict the two
+outcomes together better than the product of the univariate models. Its joint log score is 0.14993, against 0.14991 for the
+product of the univariate space-time models (difference $+0.00003$, SE $0.0005$
+clustered by country) and 0.14978 for the product of the univariate static models
+($+0.0002$, SE $0.0006$). Within the joint model, drawing the two outcomes jointly
+rather than independently improves the joint log score by $0.0002$ (SE $0.0001$), and
+conditioning on same-week unrest improves the log score of conflict from 0.1021 to
+0.1019 (AUC-PR 0.464 to 0.466). These are small effects. The dependence between the
+outcomes in a cell-week is largely carried by the histories and the static effects,
+which the univariate models also contain, and the shared field adds little to it at the
+weekly scale. As in S5, prediction cannot decide between escalation and shared episodes. The joint fit took about 4.5 hours,
 against 8 minutes for the univariate static model and 43 minutes for the univariate space-time model.
 
-\paragraph{Interpretation.} Under this model, and pending the extended model described
-above, the univariate association between recent unrest and conflict in this region is
-largely accounted for by shared episodes.
+\paragraph{Interpretation.} Under the joint model with one shared field, the univariate
+association between recent unrest and conflict in this region is largely accounted for
+by shared episodes; under the extended model, about a third of it is.
 Under no escalation, the univariate space-time model rejected $\kappa = 0$ in 55\% of
 the S5 replicates, while the joint model had coverage 0.90. A univariate estimate of
 0.13 to 0.14 is therefore not, by itself, evidence that unrest escalates into
@@ -226,8 +227,18 @@ field, the shared field has a larger standard deviation (1.01 against 0.69) and 
 (499 against 423\,km). This is what removing confounding by shared
 episodes would produce, but also what a field that absorbs unrest-specific episodes
 would produce, with $\hat\kappa$ attenuated towards zero. The two readings cannot be
-separated with a single shared field, and we leave the conclusion open until the
-extended model is fitted. \todo{biv2 results.} Three further limits
+separated with a single shared field, so we also fit the extended model with a
+space-time field for unrest alone. In West Africa it raises the log marginal likelihood
+by 131 over the joint model with one shared field. The unrest-specific field is
+substantial: range 787\,km, SD 0.49 and AR(1) coefficient 0.69 per 13 weeks. The loading of the shared field falls from
+0.87 to 0.58, and $\hat\kappa$ rises from 0.044 to 0.095 (SE 0.032), between the
+univariate estimates and that of the model with one shared field. In S5 the extended
+model gave slightly larger estimates than the model with one shared field (0.06
+against 0.04 under no escalation and 0.45--0.47 against 0.39--0.43 under escalation),
+so part of this rise may reflect the model rather than the data. The evidence for
+short-run escalation in West Africa is therefore moderate and depends on how unrest-only
+episodes are modelled: shared episodes account for about a third to two thirds of the
+univariate association. \todo{Extended model for the AME region (fit running).} Three further limits
 apply. First, $\kappa$ is
 the short-run, local part of escalation. Escalation that unfolds over several months
 and over hundreds of kilometres cannot be told apart from a shared episode, and the
