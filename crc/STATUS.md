@@ -1613,3 +1613,73 @@ What the numbers show:
 - New `crc/jobs/27_holdout_full_check.sh`: africa_me, target conflict, fold 0, with `--zero-frac 1.0` (all rows, offset 0) and otherwise the
   same arguments as 1712445.11. Output in `$WORK/holdout_refit_full/africa_me_conflict/fold0`. It will be submitted when 1712445.11 has
   finished, and I'll add its job ID here.
+
+## 2026-11-08 17:45 EST: S6 merged (1712461); biv3 west_sahel done (1711845.1); zero-frac africa_me biv done (1711777.3)
+### S6 (1712461, 40/40 shards, no Traceback; merged with `N_JOBS=1 python s6_holdout.py`)
+`results/s6_summary.csv` and `results/s6_raw.csv` (960 rows) are committed. Each cell is the mean over 20 replicates of d_log, the log score on the
+held-out block minus the base model's (negative = better), with the replicate SE in parentheses.
+
+| scenario | target | biv_st vs uni_field, past | biv_st vs uni_field, test | biv_st vs uni_st, past | biv_st vs uni_st, test |
+|---|---|---|---|---|---|
+| no_escalation | c | −0.0043 (0.0010) | +0.0008 (0.0008) | −0.0023 (0.0006) | +0.0007 (0.0006) |
+| no_escalation | u | −0.0031 (0.0006) | +0.0001 (0.0008) | −0.0031 (0.0004) | −0.0009 (0.0009) |
+| escalation | c | −0.0046 (0.0010) | +0.0007 (0.0008) | −0.0024 (0.0006) | +0.0007 (0.0007) |
+| escalation | u | −0.0034 (0.0007) | −0.0000 (0.0008) | −0.0033 (0.0005) | −0.0010 (0.0010) |
+| escalation_uST | c | −0.0037 (0.0009) | +0.0008 (0.0007) | −0.0013 (0.0007) | +0.0008 (0.0005) |
+| escalation_uST | u | −0.0051 (0.0010) | −0.0022 (0.0012) | −0.0027 (0.0007) | −0.0005 (0.0013) |
+
+- biv_st2 is within 0.0005 of biv_st everywhere.
+- **Past period (the block's history), joint models help in every scenario,** at 3-8 SE: −0.003 to −0.005 against uni_field and
+  −0.001 to −0.003 against uni_st. AUC-PR is +0.016 to +0.029 against uni_field.
+- **Test period, the gain disappears.** For target c it is slightly negative (+0.0007 to +0.0008, about 1 SE). For target u it is ≤ 0, and
+  only in escalation_uST is it about −0.002 against uni_field.
+- The pattern matches the real-data hold-out: the borrowed signal is in the shared persistent structure, which the forecast loses
+  as the AR(1) shared field decays.
+- Loading: 0.77-0.88 for biv_st2. biv_st reaches 1.10-1.25 in escalation_uST.
+
+### biv3 west_sahel (1711845.1, no Traceback; fit 12,246 s = 3 h 24 min, warm start from biv2)
+`results_real/bivariate/west_sahel/summary_biv3.json` is committed.
+- **log-ML −76,305.2 against biv2 −76,461.0 (+155.8).**
+- **New shared static field:** sd 1.021, **loading 1.652**, **range only 45 km**. It is cell-scale and takes over most of the
+  cell iid variance: cell sd conflict 0.654 → **0.136**, unrest 1.358 → **0.715**.
+- Other moves against biv2:
+  - shared_st sd 0.993 → **0.742**, loading 0.580 → 0.500, rho 0.957 → 0.914, range 445 → 437 km;
+  - field_conflict sd 1.443 → 1.447, range 467 → 507 km;
+  - field_unrest sd 0.344 → 0.274, range 497 → 605 km;
+  - country sd conflict 0.673 → 0.606, unrest 0.514 → 0.446;
+  - st_unrest unchanged (sd 0.505, rho 0.697, 788 km).
+- **κ = conflict:lag_other 0.061 (0.032)** against biv2 0.095 (0.032). unrest:lag_other is 0.076 against 0.111. Part of the cross-lag
+  was persistent shared structure.
+- **Calibration** (observed / predicted; joint_prediction):
+
+| | uni_static | biv3 |
+|---|---|---|
+| overall conflict | 0.0422 / 0.0437 | 0.0422 / 0.0443 |
+| overall both | 0.00352 / 0.00346 | 0.00352 / **0.00300** |
+| top 10% conflict | 0.277 / 0.286 | 0.265 / 0.263 |
+| top 10% both | 0.0327 / 0.0336 | 0.0324 / **0.0280** |
+| top 1% conflict | 0.460 / 0.497 | 0.454 / **0.441** |
+| top 1% both | 0.165 / 0.205 | 0.160 / **0.142** |
+| top 1% unrest | 0.341 / 0.444 | 0.338 / **0.341** |
+
+  biv3's marginals at hotspots are well calibrated: top 1% conflict 0.454 against 0.441, unrest 0.338 against 0.341, where uni_static
+  over-predicts. But **P(both) is under-predicted by about 13-15%** overall and at hotspots.
+- **Joint log score 0.149684 against the uni_static product 0.149782: −0.00010 (country SE 0.00079), no gain.** Joint against independent: −0.00013
+  (0.00005). Conflict given unrest 0.10155 against marginal 0.10168.
+- Test marginals: conflict log 0.10168 / AUC-PR 0.469; unrest 0.04814 / 0.283. These are MC scores. The biv2 summary values (0.10293 / 0.04959)
+  come from the older approximation and are not comparable.
+- africa_me biv3 (1711845.2) is still running.
+
+### Zero-frac africa_me biv r=0.10 (1711777.3, no Traceback)
+`results_real/bivariate_zf/africa_me_biv_r0.10/summary_biv.json` is committed.
+- **Fit 9,964 s (hyper 9,369 s) against the full 23,084 s: 2.3× faster.** In West Africa it was 6×. The subsample is 836,595 of 6,989,964 rows,
+  with 53 iterations / 806 evaluations.
+- **log-ML −354,677.6 against −354,668.9 (−8.7).**
+- Hyperparameters (full / zf):
+  - country sd 0.533 / 0.535 and 0.903 / 0.910; cell sd 0.994 / 0.993 and 1.308 / 1.311;
+  - field_conflict 632 / 614 km, sd 1.197 / 1.152;
+  - field_unrest 439 / 375 km, sd 0.350 / 0.323;
+  - shared_st 486 / 523 km, sd 1.254 / 1.275, rho 0.946 / 0.951, loading 0.668 / 0.636.
+- **κ 0.061 (0.015) against 0.057 (0.015).** All lag coefficients are within 0.5 SE.
+- **Test scores are identical to the full fit:** conflict log 0.05848 against 0.05853 (MC), AUC-PR 0.526 against 0.526; unrest 0.06313 against 0.06318.
+- africa_me biv2 r=0.10 (1711777.4) is still running, about 4 h 45 min so far.
