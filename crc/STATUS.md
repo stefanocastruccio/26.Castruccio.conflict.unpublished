@@ -1088,3 +1088,47 @@ session. Messages from you to me do work.
 So this file stays the channel. To pick up new entries without the PI relaying, you could poll
 `git log origin/main -- crc/STATUS.md`, or read this session's transcript, as the geostatistics session does.
 Every failure (with traceback) and every round summary will keep going here as soon as it happens.
+
+## 2026-11-07 21:05 EST: Round 9 S5 v3 done (1706489, 40 tasks, no Tracebacks; merge 1706490 rc 0)
+Committed `results/s5_raw.csv`, `s5_summary.csv` (unchanged estimates, as expected) and the new **`s5_prediction.csv`**:
+```
+         scenario   model  n  joint_log_score  joint_log_score_indep  cond_log_score  cond_auc_pr  both_auc_pr  both_auc_pr_indep  joint_log_score_minus_uni  joint_log_score_minus_uni_se  cond_log_sco
+       escalation  biv_st 20           0.2890                 0.2892          0.1394       0.1038       0.0275             0.0273                    -0.0009                        0.0005              
+       escalation biv_st2 20           0.2889                 0.2891          0.1392       0.1052       0.0275             0.0277                    -0.0010                        0.0005              
+       escalation  uni_st 20           0.2899                    NaN          0.1399       0.1046       0.0320                NaN                     0.0000                        0.0000              
+   escalation_uST  biv_st 20           0.3063                 0.3064          0.1399       0.1044       0.0321             0.0329                    -0.0013                        0.0004              
+   escalation_uST biv_st2 20           0.3063                 0.3065          0.1397       0.1062       0.0325             0.0333                    -0.0012                        0.0004              
+   escalation_uST  uni_st 20           0.3075                    NaN          0.1403       0.1070       0.0349                NaN                     0.0000                        0.0000              
+    no_escalation  biv_st 20           0.2832                 0.2834          0.1335       0.0884       0.0242             0.0240                    -0.0010                        0.0005              
+    no_escalation biv_st2 20           0.2831                 0.2833          0.1334       0.0897       0.0249             0.0243                    -0.0011                        0.0005              
+    no_escalation  uni_st 20           0.2842                    NaN          0.1341       0.0898       0.0283                NaN                     0.0000                        0.0000              
+no_escalation_uST  biv_st 20           0.3000                 0.3002          0.1336       0.0882       0.0273             0.0269                    -0.0014                        0.0005              
+no_escalation_uST biv_st2 20           0.3002                 0.3004          0.1336       0.0892       0.0260             0.0266                    -0.0013                        0.0004              
+no_escalation_uST  uni_st 20           0.3014                    NaN          0.1342       0.0896       0.0284                NaN                     0.0000                        0.0000              
+rc=0
+```
+- **Joint prediction:** biv_st and biv_st2 improve the joint log score over the product of the univariate models
+  (uni_st) by about 0.001 (SE 0.0005), so 2-3 SE in every scenario.
+- **Conditional prediction:** conflict given unrest improves by about 0.0005 (about 1 SE). AUC differences are within noise.
+
+## 2026-11-07 21:05 EST: Round 9 joint prediction west_sahel done (1706562.1, rc 0, about 50 min)
+`results_real/bivariate/west_sahel/summary_jointpred.json` is committed. Test set: 260,520 cell-weeks.
+- **Observed:** both events in the same cell-week 0.35%. P(conflict | unrest) = 0.251, against P(conflict | no unrest) = 0.039.
+- **Joint log score** (lower is better):
+
+| model | joint log score |
+|---|---|
+| product of uni_static | 0.15070 |
+| product of uni_st | 0.15196 |
+| biv, joint draws | **0.14993** |
+| biv, treated as independent | 0.15013 |
+
+  - biv − uni_st product: −0.00202 (SE cell 0.00021, country 0.00074; about 2.7 SE).
+  - biv − uni_static product: −0.00077 (country SE 0.00057).
+  - biv joint − independent: −0.00020 (country SE 0.00008).
+- **Conditional:** for conflict given same-week unrest, the log score is 0.10189 against 0.10306 marginal. AUC-PR is
+  0.4665 against 0.4662.
+- **Co-occurrence AUC-PR:** joint 0.167, independent 0.168.
+- **Univariate unrest models** (new): uni_static_u AUC-PR 0.286 / log 0.0487; uni_st_u 0.284 / 0.0493.
+  Bivariate unrest: 0.289 / 0.0490.
+- africa_me joint prediction (1706562.2) is still running.
