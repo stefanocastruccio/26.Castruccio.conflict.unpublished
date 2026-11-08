@@ -1377,3 +1377,50 @@ rc=0
   in any scenario. The differences are −0.0003 to +0.0001 (SE 0.0005); in S5 v3 they were about −0.001.
 - Joint against independent draws is about −0.0002 in every case. The S5 v3 joint gain was the same scoring artefact as
   in the application.
+
+## 2026-11-08 02:00 EST: africa_me joint prediction rescored with Monte Carlo (1708150.2, rc 0, 01:50) and 2023-24 gain map (1709550, rc 0)
+### Rescored africa_me joint prediction
+`results_real/bivariate/africa_me/summary_jointpred.json` is committed and overwritten. Test set: 1,426,776 cell-weeks.
+
+| model | joint log score (MC) | probit version from 23:20 |
+|---|---|---|
+| product of uni_static | 0.12170 | 0.12268 |
+| product of uni_st | 0.12257 | 0.12455 |
+| biv | 0.12168 | 0.12168 |
+
+- **biv − uni_static product = −0.00002 (country SE 0.00056): no gain.** The earlier −0.00101 came from the probit
+  approximation.
+- biv − uni_st product = −0.00089 (country SE 0.00032, about 2.7 SE). The earlier figure was −0.00287.
+- Joint − independent = −0.00004 (country SE 0.00003).
+- Conditional: conflict given unrest 0.05849 against marginal 0.05853. Co-occurrence AUC-PR: 0.416 joint, 0.417 independent.
+
+### Gain map on 2023-24, descriptive (`results_real/bivariate/selection/test2324_*`)
+- `location lookup: 0 rows without a match`.
+- Overall: mean_gain = 0.00002 (biv over the uni_static product), mean_gain_dependence = 0.00004.
+- **The top 5 windows selected on 2022, evaluated on 2023-24:**
+
+| lon | lat | countries | cells | gain_mean | SE country | dep_mean | both |
+|---|---|---|---|---|---|---|---|
+| 60-70 | 30-40 | AFG, TKM, IRN, UZB | 200 | **0.0148** | 0.0110 | 0.00009 | 0.0008 |
+| 55-65 | 30-40 | IRN, TKM, AFG, UZB | 400 | 0.0073 | 0.0082 | 0.00004 | 0.0005 |
+| 0-10 | 30-40 | DZA, TUN, ITA, ESP, LBY | 278 | 0.0103 | 0.0018 | −0.00002 | 0.0001 |
+| 60-70 | 25-35 | AFG, IRN, PAK | 194 | 0.0155 | 0.0080 | 0.00032 | 0.0054 |
+| 55-65 | 25-35 | IRN, AFG, PAK, OMN, ARE | 375 | 0.0077 | 0.0073 | 0.00016 | 0.0028 |
+
+  The selected window keeps its 2022 sign and size in 2023-24: 0.0173 on 2022, 0.0148 on 2023-24. But the uncertainty
+  is wide in four of the five, at about 1-2 SE (country-clustered). Only the Maghreb window is precise. dep_mean is
+  about 0 in every window, so the gain is in the marginals, not the dependence.
+- **Top countries in 2023-24, by gain_sum:**
+
+| country | cells | gain_sum | gain_mean | dep_mean | both |
+|---|---|---|---|---|---|
+| AFG | 104 | 310.4 | 0.0287 | | |
+| DZA | 854 | 307.6 | 0.0035 | | |
+| NGA | 300 | 178.2 | 0.0057 | 0.0003 | 0.017 |
+| COD | 759 | 120.9 | 0.0015 | | |
+| TUR | 324 | 89.2 | 0.0026 | | |
+| KEN | 185 | 86.6 | 0.0045 | | |
+| BFA | 86 | 80.6 | 0.0090 | 0.0007 | 0.011 |
+| LBY | 592 | 55.5 | 0.0009 | | |
+
+  AFG and DZA also topped 2022.

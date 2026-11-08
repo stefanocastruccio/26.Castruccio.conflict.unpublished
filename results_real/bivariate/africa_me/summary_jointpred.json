@@ -22,7 +22,7 @@
     "field_conflict.sd": 1.6298257377658816
    },
    "log_ml": -173069.28448216172,
-   "seconds": 210.10683250427246,
+   "seconds": 231.21698713302612,
    "hyper_source": "fixed from /groups/scastruc/conflict_spatial_work/bivariate/africa_me/summary_biv.json",
    "lag_coefficients": {
     "conflict:lag_own": [
@@ -258,10 +258,10 @@
    },
    "test_scores": {
     "conflict": {
-     "log_score": 0.05933139877135751,
-     "brier": 0.015881021854865986,
-     "auc_pr": 0.5238809775488504,
-     "auc_roc": 0.9592377316870918,
+     "log_score": 0.05895543087328954,
+     "brier": 0.01588115438785102,
+     "auc_pr": 0.5237781361127266,
+     "auc_roc": 0.9592634160957653,
      "prevalence": 0.02416707317756957
     }
    }
@@ -277,7 +277,7 @@
     "st_conflict.rho": 0.8732032042910611
    },
    "log_ml": -170579.08451110756,
-   "seconds": 685.9710395336151,
+   "seconds": 701.5820858478546,
    "hyper_source": "fixed from /groups/scastruc/conflict_spatial_work/bivariate/africa_me/summary_biv.json",
    "lag_coefficients": {
     "conflict:lag_own": [
@@ -513,10 +513,10 @@
    },
    "test_scores": {
     "conflict": {
-     "log_score": 0.059995482638848525,
-     "brier": 0.015867884167922033,
-     "auc_pr": 0.5217201119788495,
-     "auc_roc": 0.9589426415255382,
+     "log_score": 0.058941531218657715,
+     "brier": 0.01585799136015694,
+     "auc_pr": 0.5223143111937005,
+     "auc_roc": 0.9593163266650219,
      "prevalence": 0.02416707317756957
     }
    }
@@ -529,7 +529,7 @@
     "field_unrest.sd": 0.8062909576479104
    },
    "log_ml": -185273.5879247668,
-   "seconds": 1160.3244318962097,
+   "seconds": 1083.27712059021,
    "hyper_source": "fitted",
    "lag_coefficients": {
     "unrest:lag_own": [
@@ -765,10 +765,10 @@
    },
    "test_scores": {
     "unrest": {
-     "log_score": 0.06335257475665902,
-     "brier": 0.016999560234511133,
-     "auc_pr": 0.5451726579553436,
-     "auc_roc": 0.9597146502979934,
+     "log_score": 0.06274529253348629,
+     "brier": 0.01700039187075724,
+     "auc_pr": 0.5450554756058131,
+     "auc_roc": 0.9599027734480828,
      "prevalence": 0.026831822234183924
     }
    }
@@ -784,7 +784,7 @@
     "st_unrest.rho": 0.7159975300340967
    },
    "log_ml": -183516.4922179256,
-   "seconds": 5191.23397231102,
+   "seconds": 5265.683606624603,
    "hyper_source": "fitted",
    "lag_coefficients": {
     "unrest:lag_own": [
@@ -1020,10 +1020,10 @@
    },
    "test_scores": {
     "unrest": {
-     "log_score": 0.06455578320434584,
-     "brier": 0.017303264374008753,
-     "auc_pr": 0.5323772549274594,
-     "auc_roc": 0.958987672338091,
+     "log_score": 0.063624376702147,
+     "brier": 0.017300511573147378,
+     "auc_pr": 0.532095929732059,
+     "auc_roc": 0.9592543002066742,
      "prevalence": 0.026831822234183924
     }
    }
@@ -1044,7 +1044,7 @@
     "shared_st.loading": 0.6684549254882135
    },
    "log_ml": -354668.8658901641,
-   "seconds": 1496.9585914611816,
+   "seconds": 1508.8473620414734,
    "hyper_source": "fixed from /groups/scastruc/conflict_spatial_work/bivariate/africa_me/summary_biv.json",
    "lag_coefficients": {
     "conflict:lag_own": [
@@ -1508,17 +1508,17 @@
    },
    "test_scores": {
     "conflict": {
-     "log_score": 0.05950373129622152,
-     "brier": 0.015777696780015595,
-     "auc_pr": 0.525910713182811,
-     "auc_roc": 0.9595680224760216,
+     "log_score": 0.05853409386796496,
+     "brier": 0.015773959317018884,
+     "auc_pr": 0.5257197414737718,
+     "auc_roc": 0.9599612976923451,
      "prevalence": 0.02416707317756957
     },
     "unrest": {
-     "log_score": 0.064039598054596,
-     "brier": 0.01713869361808946,
-     "auc_pr": 0.5407487915458328,
-     "auc_roc": 0.9592091053354559,
+     "log_score": 0.06318494658387871,
+     "brier": 0.0171449901710567,
+     "auc_pr": 0.5402177355723072,
+     "auc_roc": 0.9595858353468991,
      "prevalence": 0.026831822234183924
     }
    }
@@ -1529,8 +1529,8 @@
   "share_both": 0.003625656725372448,
   "share_conflict_given_unrest": 0.13512525141707807,
   "share_conflict_given_no_unrest": 0.021107776560630842,
-  "joint_log_score_uni_static_product": 0.12268396466970444,
-  "joint_log_score_uni_st_product": 0.12455125898122787,
+  "joint_log_score_uni_static_product": 0.1217007264494896,
+  "joint_log_score_uni_st_product": 0.12256590276956558,
   "joint_log_score_biv": 0.12167893767175243,
   "joint_log_score_biv_independent": 0.12171904013679641,
   "biv_joint_minus_independent": {
@@ -1539,24 +1539,24 @@
    "se_country": 2.8830483605888557e-05
   },
   "biv_joint_minus_uni_static_product": {
-   "mean": -0.001005035784367161,
-   "se_cell": 0.00014810778539676298,
-   "se_country": 0.0006306299478259955
+   "mean": -2.178566604489222e-05,
+   "se_cell": 0.00014517991678827924,
+   "se_country": 0.0005594492750170898
   },
   "biv_joint_minus_uni_st_product": {
-   "mean": -0.0028723281010163072,
-   "se_cell": 0.00011389854927092381,
-   "se_country": 0.0003274407503756389
+   "mean": -0.000886970167911193,
+   "se_cell": 0.00011488715014243733,
+   "se_country": 0.00032378358378929876
   },
   "biv_conditional": {
    "log_score_conflict_given_unrest": 0.05849399124654705,
-   "log_score_conflict_marginal": 0.05950373118014078,
+   "log_score_conflict_marginal": 0.05853409370706162,
    "auc_pr_conflict_given_unrest": 0.5258908915553274,
-   "auc_pr_conflict_marginal": 0.525910713182811
+   "auc_pr_conflict_marginal": 0.5257197414737718
   },
   "biv_cooccurrence": {
    "auc_pr_joint": 0.41609323945737864,
-   "auc_pr_independent": 0.41728653375812297
+   "auc_pr_independent": 0.41694311312169285
   }
  }
 }
