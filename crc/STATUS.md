@@ -1534,3 +1534,34 @@ What the numbers show:
 ## 2026-11-08 14:00 EST: submitted 24_biv3 (repo at 62e6542)
 - `24_biv3.sh`: **1711845** (tasks 1-2: west_sahel, africa_me). 16 slots, EPYC queues.
 - 1708140: the owner will run `qdel 1708140` themselves.
+
+## 2026-11-08 14:45 EST: country hold-out done (1711778, tasks 1-10, no Traceback); folds merged
+Merged with `holdout_check.py --merge`, giving `results_real/bivariate/holdout/{west_sahel,africa_me}.json`. Conflict is treated as unobserved in
+held-out countries, and each model is re-conditioned at its saved hyperparameters. The tables give mean log-score differences
+(negative = better than the baseline), with country-clustered SEs in parentheses.
+
+**West Africa and Sahel** (past: 629,778 rows / 18,641 events; test 2023-24: 253,864 / 10,994)
+
+| | past vs uni_static | past vs uni_st | test vs uni_static | test vs uni_st |
+|---|---|---|---|---|
+| p_biv | −0.00268 (0.00181) | **−0.00379 (0.00162)** | +0.00077 (0.00237) | −0.00390 (0.00230) |
+| pcg_biv | −0.00271 (0.00182) | **−0.00382 (0.00163)** | +0.00053 (0.00237) | −0.00414 (0.00228) |
+| p_biv2 | −0.00005 (0.00177) | −0.00116 (0.00168) | +0.00156 (0.00281) | **−0.00311 (0.00155)** |
+| pcg_biv2 | −0.00007 (0.00176) | −0.00118 (0.00167) | +0.00141 (0.00282) | **−0.00327 (0.00155)** |
+
+**Africa-Middle East** (past: 3,198,054 / 77,483; test: 1,293,032 / 34,406)
+
+| | past vs uni_static | past vs uni_st | test vs uni_static | test vs uni_st |
+|---|---|---|---|---|
+| p_biv | −0.00229 (0.00122) | −0.00166 (0.00115) | −0.00182 (0.00145) | −0.00097 (0.00153) |
+| pcg_biv | −0.00231 (0.00122) | −0.00168 (0.00115) | −0.00192 (0.00144) | −0.00107 (0.00155) |
+| p_biv2 | **−0.00219 (0.00110)** | −0.00156 (0.00100) | −0.00151 (0.00109) | −0.00065 (0.00107) |
+| pcg_biv2 | **−0.00220 (0.00110)** | −0.00157 (0.00100) | −0.00163 (0.00111) | −0.00077 (0.00110) |
+
+What the numbers show:
+- **In held-out countries the joint models do better than the univariate ones in AME, in both periods:** about −0.002 against uni_static, at
+  roughly 1.3-2 SE. The sign is consistent, but no single comparison passes 2 SE except the AME past comparison of biv2 against uni_static.
+- **In West Africa the result depends on the period.** biv beats uni_st in the past (2.3 SE) and in the test period (1.7 SE). Against uni_static
+  there is a gain in the past (1.5 SE) and none in the test period (+0.0008 ± 0.0024).
+- **Conditioning on same-week unrest (pcg) adds very little over the marginal p:** at most 0.0003.
+- West Africa test: uni_static beats uni_st by 0.0047 (1.7 SE). The uni_st comparisons there are against a weak baseline.
