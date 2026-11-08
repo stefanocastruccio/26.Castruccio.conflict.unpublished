@@ -1565,3 +1565,34 @@ What the numbers show:
   there is a gain in the past (1.5 SE) and none in the test period (+0.0008 ± 0.0024).
 - **Conditioning on same-week unrest (pcg) adds very little over the marginal p:** at most 0.0003.
 - West Africa test: uni_static beats uni_st by 0.0047 (1.7 SE). The uni_st comparisons there are against a weak baseline.
+
+## 2026-11-08 15:30 EST: zero-frac speed-up, West Africa biv done (1711777.1-2, no Traceback); AME tasks 3-4 and biv3 (1711845) running
+Summaries: `results_real/bivariate_zf/west_sahel_biv_r{0.10,0.25}/summary_biv.json`.
+
+| | full biv | r = 0.10 | r = 0.25 |
+|---|---|---|---|
+| wall (s) | 16,253 | **2,691** (hyper 2,538) | 2,915 (hyper 2,759) |
+| speed-up | | **6.0×** | 5.6× |
+| subsample rows (of 1,292,580) | | 153,740 | 343,407 |
+| L-BFGS iterations / evaluations | | 47 / 754 | 51 / 767 |
+| log-ML (full data, at these θ) | −76,591.8 | −76,600.4 | −76,592.4 |
+| **κ = conflict:lag_other** | 0.044 (0.032) | 0.055 (0.032) | 0.047 (0.032) |
+| unrest:lag_other | 0.066 (0.031) | 0.080 (0.031) | 0.069 (0.031) |
+| test conflict log / AUC-PR | 0.10209 / 0.4643* | 0.10196 / 0.4653 | 0.10203 / 0.4646 |
+| test unrest log / AUC-PR | 0.04805 / 0.2864* | 0.04786 / 0.2885 | 0.04803 / 0.2864 |
+
+\* Full-biv test scores are from the MC rescoring in summary_jointpred.json (1708150.1), the same scoring as the zf runs.
+The older summary_biv.json values (0.10306 / 0.04899) used the earlier approximation and are not comparable.
+
+Hyperparameters, in order full / r=0.10 / r=0.25:
+- country sd: conflict 0.691 / 0.724 / 0.709; unrest 0.528 / 0.556 / 0.550.
+- cell sd: conflict 0.661 / 0.675 / 0.660; unrest 1.335 / 1.353 / 1.341.
+- field_conflict: range 453 / 445 / 453 km, sd 1.387 / 1.355 / 1.382.
+- field_unrest: range 369 / 317 / 322 km, sd 0.213 / 0.176 / 0.179.
+- shared_st: range 499 / 603 / 531 km, sd 1.010 / 1.045 / 1.004, rho 0.952 / 0.961 / 0.954, loading 0.868 / 0.765 / 0.875.
+
+What the numbers show:
+- **r = 0.25 essentially reproduces the full fit:** log-ML within 0.6, every lag coefficient within 0.1 SE, and the same test scores.
+- **r = 0.10 is 6× faster and gives the same test scores,** but its hyperparameters drift slightly: log-ML −8.6, the shared loading
+  0.77 against 0.87, and κ 0.055 against 0.044, about 0.3 SE. Both runs are fine for prediction. For reported hyperparameters, r = 0.25 is safer.
+- Most of the wall time is now the hyperparameter search (95%). The latent pass on the full data takes about 150 s.
