@@ -1707,3 +1707,8 @@ held-out block minus the base model's (negative = better), with the replicate SE
   - the other u cells are about 0.
 - **So the shared static field keeps a little of the hold-out gain in the forecast period.** It is clear only where the generator has unrest-only
   persistent episodes (escalation_uST, target u). It does not make the joint models beat the univariate ones at forecasting conflict.
+
+## 2026-11-08 18:25 EST: 27_holdout_full_check submitted: **1712793**
+- africa_me, target conflict, fold 0, `--zero-frac 1.0`. Submitted while 1712445.11 (the --zero-frac 0.25 run of the same fold) is still
+  running, at about 2 h with biv2 left. My watcher that was meant to wait for it timed out, and the check doesn't use that task's output, so they run
+  in parallel. The comparison follows when both are done.
