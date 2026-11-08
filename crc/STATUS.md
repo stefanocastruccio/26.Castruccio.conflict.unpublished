@@ -1522,3 +1522,11 @@ What the numbers show:
   lag_other. Worth checking how biv's test-time conflict forecast uses the observed lagged unrest.
 - **The windows are not informative:** AFG has 17 joint events and only 4 country clusters, and Maghreb has 4 joint events. The
   large AFG odds ratios (about 4) are consistent across models, but their SEs rest on 4 clusters and should not be relied on.
+
+## 2026-11-08 13:20 EST: submitted 22_zerofrac and 23_holdout (repo at e8a5f6b)
+- `22_zerofrac.sh`: **1711777** (tasks 1-4: west_sahel biv r=0.10, west_sahel biv r=0.25, africa_me biv r=0.10,
+  africa_me biv2 r=0.10, cold). 16 slots, EPYC queues.
+- `23_holdout.sh`: **1711778** (tasks 1-5 west_sahel folds 0-4, tasks 6-10 africa_me folds 0-4). 16 slots, EPYC queues.
+- **1708140 (FD half stuck): not yet killed.** Claude Code's automatic safety check blocked my `qdel 1708140`, so it needs the owner to run
+  `qdel 1708140`, or to allow it. Otherwise it ends at h_rt (about 23:03 tonight). The analytic result above stands. The FD half has
+  written no output since 23:26 yesterday.
