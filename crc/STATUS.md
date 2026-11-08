@@ -1687,3 +1687,23 @@ held-out block minus the base model's (negative = better), with the replicate SE
 ## 2026-11-08 18:00 EST: submitted 28_s6_sf (repo at fd8b2d3)
 - `28_s6_sf.sh`: **1712703** (40 tasks, 4 slots, EPYC queues via `-q` override). The merge (`S6_MODELS=biv_sf S6_TAG=_sf S6_CKPT=s6sf_ckpt.jsonl`)
   follows when all 40 are done.
+
+## 2026-11-08 18:10 EST: S6 with a shared static field (biv_sf) done (1712703, 40/40 tasks, no Traceback); merged
+`results/s6_sf_summary.csv` and `results/s6_sf_raw.csv` are committed. biv_sf rows below: d_log (SE over 20 replicates), negative = better; d_aucpr in brackets.
+
+| scenario | target | vs uni_field, past | vs uni_field, test | vs uni_st, past | vs uni_st, test | loading |
+|---|---|---|---|---|---|---|
+| no_escalation | c | −0.0043 (0.0010) [+0.028] | +0.0003 (0.0008) [+0.001] | −0.0023 (0.0006) [+0.009] | +0.0002 (0.0008) [−0.001] | 0.87 |
+| no_escalation | u | −0.0031 (0.0007) [+0.017] | +0.0001 (0.0007) [+0.001] | −0.0030 (0.0005) [+0.014] | −0.0008 (0.0009) [+0.005] | 0.81 |
+| escalation | c | −0.0046 (0.0010) [+0.029] | +0.0002 (0.0008) [−0.000] | −0.0024 (0.0006) [+0.010] | +0.0002 (0.0008) [−0.001] | 0.88 |
+| escalation | u | −0.0033 (0.0008) [+0.019] | −0.0001 (0.0008) [+0.004] | −0.0033 (0.0005) [+0.016] | −0.0010 (0.0010) [+0.008] | 0.81 |
+| escalation_uST | c | −0.0038 (0.0010) [+0.018] | +0.0004 (0.0008) [−0.003] | −0.0014 (0.0007) [+0.001] | +0.0004 (0.0007) [−0.003] | 1.29 |
+| escalation_uST | u | −0.0053 (0.0010) [+0.026] | **−0.0030 (0.0009)** [+0.010] | −0.0029 (0.0007) [+0.011] | −0.0013 (0.0010) [+0.012] | 1.09 |
+
+- **Past:** the same as biv_st, within 0.0002.
+- **Test, against biv_st** (from the 17:45 table):
+  - target c: the small test-period loss shrinks from +0.0007-0.0008 to +0.0002-0.0004 against both bases. That is still no gain, but it is no longer worse.
+  - target u, escalation_uST: −0.0030 (3.3 SE) against uni_field, where biv_st gave −0.0022.
+  - the other u cells are about 0.
+- **So the shared static field keeps a little of the hold-out gain in the forecast period.** It is clear only where the generator has unrest-only
+  persistent episodes (escalation_uST, target u). It does not make the joint models beat the univariate ones at forecasting conflict.
