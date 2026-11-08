@@ -36,8 +36,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("pred"); ap.add_argument("out")
     ap.add_argument("--model", default="biv"); ap.add_argument("--base", default="uni_static")
+    ap.add_argument("--lookup", default=None,
+                    help="parquet with grid_id, iso, lon, lat (e.g. the validation predictions) for files without them")
     a = ap.parse_args()
     d = pd.read_parquet(a.pred)
+    if a.lookup and not {"iso", "lon", "lat"} <= set(d.columns):
+        lk = pd.read_parquet(a.lookup, columns=["grid_id", "iso", "lon", "lat"]).drop_duplicates("grid_id")
+        d = d.drop(columns=[c for c in ("iso", "lon", "lat") if c in d]).merge(lk, on="grid_id", how="left")
+        print(f"location lookup: {d.iso.isna().sum()} rows without a match", flush=True)
+        d = d.dropna(subset=["iso"])
     yc, yu = d["y_conflict"].to_numpy(), d["y_unrest"].to_numpy()
     base = logb(yc, d[f"p_conflict_{a.base}"].to_numpy()) + logb(yu, d[f"p_unrest_{a.base}"].to_numpy())
     # gain > 0: the joint model is better (difference in log predictive density per cell-week)
