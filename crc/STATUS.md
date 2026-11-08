@@ -1533,7 +1533,7 @@ What the numbers show:
 
 ## 2026-11-08 14:00 EST: submitted 24_biv3 (repo at 62e6542)
 - `24_biv3.sh`: **1711845** (tasks 1-2: west_sahel, africa_me). 16 slots, EPYC queues.
-- 1708140: the owner will run `qdel 1708140` themselves.
+- 1708140: (correction) the "owner will qdel" note came from the coordinating session, not the owner. Killed by me at the owner's request at 15:20 EST, see below.
 
 ## 2026-11-08 14:45 EST: country hold-out done (1711778, tasks 1-10, no Traceback); folds merged
 Merged with `holdout_check.py --merge`, giving `results_real/bivariate/holdout/{west_sahel,africa_me}.json`. Conflict is treated as unobserved in
@@ -1596,3 +1596,8 @@ What the numbers show:
 - **r = 0.10 is 6× faster and gives the same test scores,** but its hyperparameters drift slightly: log-ML −8.6, the shared loading
   0.77 against 0.87, and κ 0.055 against 0.044, about 0.3 SE. Both runs are fine for prediction. For reported hyperparameters, r = 0.25 is safer.
 - Most of the wall time is now the hyperparameter search (95%). The latent pass on the full data takes about 150 s.
+
+## 2026-11-08 15:20 EST: 1708140 killed (qdel, owner's request)
+- The analytic half finished (1,358 s, log-ML −180,888.63; hyperparameters look degenerate, see 13:00 entry). The FD half was
+  stuck: no output from 23:26 to 15:20, low CPU. **No analytic-vs-FD comparison was obtained.** Branch `analytic-grad` is untouched
+  and not merged. To redo it, run the FD half on its own with a timeout, and check first that it isn't hanging in the worker pool.
