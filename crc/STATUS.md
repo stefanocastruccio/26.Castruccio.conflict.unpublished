@@ -1606,3 +1606,10 @@ What the numbers show:
 - `25_holdout_refit.sh`: **1712445** (20 tasks; west_sahel and africa_me × conflict and unrest targets × folds 0-4; per-fold refits with
   --zero-frac 0.25). 16 slots, EPYC queues. `26_s6.sh` is on hold, waiting for the go-ahead.
 - 1708140 was killed at 15:20 (see above).
+
+## 2026-11-08 16:30 EST: submitted 26_s6 (repo at c174e48); full-data hold-out check queued
+- `26_s6.sh`: **1712461** (40 shards, 4 slots each). Submitted with `-q long@@crc_d32cepyc,long@@acms_d32cepyc`, overriding the
+  script's plain `long`. Merge and commit of s6_summary.csv and s6_raw.csv follow when all shards are done.
+- New `crc/jobs/27_holdout_full_check.sh`: africa_me, target conflict, fold 0, with `--zero-frac 1.0` (all rows, offset 0) and otherwise the
+  same arguments as 1712445.11. Output in `$WORK/holdout_refit_full/africa_me_conflict/fold0`. It will be submitted when 1712445.11 has
+  finished, and I'll add its job ID here.
