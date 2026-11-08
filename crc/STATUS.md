@@ -1307,3 +1307,7 @@ This is the pattern S5 v2 predicted, where biv_st under-estimates escalation whe
 - **Exception, the weakly identified field_unrest:** range 497 against 371 km, sd 0.344 against 0.224. The likelihood
   is flat in that direction, which is why log-ML is unchanged.
 - africa_me warm (1708086.2) is still running, at 2 h 37 min.
+
+## 2026-11-08 00:14 EST: region selection resubmitted with the year-dummy fix (f6c411d): **1708630**
+- I deleted the invalid, uncommitted selection files from the first run.
+- The test2324 gain map (with --lookup) follows once this job and the africa_me rescoring (1708150.2) have finished.
