@@ -62,35 +62,31 @@ def write(var, year, grid_id, week_start, value):
 
 
 def to_half_degree(arr, lat, lon, how="mean"):
-    """Aggregate a (T, nlat, nlon) array on a regular grid aligned with the 0.5-degree lattice (pixel size 0.5/k)
-    to the global (T, 360, 720) lattice (rows/cols as in cells()). 'mean' is the area-weighted (cos latitude) mean
-    over the pixels with data; 'sum' adds them. NaN where no pixel of a cell has data or the cell is outside the grid."""
-    lat = np.asarray(lat, float); lon = np.asarray(lon, float)
+    """Aggregate a (T, nlat, nlon) array on a regular lat/lon grid to the global (T, 360, 720) 0.5-degree lattice
+    (rows/cols as in cells()), assigning each pixel to the cell that contains its centre (so grids offset from the
+    lattice, e.g. GHSL, work too). 'mean' is the area-weighted (cos latitude) mean over the pixels with data; 'sum' adds
+    them. NaN where no pixel of a cell has data or the cell is outside the grid."""
+    arr = np.asarray(arr); lat = np.asarray(lat, float); lon = np.asarray(lon, float)
     if lat[0] > lat[-1]:
         arr, lat = arr[:, ::-1, :], lat[::-1]
     lon = ((lon + 180) % 360) - 180
-    o = np.argsort(lon); arr, lon = arr[:, :, o], lon[o]
-    d = abs(lat[1] - lat[0]); k = int(round(0.5 / d))
-    def first_aligned(x, base):  # first pixel whose lower edge lies on the 0.5-degree lattice
-        e = (x - d / 2 + base) / 0.5
-        return int(np.argmax(np.abs(e - np.round(e)) < 1e-6))
-    i0, j0 = first_aligned(lat, 90), first_aligned(lon, 180)
-    arr, lat, lon = arr[:, i0:, j0:], lat[i0:], lon[j0:]
-    r = np.floor((lat + 90) / 0.5).astype(int); c = np.floor((lon + 180) / 0.5).astype(int)
-    r0, c0 = r[0], c[0]
-    nr, nc = len(lat) // k, len(lon) // k
-    assert (r[::k][:nr] == r0 + np.arange(nr)).all() and (c[::k][:nc] == c0 + np.arange(nc)).all(), "grid not aligned"
-    a = np.asarray(arr[:, :nr * k, :nc * k], "float32")
-    T = a.shape[0]
-    a = a.reshape(T, nr, k, nc, k)
-    ok = np.isfinite(a)
-    if how == "mean":
-        w = np.cos(np.deg2rad(lat[:nr * k])).reshape(nr, k)[None, :, :, None, None] * ok
-        s = (np.where(ok, a, 0) * w).sum((2, 4)); ws = w.sum((2, 4))
-        v = np.where(ws > 0, s / np.where(ws > 0, ws, 1), np.nan)
-    else:
-        s = np.where(ok, a, 0).sum((2, 4)); n = ok.sum((2, 4))
-        v = np.where(n > 0, s, np.nan)
+    o = np.argsort(lon, kind="stable"); arr, lon = arr[:, :, o], lon[o]
+    r = np.clip(np.floor((lat + 90) / 0.5).astype(int), 0, 359)
+    c = np.clip(np.floor((lon + 180) / 0.5).astype(int), 0, 719)
+    rb = np.r_[0, np.flatnonzero(np.diff(r)) + 1]; cb = np.r_[0, np.flatnonzero(np.diff(c)) + 1]
+    ru, cu = r[rb], c[cb]
+    T = arr.shape[0]
     out = np.full((T, 360, 720), np.nan, "float32")
-    out[:, r0:r0 + nr, c0:c0 + nc] = v
+    w = np.cos(np.deg2rad(lat)).astype("float32")[:, None] if how == "mean" else None
+    for t in range(T):
+        a = np.asarray(arr[t], "float32"); ok = np.isfinite(a)
+        x = np.where(ok, a, 0).astype("float64")
+        if how == "mean":
+            x = x * w; n = (ok * w).astype("float64")
+        else:
+            n = ok.astype("float64")
+        s_ = np.add.reduceat(np.add.reduceat(x, cb, axis=1), rb, axis=0)
+        n_ = np.add.reduceat(np.add.reduceat(n, cb, axis=1), rb, axis=0)
+        v = np.where(n_ > 0, (s_ / np.where(n_ > 0, n_, 1)) if how == "mean" else s_, np.nan)
+        out[t][np.ix_(ru, cu)] = v
     return out
