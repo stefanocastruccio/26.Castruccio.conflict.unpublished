@@ -2076,3 +2076,7 @@ Syria and Yemen (62-69% of their event cell-weeks have 2+). In West Africa this 
 - **Precipitation gap for Europe:** CHIRPS covers 50S-50N, so **European cells north of 50N** (UK, Ireland, Benelux north, Germany, Poland, the Baltics,
   Scandinavia, Iceland) have no ppt or SPI-3. Temperature (CHIRTS-ERA5, to 70N) covers them. If Europe needs precipitation, a second source north of 50N is needed
   (e.g. ERA5 daily precipitation from the Copernicus CDS, which needs a free account). Not done.
+
+## 2026-11-09 18:10 EST: 31.2 (ame fields, 1714255) done, no Traceback
+`results_real/bivariate/ame/fields_{biv,biv2,biv3}_{static,st}.csv.gz` are committed. 32 (map, 1714292) is now running.
+Task 35: malaria job `crc/jobs/35_malaria.sh` 1718079 (2 cores). The CHIRTS array was lowered to 3 concurrent tasks (qalter -tc 3) to stay within 8 cores.
