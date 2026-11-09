@@ -71,6 +71,11 @@ def to_half_degree(arr, lat, lon, how="mean"):
     lon = ((lon + 180) % 360) - 180
     o = np.argsort(lon); arr, lon = arr[:, :, o], lon[o]
     d = abs(lat[1] - lat[0]); k = int(round(0.5 / d))
+    def first_aligned(x, base):  # first pixel whose lower edge lies on the 0.5-degree lattice
+        e = (x - d / 2 + base) / 0.5
+        return int(np.argmax(np.abs(e - np.round(e)) < 1e-6))
+    i0, j0 = first_aligned(lat, 90), first_aligned(lon, 180)
+    arr, lat, lon = arr[:, i0:, j0:], lat[i0:], lon[j0:]
     r = np.floor((lat + 90) / 0.5).astype(int); c = np.floor((lon + 180) / 0.5).astype(int)
     r0, c0 = r[0], c[0]
     nr, nc = len(lat) // k, len(lon) // k
