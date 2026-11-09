@@ -1,85 +1,162 @@
 \documentclass[10pt]{article}
-\usepackage[margin=0.75in]{geometry}
+\usepackage[margin=0.8in]{geometry}
 \usepackage{mathtools,amssymb,bm}
 \usepackage[T1]{fontenc}
 \usepackage{mathptmx}
 \usepackage{enumitem}
-\setlist{nosep,leftmargin=1.2em}
-\setlength{\parskip}{3pt}\setlength{\parindent}{0pt}
-\pagestyle{empty}
+\setlist{nosep,leftmargin=1.4em}
+\setlength{\parskip}{4pt}\setlength{\parindent}{0pt}
+\pagestyle{plain}
+\newcommand{\logit}{\operatorname{logit}}
+\newcommand{\N}{\mathcal{N}}
 \begin{document}
-\begin{center}\textbf{Design note: latent escalation between conflict and unrest episodes}\end{center}
+\begin{center}\textbf{Design note: a latent escalation model for conflict and unrest}\end{center}
 
-\textbf{Problem.} In the current joint model, escalation is identified only at the
-shortest scale: $\kappa$ is the effect of unrest in the previous four weeks in the same
-cell. Escalation over months and hundreds of kilometres is absorbed by the shared
-field and cannot be told apart from a shared episode. The proposal makes it identifiable.
+\textbf{Question.} When unrest rises in a region, does conflict follow \emph{because of}
+the unrest (escalation), or do both rise together because of a common latent episode
+(shared episode)? The current joint model separates the two only within four weeks in the
+same cell ($\kappa$). The new model separates them over months and hundreds of kilometres.
 
-\textbf{Logit of each outcome.} Cell $s$, week $t$, time step $k = k(t)$ of $\Delta$ weeks:
-\begin{align*}
-\operatorname{logit} P(\text{conflict}_{st} = 1) &= m^C_{st} + v^S_k(s) + v^C_k(s) = m^C_{st} + L^C_k(s),\\
-\operatorname{logit} P(\text{unrest}_{st} = 1) &= m^U_{st} + \lambda\, v^S_k(s) + v^U_k(s) = m^U_{st} + L^U_k(s).
-\end{align*}
-$L^C_k(s)$ and $L^U_k(s)$ are the \emph{latent conflict episode} and the \emph{latent
-unrest episode}.
-$m^C_{st}$ and $m^U_{st}$ are everything we have now apart from the space-time fields:
-covariates, own and cross lags of recorded events ($\delta$, $\kappa$ and neighbour
-terms), country effects, cell effects and static Mat\'ern fields. There are three
-space-time fields: $v^S$ (shared), $v^C$ (conflict only) and $v^U$ (unrest only).
-
-\textbf{Dynamics of the three fields.}
-\begin{align*}
-v^S_k(s) &= \varphi_S\, v^S_{k-1}(s) + \varepsilon^S_k(s), \\
-v^C_k(s) &= \varphi_C\, v^C_{k-1}(s) + \psi_{U\to C}\, \bar L^U_{k-1}(s) + \varepsilon^C_k(s), \\
-v^U_k(s) &= \varphi_U\, v^U_{k-1}(s) + \psi_{C\to U}\, \bar L^C_{k-1}(s) + \varepsilon^U_k(s),
-\end{align*}
-where $\bar L^U_{k-1}(s) = (1-\omega)\, L^U_{k-1}(s) + \omega\cdot$(mean of $L^U_{k-1}$
-over the neighbours of $s$), so last step's unrest episode here and next door feeds
-conflict now; likewise $\bar L^C$. The innovations $\varepsilon^S_k$, $\varepsilon^C_k$,
-$\varepsilon^U_k$ are independent Mat\'ern fields with sea barriers, independent over
-$k$, each with its own range and SD.
-
-\textbf{What each parameter answers.}
+\section*{0. Input and output}
+\textbf{Input (data).} Cells $s = 1,\dots,n$ ($0.5^\circ$), weeks $t = 1,\dots,T$.
 \begin{itemize}
-\item $\lambda$ and $v^S$: \emph{shared episodes}, which move both outcomes in the same
-step and place; $\varphi_S$ is their persistence.
-\item $\psi_{U\to C}$: \emph{latent escalation}. An unrest episode raises conflict risk
-one step later, here and next door, and the effect then decays at rate $\varphi_C$.
-$\psi_{C\to U}$ is the reverse direction.
-\item $\kappa$ (in $m^C$): \emph{short-run local escalation} from recorded events, as now.
+\item Outcomes: $Y^C_{st} = 1$ if at least one conflict event is recorded in cell $s$, week
+$t$, and $Y^U_{st} = 1$ for unrest; 0 otherwise.
+\item Covariates $\bm x_{st}$ (climate anomalies, population, national indicators,
+missingness indicators, biome, year), and the country $c(s)$ of each cell.
+\item Histories, computed from the outcomes themselves: $h^C_{st}$, $h^U_{st}$ = $\log(1+$
+number of events in weeks $t-4,\dots,t-1)$, and their neighbour means $\bar h^C_{st}$,
+$\bar h^U_{st}$.
+\item Grid for the space-time fields: coarse cells $g = g(s)$ ($1^\circ$ or $2^\circ$) and
+time steps $k = k(t)$ of $\Delta$ weeks, so all weeks of step $k$ in cell $s$ share the same
+field value.
 \end{itemize}
-\textbf{Current models as special cases.} Current \emph{extended} model:
-$\psi_{U\to C} = \psi_{C\to U} = 0$ and $v^C \equiv 0$ ($v^S$ is its shared field, $v^U$
-its unrest-only field). Current \emph{joint} model: also $v^U \equiv 0$. Univariate
-space-time model of conflict: $\lambda = 0$, $v^U \equiv 0$, no unrest data. The main
-summary is the impulse response: the change in conflict risk over the next $1, 2, \dots$
-steps after a one-SD unrest episode, split into its shared and its escalation parts.
+\textbf{Output.} (a) Estimates of the parameters listed in Step 4, above all the
+escalation coefficients $\psi_{U\to C}$, $\psi_{C\to U}$, the shared loading $\lambda$
+and the short-run coefficient $\kappa$; (b) maps over time of the three latent fields;
+(c) predictive probabilities $\pi^C_{st}$, $\pi^U_{st}$ for held-out data; (d) the
+impulse response of conflict to an unrest episode (Step 5).
 
-\textbf{Why it fits our machinery.} Each step of $(v^S, v^C, v^U)$ is Gaussian given
-the previous step, so the joint precision is sparse (block bidiagonal in time,
-finite-volume sparsity in space). The Laplace engine, METIS ordering and case-control
-subsampling are unchanged. Stationarity requires the one-step transition of
-$(v^S, v^C, v^U)$ to have spectral radius below one, checked at the estimate.
-Hyperparameters: 13 (against 9 in the extended model).
+\section*{1. Data level: a bivariate Bernoulli for each cell-week}
+Given the two linear predictors $\eta^C_{st}$ and $\eta^U_{st}$ (Step 2), the pair
+$(Y^C_{st}, Y^U_{st})$ is bivariate Bernoulli with independent components, and pairs are
+independent across cells and weeks:
+\[
+P(Y^C_{st} = a,\, Y^U_{st} = b \mid \eta^C_{st}, \eta^U_{st})
+= (\pi^C_{st})^{a}(1-\pi^C_{st})^{1-a}\,(\pi^U_{st})^{b}(1-\pi^U_{st})^{1-b},
+\qquad \pi^j_{st} = \operatorname{expit}(\eta^j_{st}).
+\]
+All dependence between conflict and unrest therefore comes from the levels below: the
+histories (lagged, recorded), the shared field (same step) and the escalation terms
+(lagged, latent). Once the latent fields are integrated out, $(Y^C_{st}, Y^U_{st})$ are
+dependent. A same-week odds-ratio parameter at this level is possible, but in the
+current fits drawing the two outcomes jointly rather than independently changes the
+joint log score by $0.00002$--$0.00004$, so we do not add it.
+
+\section*{2. Linear predictors}
+\begin{align*}
+\eta^C_{st} &= \underbrace{\bm x_{st}^\top\bm\beta^C + \delta^C h^C_{st} + \kappa\, h^U_{st}
++ \delta^C_{nb}\bar h^C_{st} + \kappa_{nb}\bar h^U_{st}
++ u^C_{c(s)} + e^C_s + w^C_s}_{m^C_{st}:\ \text{as in the current model}}
+\;+\; \underbrace{v^S_{g,k} + v^C_{g,k}}_{L^C_{g,k}},\\
+\eta^U_{st} &= \underbrace{\bm x_{st}^\top\bm\beta^U + \delta^U h^U_{st} + \kappa^U h^C_{st}
++ \delta^U_{nb}\bar h^U_{st} + \kappa^U_{nb}\bar h^C_{st}
++ u^U_{c(s)} + e^U_s + w^U_s}_{m^U_{st}}
+\;+\; \underbrace{\lambda\, v^S_{g,k} + v^U_{g,k}}_{L^U_{g,k}},
+\end{align*}
+with $g = g(s)$, $k = k(t)$. $L^C$ and $L^U$ are the \emph{latent conflict and unrest
+episodes}: the part of each log-odds that is smooth in space, evolves over time and is
+not explained by covariates or recorded histories.
+
+\section*{3. Latent level, given the hyperparameters}
+\textbf{Static terms} (one independent set per outcome $j \in \{C, U\}$, as now):
+$u^j_c \sim \N(0, \sigma^2_{u,j})$ country effects; $e^j_s \sim \N(0,\sigma^2_{e,j})$ cell
+effects; $\bm w^j \sim \N(\bm 0, \bm Q_s(\rho_{w,j}, \sigma_{w,j})^{-1})$ a Mat\'ern
+field with sea barriers ($\bm Q_s$ is the finite-volume SPDE precision of the paper).
+Fixed effects $\bm\beta^j, \delta, \kappa$ get $\N(0, 10^4)$ priors.
+
+\textbf{Dynamic terms.} Three space-time fields on the coarse grid: $v^S$ (shared),
+$v^C$ (conflict only), $v^U$ (unrest only). Write $\bm D = (1-\omega)\bm I + \omega\bm N$,
+where $\bm N$ averages over the neighbours of a coarse cell, so $\bm D\bm L$ is ``the
+episode here and next door''. For $k = 2, \dots, K$:
+\begin{align*}
+\bm v^S_k &= \varphi_S\, \bm v^S_{k-1} + \bm\varepsilon^S_k,\\
+\bm v^C_k &= \varphi_C\, \bm v^C_{k-1} + \psi_{U\to C}\, \bm D\, \bm L^U_{k-1} + \bm\varepsilon^C_k,
+\qquad \bm L^U_{k-1} = \lambda\bm v^S_{k-1} + \bm v^U_{k-1},\\
+\bm v^U_k &= \varphi_U\, \bm v^U_{k-1} + \psi_{C\to U}\, \bm D\, \bm L^C_{k-1} + \bm\varepsilon^U_k,
+\qquad \bm L^C_{k-1} = \bm v^S_{k-1} + \bm v^C_{k-1}.
+\end{align*}
+The innovations are independent across fields and steps:
+$\bm\varepsilon^\ell_k \sim \N(\bm 0, \bm Q_s(\rho_\ell, \sigma_\ell)^{-1})$, $\ell \in
+\{S, C, U\}$, each a Mat\'ern field with its own range $\rho_\ell$ and innovation SD
+$\sigma_\ell$. In matrix form, $\bm z_k = (\bm v^S_k, \bm v^C_k, \bm v^U_k)$ is a vector
+autoregression $\bm z_k = \bm\Phi\,\bm z_{k-1} + \bm\varepsilon_k$ with
+\[
+\bm\Phi = \begin{pmatrix}
+\varphi_S \bm I & \bm 0 & \bm 0\\
+\psi_{U\to C}\lambda\,\bm D & \varphi_C \bm I & \psi_{U\to C}\bm D\\
+\psi_{C\to U}\bm D & \psi_{C\to U}\bm D & \varphi_U \bm I
+\end{pmatrix}.
+\]
+The first step $\bm z_1$ has the stationary variance of the uncoupled fields,
+$\bm v^\ell_1 \sim \N(\bm 0, \bm Q_s(\rho_\ell,\sigma_\ell)^{-1}/(1-\varphi_\ell^2))$.
+\emph{Stationarity}: the spectral radius of $\bm\Phi$ must be below one; we check it at
+the estimate. \emph{Precision}: stacking $\bm z = (\bm z_1,\dots,\bm z_K)$,
+$\bm Q_z = \bm B^\top \bm\Sigma^{-1}\bm B$, where $\bm B$ has identity blocks on the
+diagonal and $-\bm\Phi$ below it, and $\bm\Sigma^{-1}$ is block diagonal in the
+$\bm Q_s$. $\bm Q_z$ is sparse, and since $\det\bm B = 1$, $\log\det \bm Q_z$ does not
+depend on $\lambda$, $\psi$ or $\omega$, as with the loading in the current model.
+
+\section*{4. Hyperparameters and priors}
+\begin{tabular}{@{}lll@{}}
+static, per outcome (8) & $\sigma_{u,j}, \sigma_{e,j}, \rho_{w,j}, \sigma_{w,j}$ & PC priors, as now\\
+dynamic fields (9) & $\rho_\ell, \sigma_\ell, \varphi_\ell$, $\ell \in \{S,C,U\}$ &
+PC priors; $\operatorname{atanh}\varphi_\ell \sim \N(0, 1.5^2)$\\
+shared loading (1) & $\lambda$ & $\N(0, 2^2)$\\
+escalation (2) & $\psi_{U\to C}$, $\psi_{C\to U}$ & $\N(0, 0.5^2)$\\
+spatial reach (1) & $\omega \in (0,1)$ & $\logit\omega \sim \N(0,1)$, or fixed at $0.5$\\
+\end{tabular}
+
+21 hyperparameters, against 15 in the current extended model (8 static, shared
+$\rho,\sigma,\varphi,\lambda$, unrest-only $\rho,\sigma,\varphi$).
+
+\section*{5. What each parameter answers, and the special cases}
+\begin{itemize}
+\item $\lambda$: how strongly a shared episode moves unrest relative to conflict, in the same
+step and place. $\varphi_S$: how long shared episodes last.
+\item $\psi_{U\to C}$: latent escalation. A one-unit rise in the unrest episode in step $k$,
+here and next door, raises the conflict log-odds by $\psi_{U\to C}$ in step $k+1$, and the
+effect then decays at rate $\varphi_C$. $\psi_{C\to U}$: the reverse direction.
+\item $\kappa$: short-run escalation from \emph{recorded} unrest in the last four weeks, same
+cell, as now.
+\item \emph{Impulse response}: the change in conflict log-odds $h = 0, 1, 2,\dots$ steps
+after a one-SD innovation in $v^S$ (shared part: immediate in both outcomes) or in $v^U$
+(escalation part: zero at $h=0$, then through $\psi_{U\to C}$). Computed from
+$\bm\Phi^h$.
+\end{itemize}
+Special cases. \emph{Current extended model}: $\psi_{U\to C} = \psi_{C\to U} = 0$ and
+$v^C \equiv 0$. \emph{Current joint model}: in addition $v^U \equiv 0$.
+\emph{Univariate space-time model}: only $m^C + v^S$, no unrest data.
+
+\section*{6. Inference}
+Empirical Bayes with a Laplace approximation, as now. Given the hyperparameters
+$\bm\theta$, all latent quantities
+$\bm\xi = (\bm\beta, \delta, \kappa, \bm u, \bm e, \bm w, \bm z)$ are jointly Gaussian
+with sparse precision; the Laplace approximation of $p(\bm y \mid \bm\theta)$ is
+maximised over $\bm\theta$, and the latent fields are summarised by their conditional
+posterior at $\hat{\bm\theta}$. The design matrix does not depend on $\bm\theta$
+($\lambda$ and $\psi$ enter only $\bm Q_z$). Case-control subsampling of non-events
+($r = 0.25$) with offset $-\log r$, as now.
 
 \textbf{Identification.} Shared episodes move both outcomes in the \emph{same} step;
-escalation moves conflict \emph{after} unrest. They are separated by timing, so the
-model needs enough steps: $\Delta = 4$ weeks on $1^\circ$ cells for West Africa (91
-steps, about $1.8\times10^5$ latent values) and $\Delta = 8$ on $2^\circ$ cells for Africa
-and the Middle East (46 steps, about $1.3\times10^5$). Longer memory than one AR(1) can
-be added as a sum of a fast and a slow component, which stays sparse.
+escalation moves conflict \emph{one step after} unrest. They are separated by timing, so
+$\Delta$ must be short: $\Delta = 4$ weeks on $1^\circ$ cells for West Africa (91 steps)
+and $\Delta = 8$ on $2^\circ$ cells for Africa and the Middle East (46 steps), about
+$1.3$--$1.8\times10^5$ latent values each.
 
-\textbf{Simulation check (before any real-data claim).} S2 design, 20 replicates per
-truth: (i) shared episodes only; (ii) latent escalation only ($\psi_{U\to C}=0.3$);
-(iii) both; (iv) short-run $\kappa$ only. Fit the new model, the current extended model
-and the univariate model. Criteria: bias and coverage of $\psi_{U\to C}$, $\lambda$
-and $\kappa$; no spurious $\psi$ under (i) and (iv). \emph{Go/no-go:} if $\psi$ and
-$\lambda$ are not separated in (i)--(iii), stop and fall back to regional $\lambda$ and
-$\kappa$.
-
-\textbf{Cost.} Implementation and tests: 1 day. Simulation: 1 day on the CRC. Real-data
-fits (two regions, warm-started, $r = 0.25$): 1--2 days. Rewriting methods and
-application: 1 day. Paper: the latent escalation model becomes the main model, with the
-current models as special cases; the application reports $\psi$, $\lambda$, $\kappa$
-and impulse responses.
+\textbf{Simulation check before any real-data fit.} 20 replicates for each truth:
+(i) shared episodes only; (ii) escalation only ($\psi_{U\to C} = 0.3$); (iii) both;
+(iv) short-run $\kappa$ only. Criteria: bias and coverage of $\psi_{U\to C}$, $\lambda$,
+$\kappa$; no spurious $\psi$ under (i) and (iv). If $\psi$ and $\lambda$ are not
+separated, we stop and report regional $\lambda$ and $\kappa$ instead.
 \end{document}
