@@ -91,9 +91,9 @@
 \begin{document}
 
 \begin{frontmatter}
-\title{Where violence persists: latent spatial fields for the residual risk of
-armed conflict and social unrest}
-\runtitle{Latent spatial fields for conflict risk}
+\title{Escalation or shared episodes? A joint spatio-temporal model of armed
+conflict and social unrest}
+\runtitle{Escalation or shared episodes}
 
 \begin{aug}
 \author[A]{\fnms{Stefano}~\snm{Castruccio}\ead[label=e1]{scastruc@nd.edu}}
@@ -106,7 +106,30 @@ Global Affairs, University of Notre Dame}
 \end{aug}
 
 \begin{abstract}
-\todo{Abstract to be written after the application.}
+Recent protests and riots in a place predict armed conflict there in the following
+weeks. This association is read as escalation, unrest turning into violence, and it is
+used to forecast conflict. It can also arise because both kinds of events respond to
+the same latent episodes, such as a local political crisis or a period of media
+attention, without any effect of one on the other. We propose a joint latent Gaussian
+model for weekly occurrence of armed conflict and social unrest on a $0.5^\circ$ grid,
+in which the two outcomes share a space-time field, an AR(1) process of Mat\'ern
+innovations that enters unrest with an estimated loading, alongside cross-lagged
+effects of each outcome's recent history on the other. Fields are discretised by
+finite volumes on the sphere, with sea barriers, and fitted by an empirical Bayes
+Laplace approximation, with case-control subsampling of non-events to estimate the
+hyperparameters on millions of cell-weeks. In simulations, univariate models with
+their own latent fields report escalation that does not exist, rejecting the null in
+55--95\% of replicates, whereas the joint model has close to nominal coverage. Applied to
+ACLED events in West Africa and the Sahel and in Africa and the Middle East,
+2018--2024, the joint model attributes between a quarter and two thirds of the
+association between recent unrest and conflict to shared episodes, depending on how
+episodes of unrest alone are modelled. When both outcomes are observed, the joint
+model forecasts neither better than univariate models that use both histories. Where
+one outcome is withheld but the other is recorded, it predicts the withheld outcome
+better in simulations, mainly in the weeks in which the other is observed, and in the
+application it does so for conflict but not for unrest. Its value lies in separating
+escalation from shared episodes and in filling in areas where one type of event goes
+unreported, rather than in forecasting.
 \end{abstract}
 
 \begin{keyword}
@@ -121,7 +144,7 @@ Global Affairs, University of Notre Dame}
 \end{frontmatter}
 
 \section{Introduction}\label{sec:intro}
-\todo{Introduction (not drafted yet).}
+\input{sections/introduction}
 
 \input{sections/data}
 \input{sections/methods}
@@ -129,8 +152,7 @@ Global Affairs, University of Notre Dame}
 
 \input{sections/application}
 
-\section{Discussion}\label{sec:discussion}
-\todo{Discussion (not drafted yet).}
+\input{sections/discussion}
 
 \begin{acks}[Acknowledgments]
 \textit{Use of generative AI.} This work is AI-assisted. The research questions, the

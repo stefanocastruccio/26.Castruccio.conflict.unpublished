@@ -1,0 +1,88 @@
+Event data on political violence and protest are now available at fine resolution
+across much of the world. The Armed Conflict Location \& Event Data Project
+\citep[ACLED;][]{raleigh2010acled} records the date, place and type of individual
+battles, attacks on civilians, riots and demonstrations, and such data underpin
+early-warning systems for armed conflict \citep{hegre2019views, hegre2025views} and a
+growing statistical literature on where and when violence occurs. Recorded events are
+rare and strongly clustered. Most cells of a $0.5^\circ$ grid record no event in a
+given week, a few record events in most weeks, and the strongest single predictor of
+an event is recent events in the same place \citep{weidmann2010predicting,
+mueller2022hard, vestby2022predicting}. Spatial statistical models represent this
+clustering with latent fields \citep{zammitmangion2012afghan, python2019bayesian,
+python2021predicting, egbon2024spatio}, and point-process models with self-excitation
+\citep{mohler2011self, clark2018selfexciting, reinhart2018review}. Both have mostly
+modelled one type of event at a time.
+
+Different types of events are, however, closely linked. Protests and riots are often
+followed by armed conflict in the same area, and an influential reading of this
+association is escalation. Repression of protest can radicalise movements and push
+them towards violence \citep{ritter2016preventing, ryckman2020turn, rod2023protest},
+and the outcome of nonviolent campaigns shapes whether violent ones follow
+\citep{chenoweth2017violent}. Forecasting models therefore use the recent history of
+unrest, and its spatial lags, as predictors of conflict \citep{rod2025predicting}, and
+diffusion models add spatial lags of past events to the predictor
+\citep{buhaug2008contagion, racek2025diffusion}. A second reading is that both kinds of
+events respond to the same latent episodes: a period of political crisis in a region,
+a contested election, a collapse of local authority, or simply a period in which media
+and local partners pay attention to a place, raising the recorded counts of every
+type of event \citep{weidmann2016closer, hellmeier2018spotlight, croicu2022reporting}.
+Under this reading, recent unrest predicts conflict because it reveals the current
+state of the episode, not because it causes violence.
+
+The two readings are hard to separate with the models that are usually fitted.
+A regression of conflict on lagged unrest, with or without a latent field for
+conflict, attributes to the lag coefficient whatever part of the shared episode the
+conflict data alone cannot reveal. This is a familiar problem in another guise: in
+panel models, state dependence is confounded with persistent heterogeneity unless the
+latter is modelled \citep{heckman1981heterogeneity, wooldridge2005initial}, and a
+latent effect estimated from rare binary outcomes is too noisy to absorb it fully. The
+remedy we pursue is to model the two outcomes jointly, so that unrest data inform the
+latent episode directly rather than only through a covariate.
+
+We propose a joint latent Gaussian model \citep{rue2009inla} for the weekly
+occurrence of armed conflict and of social unrest in cells of a $0.5^\circ$ grid. Each
+outcome has its own fixed effects, cross-lagged effects of both outcomes' recent
+histories in the cell and its neighbours, country and cell effects and a static
+Mat\'ern field. The two outcomes share a space-time field, an AR(1) process of
+Mat\'ern innovations \citep{cameletti2013pm10} that enters conflict with loading one
+and unrest with an estimated loading, in the manner of a linear model of
+coregionalisation \citep{gelfand2004nonstationary}. The coefficient of recent unrest
+on conflict is then an association conditional on shared episodes, which we call
+escalation conditional on shared episodes; an extended model adds a space-time field
+for unrest alone, so that episodes of unrest without conflict are not forced into the
+shared field. Fields are defined through the SPDE representation of Mat\'ern fields
+\citep{lindgren2011spde}, discretised by finite volumes directly on the
+longitude--latitude grid on the sphere, with sea barriers \citep{bakka2019barrier} so
+that correlation does not leak across narrow seas. Inference is an empirical Bayes
+Laplace approximation in the spirit of INLA and TMB \citep{rue2009inla,
+kristensen2016tmb}. Because the regions analysed contain millions of cell-weeks per
+outcome, we estimate the hyperparameters on a case-control subsample of the non-events
+with an exact offset \citep{prentice1979logistic}, and compute the latent posterior on
+all data; this reduces the cost of a fit several-fold without changing the estimates
+or the predictions materially.
+
+The paper makes three contributions. First, a simulation study shows that univariate
+models, including models with their own space-time field, report escalation that does
+not exist when the two outcomes share latent episodes, while the joint model recovers
+the escalation coefficient with close to nominal coverage, also when unrest has
+episodes of its own. Second, in ACLED data for West Africa and the Sahel and for
+Africa and the Middle East, 2018--2024, the coefficient of recent unrest on conflict
+falls from 0.13--0.15 in univariate models to about 0.10 once both shared and
+unrest-specific episodes are modelled, and to about 0.05 with a single shared field:
+shared episodes account for between a quarter and two thirds of the univariate
+association. Escalation at the short, local scale that the model can resolve is real
+but smaller than univariate models suggest. Third, we examine what the joint model
+adds to prediction. When both outcomes are observed, it cannot forecast either one
+better than univariate models that use both histories as covariates, and it does not.
+When one outcome is withheld in an area while the other is observed, as when one type
+of event goes unreported, the joint model predicts the withheld outcome better, in
+simulations and, for conflict, in the data; the gain comes mostly from the weeks in
+which the other outcome is observed and fades in forecasts.
+
+Section~\ref{sec:data} describes the data and Section~\ref{sec:methods} the model and
+its inference. Section~\ref{sec:simulation} reports the simulation studies and
+Section~\ref{sec:application} the application. Section~\ref{sec:discussion}
+discusses the interpretation of the shared episodes, the limits of the analysis and
+extensions. The Supplementary Material contains the construction of the data,
+computational details, further simulation studies of the univariate building blocks,
+and further results.

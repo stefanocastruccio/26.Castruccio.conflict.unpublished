@@ -1,0 +1,76 @@
+\section{Discussion}\label{sec:discussion}
+
+The association between recent unrest and later conflict in the same place is one of
+the most robust regularities in event data, and it is often read as escalation. We
+have argued that the association has a second component, shared latent episodes that
+raise both kinds of events, and that models of conflict alone cannot separate the two
+even when they include their own latent space-time field. A joint model in which the
+two outcomes share a space-time field can. In simulations it recovers the escalation
+coefficient where univariate models report escalation that does not exist, and in
+ACLED data for West Africa and the Sahel and for Africa and the Middle East it
+attributes between a quarter and two thirds of the univariate association to shared
+episodes. Once both shared and unrest-specific episodes are modelled, a short-run
+effect of recent unrest on conflict remains, of about two thirds of the univariate
+estimate. \todo{Update with the Africa and Middle East refit without Europe (job 29).}
+
+\paragraph{What the shared field represents.} The shared field is a latent component
+of \emph{recorded} risk. It combines common shocks to the occurrence of conflict and
+unrest, such as a political crisis, with common shocks to their reporting, such as a
+period of media attention or a change in the sources that cover a region
+\citep{weidmann2016closer, hellmeier2018spotlight, croicu2022reporting}. With a single
+source of event data the two cannot be separated, and we do not interpret the field,
+or its loading, as a property of occurrence alone. Several independent sources of
+event data, or auxiliary measures of reporting intensity, would allow the two to be
+distinguished \citep{cook2017twowrongs}. The same applies to the escalation
+coefficient: it is a conditional association of recorded events, not a causal
+effect.
+
+\paragraph{The scale of escalation.} The joint model separates escalation from shared
+episodes only at the resolution of the shared field. Escalation that unfolds over
+several months and over hundreds of kilometres is indistinguishable from a shared
+episode and is attributed to the field, while episodes that are shorter than a
+time step or smaller than the lattice of the field remain in the lag coefficient. Our
+estimate is therefore the short-run, local part of escalation. It is compatible with
+accounts in which repression of protest leads to armed conflict over longer periods
+\citep{ritter2016preventing, ryckman2020turn, chenoweth2017violent, rod2023protest},
+and it indicates that four-week unrest histories in the same cell are a weak signal of
+such escalation once shared episodes are modelled. It also explains why unrest
+histories help forecasting models of conflict \citep{rod2025predicting}: they are
+informative about the current episode, whatever its nature.
+
+\paragraph{Prediction.} A more comprehensive model need not predict better. When both
+outcomes are observed everywhere and both histories enter as covariates, the shared
+field adds little that the univariate models do not already contain, and in our
+simulations and data the joint model forecasts neither outcome better. Its predictive
+value appears when one outcome is missing where the other is recorded: there the
+shared field transfers information about the current episode from the observed
+outcome to the unobserved one. Under-reporting of particular types of events is
+common in event data \citep{weidmann2016closer, croicu2022reporting}, so this is a
+practical use of the model, for example to flag areas where recorded protest
+suggests that conflict may be going unrecorded. The gain fades in forecasts, because
+the shared field decays at the rate of its autoregression and a shared static
+field retained only a small part of it. The joint model also under-predicts the
+co-occurrence of the two outcomes in the test period, by about 13--15\% in West
+Africa even with a shared static field.
+
+\paragraph{Limitations.} Several limits apply. The plug-in standard errors ignore the
+uncertainty in the hyperparameters and, in simulations, understate the variability of
+the lag coefficients by up to 20\% when a space-time field is fitted, so intervals
+that only just exclude zero should be read with caution. The loading of the shared
+field is constant in space, while the relation between unrest and conflict surely
+differs between, say, the central Sahel and North Africa. Escalation runs in both
+directions in the model, but the simulations covered one direction only, and they
+did not reproduce the 13- and 26-week steps or the coarser lattice of the application.
+The regions were chosen as boxes and the countries of Europe were excluded from the
+larger one; results for other regions may differ. Finally, the analysis uses a
+repaired version of an earlier cell-week table, whose construction we describe in the
+Supplementary Material.
+
+\paragraph{Extensions.} Natural extensions are loadings that vary in space, through a
+second field in the loading or region-specific loadings; non-separable space-time
+fields \citep{lindgren2024diffusion}; more outcomes, such as fatalities or different
+actors, sharing several latent components; and hybrids with self-exciting models of
+event data \citep{jun2024hawkes, browning2026hawkes}, in which the shared field would
+act as a common stochastic background rate. The finite-volume construction on the
+sphere and the case-control subsampling of non-events make such models feasible on
+continental grids with millions of cell-weeks.

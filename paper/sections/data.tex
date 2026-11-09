@@ -18,17 +18,20 @@ Y_{st} = \mathbf{1}\Bigl\{\textstyle\sum_{j \in \mathcal{J}} N^{(j)}_{st} > 0\Bi
 where $\mathcal{J}$ is the set of event types of the outcome being modelled. The two
 outcomes are analysed separately.
 
-The main analysis covers Africa, the Middle East and adjacent regions, the box from
-$20^\circ$W to $65^\circ$E and from $36^\circ$S to $45^\circ$N, with 13{,}719 cells in 93
-countries. We call it the AME region. Besides Africa and the Middle East, the box
-includes Mediterranean Europe, the Caucasus, parts of Central Asia and Afghanistan.
-ACLED coverage of these areas has a different history. Among the countries in the box,
-Italy, Spain, Portugal, France, Malta and Andorra are covered by ACLED only from 2020
-(as are several small islands of the Indian and Atlantic oceans), so they
-contribute three of the five training years, 2020--2022, which include the period of
-COVID-19 restrictions.
+The joint analysis covers two regions. The larger one, Africa and the Middle East, is
+the box from $20^\circ$W to $65^\circ$E and from $36^\circ$S to $45^\circ$N (the AME
+region) without the
+European countries that its northern corner contains (Spain, Portugal, France, Italy,
+Malta, Greece, the Balkans and the part of Russia in the box), together with the
+French islands of Mayotte and R\'eunion. ACLED covers most of these countries only
+from 2020, and their dense, well-reported protest with almost no armed conflict is
+unlike the rest of the region. Turkey, the Caucasus, Iran, Central Asia and
+Afghanistan remain. \todo{Number of cells and countries of the region without Europe
+(job 29 log).} The smaller region, West Africa and the Sahel, is described in
+Section~\ref{sec:app-joint}.
 
-Event weeks are rare. In 2023--2024, over the covered cell-weeks of the AME region with
+Event weeks are rare. \todo{Update the shares in this and the next paragraph from
+data\_events.json for the region without Europe.} In 2023--2024, over the covered cell-weeks of the AME region with
 complete history, 2.4\% of cell-weeks contain at least one conflict event and 2.7\% at
 least one unrest event. Over all covered cell-weeks worldwide with complete climate
 records the shares are 1.6\% and 2.7\%.
@@ -50,7 +53,7 @@ Republic of the Congo, are one reason why recent history is such a strong predic
 \end{itemize}
 The two outcomes have different geographies. Conflict forms large contiguous regions:
 the central Sahel and Lake Chad basin, the Sudans and Ethiopia, Somalia, eastern Congo,
-Yemen and Syria--Iraq. Unrest is densest in Mediterranean Europe, North Africa,
+Yemen and Syria--Iraq. Unrest is densest in North Africa,
 Turkey, Iran, South Africa and the Great Lakes region, where population and media
 coverage are high. The weekly share of cells with an event rises over the period. For
 conflict it goes from about 2\% in 2018 to about 2.5\% in 2024, and for unrest from

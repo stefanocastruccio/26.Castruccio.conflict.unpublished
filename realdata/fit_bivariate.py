@@ -259,6 +259,28 @@ def joint_eval(m, Dte, yc, yu, n_samples=200, seed=0, chunk=100_000):
     return out
 
 
+def export_fields(m, model, L, observed, Lv, T, a, week0):
+    """Posterior means of the latent fields of a joint model, for maps (Section 5):
+    fields_<model>_static.csv.gz  (0.5-degree cells: static fields, cell effects, shared static field)
+    fields_<model>_st.csv.gz      (st-res cells x time steps: shared and unrest-specific space-time fields)
+    Model output only (no event data)."""
+    k = {b.name: i for i, b in enumerate(m.blocks)}
+    st = pd.DataFrame({"lon": L.lon[observed], "lat": L.lat[observed]})
+    for nm in ("field_conflict", "field_unrest", "cell_conflict", "cell_unrest"):
+        st[nm] = m.block_mean(k[nm])[observed]
+    if "shared_field" in k:
+        st["shared_field"] = m.block_mean(k["shared_field"])[:L.n][observed]
+    st.to_csv(os.path.join(a.out, f"fields_{model}_static.csv.gz"), index=False, float_format="%.4f")
+    n = Lv.n
+    v = m.block_mean(k["shared_st"])[:n * T].reshape(T, n)
+    tt = pd.DataFrame({"lon": np.tile(Lv.lon, T), "lat": np.tile(Lv.lat, T), "step": np.repeat(np.arange(T), n),
+                       "step_start": np.repeat(week0 + pd.to_timedelta(7 * a.st_step * np.arange(T), unit="D"), n),
+                       "shared_st": v.ravel()})
+    if "st_unrest" in k:
+        tt["st_unrest"] = m.block_mean(k["st_unrest"]).reshape(T, n).ravel()
+    tt.to_csv(os.path.join(a.out, f"fields_{model}_st.csv.gz"), index=False, float_format="%.4f")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("table"); ap.add_argument("--region", default="west_sahel")
@@ -456,6 +478,8 @@ def main():
         res["models"][model]["test_scores"] = sc
         if hasattr(m, "sub_info"):
             res["models"][model]["subsample"] = dict(m.sub_info, zero_frac=a.zero_frac)
+        if model in ("biv", "biv2", "biv3"):
+            export_fields(m, model, L, observed, Lv, T, a, base["week_start"].min())
         print(model, json.dumps({k: res["models"][model][k] for k in ("hyper", "lag_coefficients", "test_scores")},
                                 default=float), flush=True)
         json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
