@@ -2114,3 +2114,19 @@ Still to run in job 33: west_sahel biv, then west_sahel biv2 (all rows, no subsa
 ### Task 35, malaria (MAP PfPR 2-10): done (1718079, rc 0)
 `grid/malaria/malaria_2000_2025.parquet`: population-weighted (GHSL), area mean as fallback; `value` is NaN outside MAP's modelled area and `value_fill0` is 0 there.
 Over all 56,354 cells, 21.9% have PfPR in 2024/2025, mean 0.11 where defined. Restricted to the five regions. The comparison with $CLEAN's malaria follows.
+
+### Task 35, malaria: $CLEAN's malaria compared with MAP PfPR (in-region cells, cell-year)
+
+| year | cells | Pearson (MAP NaN → 0) | Spearman | Pearson where MAP is defined | median CLEAN/MAP |
+|---|---|---|---|---|---|
+| 2018 | 22,655 | 0.968 | 0.992 | 0.962 (12,914) | 0.95 |
+| 2019 | 25,081 | 0.958 | 0.993 | 0.949 | 0.93 |
+| 2020 | 25,081 | 0.950 | 0.993 | 0.939 | 0.89 |
+| 2021 | 25,081 | 0.944 | 0.994 | 0.932 | 0.89 |
+| 2022 | 25,081 | 0.933 | 0.994 | 0.918 | 0.87 |
+| 2023 | 25,081 | 0.916 | 0.992 | 0.894 | 0.88 |
+| 2024 | 25,081 | 0.923 | 0.984 | 0.902 | 0.83 |
+
+- **Luca's variable is MAP PfPR 2-10.** The rank agreement is about 0.99 every year. His values are about 5-17% lower and drift down over time against the 202608 release.
+  The likely reasons are an older MAP release and/or an area mean rather than a population-weighted one. In 2017 $CLEAN has only week 2017-12-26, and its malaria is all 0 there.
+- $CLEAN: malaria > 0 in 21% of cell-years, max 0.946. MAP's `value_fill0` matches it (0 outside the modelled area).
