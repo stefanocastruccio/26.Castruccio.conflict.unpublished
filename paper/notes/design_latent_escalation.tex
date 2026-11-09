@@ -15,47 +15,51 @@ shortest scale: $\kappa$ is the effect of unrest in the previous four weeks in t
 cell. Escalation over months and hundreds of kilometres is absorbed by the shared
 field and cannot be told apart from a shared episode. The proposal makes it identifiable.
 
-\textbf{Model.} Time steps $k = 1,\dots,K$ of $\Delta$ weeks; cells $s$ of a coarse
-lattice. The latent episode of conflict, $a_k(s)$, and of unrest, $b_k(s)$, are built
-from three space-time components:
-\[
-a_k(s) = v_k(s) + c_k(s), \qquad b_k(s) = \lambda\, v_k(s) + d_k(s),
-\]
-\vspace{-14pt}
+\textbf{Logit of each outcome.} Cell $s$, week $t$, time step $k = k(t)$ of $\Delta$ weeks:
 \begin{align*}
-v_k(s) &= \varphi_v\, v_{k-1}(s) + \eta_k(s) && \text{shared episodes},\\
-c_k(s) &= \varphi_C\, c_{k-1}(s) + \underbrace{\psi_{U\to C}\, \bar b_{k-1}(s)}_{\text{escalation}} + \xi^C_k(s) && \text{conflict-only episodes},\\
-d_k(s) &= \varphi_U\, d_{k-1}(s) + \psi_{C\to U}\, \bar a_{k-1}(s) + \xi^U_k(s) && \text{unrest-only episodes},
+\operatorname{logit} P(\text{conflict}_{st} = 1) &= m^C_{st} + v^S_k(s) + v^C_k(s) = m^C_{st} + L^C_k(s),\\
+\operatorname{logit} P(\text{unrest}_{st} = 1) &= m^U_{st} + \lambda\, v^S_k(s) + v^U_k(s) = m^U_{st} + L^U_k(s).
 \end{align*}
-where $\bar b_{k-1}(s) = (1-\omega)\, b_{k-1}(s) + \omega \cdot \text{mean of } b_{k-1}$
-over the neighbours of $s$ (so an unrest episode can spill into neighbouring cells), and
-likewise $\bar a$. The innovations $\eta_k$, $\xi^C_k$, $\xi^U_k$ are independent
-Mat\'ern fields with sea barriers, independent over $k$, each with its own range and
-SD. The observation model is unchanged: $\operatorname{logit} P(Y^C_{st}=1) =
-\bm{x}^\top\bm{\beta}_C + \delta_C h_C + \kappa_C h_U + \dots + u_C + e_C + w_C +
-a_{k(t)}(s)$, and the same for unrest with $b$.
+$L^C_k(s)$ and $L^U_k(s)$ are the \emph{latent conflict episode} and the \emph{latent
+unrest episode}.
+$m^C_{st}$ and $m^U_{st}$ are everything we have now apart from the space-time fields:
+covariates, own and cross lags of recorded events ($\delta$, $\kappa$ and neighbour
+terms), country effects, cell effects and static Mat\'ern fields. There are three
+space-time fields: $v^S$ (shared), $v^C$ (conflict only) and $v^U$ (unrest only).
+
+\textbf{Dynamics of the three fields.}
+\begin{align*}
+v^S_k(s) &= \varphi_S\, v^S_{k-1}(s) + \varepsilon^S_k(s), \\
+v^C_k(s) &= \varphi_C\, v^C_{k-1}(s) + \psi_{U\to C}\, \bar L^U_{k-1}(s) + \varepsilon^C_k(s), \\
+v^U_k(s) &= \varphi_U\, v^U_{k-1}(s) + \psi_{C\to U}\, \bar L^C_{k-1}(s) + \varepsilon^U_k(s),
+\end{align*}
+where $\bar L^U_{k-1}(s) = (1-\omega)\, L^U_{k-1}(s) + \omega\cdot$(mean of $L^U_{k-1}$
+over the neighbours of $s$), so last step's unrest episode here and next door feeds
+conflict now; likewise $\bar L^C$. The innovations $\varepsilon^S_k$, $\varepsilon^C_k$,
+$\varepsilon^U_k$ are independent Mat\'ern fields with sea barriers, independent over
+$k$, each with its own range and SD.
 
 \textbf{What each parameter answers.}
 \begin{itemize}
-\item $\lambda$ (with $v$): \emph{shared episodes}, which move both outcomes in the same
-step and place; $\varphi_v$ is their persistence.
-\item $\psi_{U\to C}$: \emph{latent escalation}, an unrest episode at $s$ raising
-conflict risk at $s$ and its neighbours one step later, decaying at rate
-$\varphi_C$. $\psi_{C\to U}$ is the reverse direction.
-\item $\kappa_C$: \emph{short-run local escalation} from recorded events, as now.
+\item $\lambda$ and $v^S$: \emph{shared episodes}, which move both outcomes in the same
+step and place; $\varphi_S$ is their persistence.
+\item $\psi_{U\to C}$: \emph{latent escalation}. An unrest episode raises conflict risk
+one step later, here and next door, and the effect then decays at rate $\varphi_C$.
+$\psi_{C\to U}$ is the reverse direction.
+\item $\kappa$ (in $m^C$): \emph{short-run local escalation} from recorded events, as now.
 \end{itemize}
-\textbf{Special cases.} With $\psi_{U\to C} = \psi_{C\to U} = 0$ and no conflict-only
-episodes ($c \equiv 0$), this is exactly the current extended model: $v$ is its shared
-field and $d$ its unrest-only field, each with its own persistence. Dropping $d$ as well
-gives the current joint model. The main summary is the impulse response: the change in
-conflict risk over the next $1, 2, \dots$ steps after a one-SD unrest episode, split
-into its shared and its escalation parts.
+\textbf{Current models as special cases.} Current \emph{extended} model:
+$\psi_{U\to C} = \psi_{C\to U} = 0$ and $v^C \equiv 0$ ($v^S$ is its shared field, $v^U$
+its unrest-only field). Current \emph{joint} model: also $v^U \equiv 0$. Univariate
+space-time model of conflict: $\lambda = 0$, $v^U \equiv 0$, no unrest data. The main
+summary is the impulse response: the change in conflict risk over the next $1, 2, \dots$
+steps after a one-SD unrest episode, split into its shared and its escalation parts.
 
-\textbf{Why it fits our machinery.} Keeping $(v, c, d)$ as latent variables, each step
-is Gaussian given the previous one, so the joint precision is sparse (block
-bidiagonal in time, finite-volume sparsity in space). The Laplace engine, METIS ordering
-and case-control subsampling are unchanged. Stationarity requires the transition of
-$(v, c, d)$ to have spectral radius below one, which we check at the estimate.
+\textbf{Why it fits our machinery.} Each step of $(v^S, v^C, v^U)$ is Gaussian given
+the previous step, so the joint precision is sparse (block bidiagonal in time,
+finite-volume sparsity in space). The Laplace engine, METIS ordering and case-control
+subsampling are unchanged. Stationarity requires the one-step transition of
+$(v^S, v^C, v^U)$ to have spectral radius below one, checked at the estimate.
 Hyperparameters: 13 (against 9 in the extended model).
 
 \textbf{Identification.} Shared episodes move both outcomes in the \emph{same} step;
@@ -75,7 +79,7 @@ $\kappa$.
 
 \textbf{Cost.} Implementation and tests: 1 day. Simulation: 1 day on the CRC. Real-data
 fits (two regions, warm-started, $r = 0.25$): 1--2 days. Rewriting methods and
-application: 1 day. Paper: Section 3 gains the latent escalation model as the main
-model; the current extended model becomes its special case without escalation or conflict-only episodes; the application
-reports $\psi$, $\lambda$, $\kappa$ and impulse responses.
+application: 1 day. Paper: the latent escalation model becomes the main model, with the
+current models as special cases; the application reports $\psi$, $\lambda$, $\kappa$
+and impulse responses.
 \end{document}
