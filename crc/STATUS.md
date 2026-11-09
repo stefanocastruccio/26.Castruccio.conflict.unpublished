@@ -1886,3 +1886,37 @@ The same picture as africa_me: no joint gain over uni_static.
      the email contains "@". Checked without printing anything from the file.
    - So ACLED rejects the email/password pair itself. **Please check the credentials** (the ACLED account login, myACLED). Note that API access needs an account
      with API rights. **Stopped here as instructed.** Nothing was downloaded; `$WORK/acled/raw` is empty.
+
+## 2026-11-09 14:30 EST: task 35 (covariates 1990-2025), in progress
+Scripts are in `realdata/covariates/` (`common.py`: grid and weeks; `chirps_weekly.py`; `national.py`). Job `crc/jobs/35_chirps.sh` (8 cores).
+Outputs go to `$WORK/covariates/{raw,grid}`, never the repo.
+- **Grid:** 56,354 cells of $CLEAN with 40S ≤ lat ≤ 72N (of 59,339). The cell centres sit on the 0.5-degree lattice (.25/.75). Cached in `$WORK/covariates/cells.parquet`.
+  **Weeks:** Tuesdays (as in $CLEAN), 1990-01-02 .. 2025-12-30; a week belongs to the year of its week_start.
+- **1. Precipitation (CHIRPS v2.0 daily p25):** small, 66-87 MB per year (about 2.7 GB for 1990-2026). Downloading on the login node, then processing per year in batch:
+  weekly total = sum of 7 daily cell means, where each cell mean is the area-weighted mean of its 2×2 0.25-degree pixels. Monthly totals are kept for SPI-3.
+  **Note: CHIRPS covers 50S-50N only, so cells north of 50N (Europe, Russia, Canada, ...) have no precipitation from CHIRPS.**
+  Test year 1990 running (cs_chirps_t 1717070). SPI-3 follows.
+- **2. Temperature: options, waiting for your choice** (more than 500 GB in total). What data.chc.ucsb.edu offers:
+  - **CHIRTS-ERA5 daily** (`/experimental/CHIRTS-ERA5/{tmax,tmin}/netcdf/daily/`, 0.05 deg, 60S-70N, **1980-2026**): **7.2 GB per variable-year,
+    so about 518 GB for Tmax + Tmin 1990-2025.** Processed year by year with the raw files deleted, the peak disk use is about 15 GB.
+  - **CHIRTS-ERA5 pentads** (same product, 5-day means; 6 per month, with the last one 3-6 days long): **1.43 GB per variable-year, about 103 GB.**
+    Weekly means would be the day-weighted mean of the overlapping pentads. That is an approximation, but it is the same source.
+  - CHIRTS-ERA5 monthly: one 7.2 GB file per variable (monthly only).
+  - CHIRTS-daily v1.0 (`/products/CHIRTS/daily/v1.0/global_netcdf_p05/`, 1983-2016 only): 27.4 GB per variable-year. Not useful, since it stops in 2016.
+  - Both cover 60S-70N, so cells between 70N and 72N get no temperature.
+  **Recommendation: CHIRTS-ERA5 daily** (exact weekly means, about 518 GB of transfer but little disk), or pentads if the transfer is too much.
+  It is probably also the source of $CLEAN's tmax/tmin (the 2018-2022 correlation check will tell).
+- **3. Population (GHSL):** next.
+- **4. National: done** → `$WORK/covariates/grid/national/national_1990_2025.parquet` (187 cell codes × 36 years) and `national_unmatched.csv`.
+  - World Bank API: GDP, GDP per capita and electricity access.
+  - **V-Dem: the v-dem.net download needs a form (required fields), so v2x_libdem is taken from Our World in Data's republication of V-Dem v16**
+    (grapher liberal-democracy-index, `libdem_vdem__estimate_best`, to 2025).
+  - OWID ghg_per_capita.
+  - Code mapping: KOS→XKX, SOL→SOM, CYN→CYP, ESH→MAR, BRT→EGY.
+  - Missing shares: gdp 5.5%, gdp_pc 5.5%, electricity 16.3%, libdem 9.0%, ghg_pc 8.5%; 2025 is mostly missing in the World Bank series.
+  - Codes with no data at all: gdp/gdp_pc ALA, COK, KAB, KAS, PRK, TWN; electricity ALA, COK, KAB, KAS, TWN;
+    libdem ALA, BHS, BLZ, BRN, COK, CYM, GRL, KAB, KAS, NCL, PRI, **PSE**, PYF, VCT, VIR, WSM; ghg_pc ALA, CYM, GRL, KAB, KAS, **KOS**, NCL, PRI, **PSE**, PYF, VIR.
+- **5. Static per cell:** river_length, lake_area, malaria and BIOME_NAME are present for **all 56,354 cells** (no cell without a value).
+  **But they are not constant over weeks:** river_length varies within 14,131 cells, lake_area within 3,735 and malaria within 13,836. Worth checking which value to use
+  (e.g. malaria may be yearly); `$WORK/covariates/static_missing_cells.csv` is empty.
+- Disk: `$WORK/covariates` about 2.7 GB (CHIRPS raw) so far.
