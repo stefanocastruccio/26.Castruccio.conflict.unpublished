@@ -2146,3 +2146,24 @@ Luca's table has 7 covariates beyond the task list. The owner wants all of them.
 - **ECO_pc_gha (ecological footprint): blocked**, needs a Global Footprint Network data account or API key (the owner will provide it).
 - **phase_1..5 (IPC food insecurity): blocked**, needs an IPC API key (the owner will provide it).
 - Also pending from the owner: corrected ACLED credentials (task 36), and optionally a Copernicus CDS account for precipitation north of 50N.
+
+## 2026-11-09 18:52 EST: job 33, west_sahel biv → `results_real/bivariate/west_sahel/ci_biv.json`
+Hessian on 1,292,580 rows (all rows), 863 s. **hessian_eig_min = 0.93** (> 0).
+
+| hyperparameter | estimate | 95% CI |
+|---|---|---|
+| **shared_st.loading (λ)** | 0.868 | [0.763, 0.973] |
+| country_conflict.sd | 0.691 | [0.371, 1.288] |
+| country_unrest.sd | 0.528 | [0.298, 0.936] |
+| cell_conflict.sd | 0.661 | [0.579, 0.753] |
+| cell_unrest.sd | 1.335 | [1.244, 1.433] |
+| field_conflict.range_km | 452.992 | [330.521, 620.844] |
+| field_conflict.sd | 1.387 | [1.115, 1.725] |
+| field_unrest.range_km | 368.722 | [56.952, 2387.193] |
+| field_unrest.sd | 0.213 | [0.041, 1.096] |
+| shared_st.range_km | 498.706 | [427.483, 581.794] |
+| shared_st.sd | 1.010 | [0.844, 1.209] |
+| shared_st.rho | 0.952 | [0.930, 0.967] |
+
+theta_se: 0.318, 0.292, 0.067, 0.036, 0.161, 0.111, 0.953, 0.836, 0.079, 0.092, 0.099, 0.054
+west_sahel biv2 is next (run 4 of 4).
