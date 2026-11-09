@@ -1960,3 +1960,24 @@ Outputs go to `$WORK/covariates/{raw,grid}`, never the repo.
   4. **deletes the raw files.**
   Peak raw disk is about 58 GB. Weekly means then come from the daily caches in one cheap step, including weeks crossing into the next year.
 - Test year 1990: cs_chirts_t 1717119. The full array follows if it is clean.
+
+## 2026-11-09 15:20 EST: job 33, ame biv done → `results_real/bivariate/ame/ci_biv.json`
+Hessian on the 1,778,323-row subsample, 2,385 s. **hessian_eig_min = 3.43 (> 0).** 95% intervals at the saved estimates:
+
+| hyperparameter | estimate | 95% CI |
+|---|---|---|
+| **shared_st.loading (λ)** | **0.683** | **[0.638, 0.728]** |
+| shared_st.sd | 1.324 | [1.220, 1.436] |
+| shared_st.rho | 0.951 | [0.942, 0.959] |
+| shared_st.range_km | 521 | [479, 566] |
+| field_conflict.sd | 1.199 | [1.031, 1.395] |
+| field_conflict.range_km | 636 | [485, 833] |
+| field_unrest.sd | 0.361 | [0.225, 0.578] |
+| field_unrest.range_km | 433 | [153, 1,221] |
+| country_conflict.sd | 0.534 | [0.387, 0.735] |
+| country_unrest.sd | 0.955 | [0.774, 1.178] |
+| cell_conflict.sd | 0.994 | [0.949, 1.040] |
+| cell_unrest.sd | 1.369 | [1.324, 1.415] |
+
+theta_se (internal scale, in block order): 0.163, 0.107, 0.023, 0.017, 0.138, 0.077, 0.529, 0.241, 0.043, 0.042, 0.046, 0.023.
+ame biv2 (λ for biv2) is running now: run 2 of 4.
