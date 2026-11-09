@@ -325,6 +325,54 @@ class LatentGaussianModel:
         self.fit_seconds = time.time() - t0
         return self
 
+    def hessian_theta(self, step=0.05, n_jobs=None):
+        """Hessian of the negative log posterior of theta, -[log p(y | theta) + log p(theta)]
+        (Laplace), at self.theta by central differences (2 p^2 evaluations, run in parallel
+        forked processes). Returns (H, se): se = sqrt(diag(H^-1)) on the internal scale
+        (log sd, log range, atanh rho, loading), NaN where H is not positive definite."""
+        import os
+        import multiprocessing as mp
+        global _PAR_MODEL
+        p = self.n_theta
+        th = np.asarray(self.theta, float)
+        bds = [bd for blk in self.blocks for bd in blk.bounds()]
+        lo = np.array([bd[0] for bd in bds]); hi = np.array([bd[1] for bd in bds])
+        h = np.full(p, step)
+        x0 = self.mode(th)[0].copy()
+        pts = []
+        def pt(d):
+            return (np.clip(th + d, lo + 1e-9, hi - 1e-9), x0)
+        for i in range(p):
+            e = np.zeros(p); e[i] = h[i]
+            pts += [pt(e), pt(-e)]
+            for j in range(i + 1, p):
+                f = np.zeros(p); f[j] = h[j]
+                pts += [pt(e + f), pt(e - f), pt(-e + f), pt(-e - f)]
+        n_jobs = int(n_jobs or os.environ.get("FIT_JOBS", 1))
+        _PAR_MODEL = self
+        try:
+            if n_jobs > 1:
+                with mp.get_context("fork").Pool(n_jobs) as pool:
+                    fs = np.array(pool.map(_par_nlp, [(t, x0) for t, _ in pts]))
+            else:
+                fs = np.array([_par_nlp((t, x0)) for t, _ in pts])
+            f0 = _par_nlp((th, x0))
+        finally:
+            _PAR_MODEL = None
+        H = np.zeros((p, p)); k = 0
+        for i in range(p):
+            fp, fm = fs[k], fs[k + 1]; k += 2
+            H[i, i] = (fp - 2 * f0 + fm) / h[i] ** 2
+            for j in range(i + 1, p):
+                fpp, fpm, fmp, fmm = fs[k:k + 4]; k += 4
+                H[i, j] = H[j, i] = (fpp - fpm - fmp + fmm) / (4 * h[i] * h[j])
+        try:
+            np.linalg.cholesky(H)
+            se = np.sqrt(np.diag(np.linalg.inv(H)))
+        except np.linalg.LinAlgError:
+            se = np.full(p, np.nan)
+        return H, se
+
     # ---- posterior summaries ------------------------------------------------
     def block_mean(self, k):
         return self.x_hat[self.slices[k]]

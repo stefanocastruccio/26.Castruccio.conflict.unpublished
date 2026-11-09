@@ -187,6 +187,7 @@ def fit_subsampled(make, y_sub, D_sub, off_sub, y_full, D_full, model, saved, in
     m.log_ml = m.log_marginal(m.theta)
     m.x_hat, m.f_hat, m.lu = m.mode(m.theta, x0=m._x)
     m.fit_seconds = time.time() - t0
+    m.sub_model = ms
     m.sub_info = {"rows": int(len(y_sub)), "rows_full": int(len(y_full)), "seconds_hyper": float(t_sub),
                   "log_ml_subsample": float(ms.log_ml),
                   "n_evals": int(ms.n_evals), "nit": int(getattr(getattr(ms, "opt", None), "nit", -1))}
@@ -267,11 +268,14 @@ def export_fields(m, model, L, observed, Lv, T, a, week0):
     k = {b.name: i for i, b in enumerate(m.blocks)}
     st = pd.DataFrame({"lon": L.lon[observed], "lat": L.lat[observed]})
     for nm in ("field_conflict", "field_unrest", "cell_conflict", "cell_unrest"):
-        st[nm] = m.block_mean(k[nm])[observed]
+        if nm in k:
+            st[nm] = m.block_mean(k[nm])[observed]
     if "shared_field" in k:
         st["shared_field"] = m.block_mean(k["shared_field"])[:L.n][observed]
     st.to_csv(os.path.join(a.out, f"fields_{model}_static.csv.gz"), index=False, float_format="%.4f")
     n = Lv.n
+    if "shared_st" not in k:
+        return
     v = m.block_mean(k["shared_st"])[:n * T].reshape(T, n)
     tt = pd.DataFrame({"lon": np.tile(Lv.lon, T), "lat": np.tile(Lv.lat, T), "step": np.repeat(np.arange(T), n),
                        "step_start": np.repeat(week0 + pd.to_timedelta(7 * a.st_step * np.arange(T), unit="D"), n),
@@ -316,6 +320,11 @@ def main():
                          "(exact for the logistic likelihood); the latent posterior is then computed "
                          "on all training rows at those hyperparameters")
     ap.add_argument("--zero-seed", type=int, default=0)
+    ap.add_argument("--hessian-only", action="store_true",
+                    help="with --fixed-theta: only the hyperparameter intervals (no predictions, no exports)")
+    ap.add_argument("--hessian", action="store_true",
+                    help="approximate 95%% intervals for the hyperparameters from the Hessian of the "
+                         "Laplace log posterior of theta at the estimate (on the subsample with --zero-frac)")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
@@ -465,6 +474,23 @@ def main():
                                    y, dz(parts_tr["conflict"], parts_tr["unrest"]), model, saved, init)
             else:
                 m = fit_or_condition(LatentGaussianModel(y, bl(), dz(parts_tr["conflict"], parts_tr["unrest"])), saved, model, init)
+            if a.hessian_only:
+                import time
+                t0 = time.time()
+                mh = getattr(m, "sub_model", m)
+                H, se = mh.hessian_theta()
+                lo_, hi_, k_ = {}, {}, 0
+                for b, t in zip(mh.blocks, mh._split(mh.theta)):
+                    n_ = len(t)
+                    lo_.update(b.describe(t - 1.96 * se[k_:k_ + n_])); hi_.update(b.describe(t + 1.96 * se[k_:k_ + n_]))
+                    k_ += n_
+                res["models"][model] = {"hyper": m.hyper(), "hyper_ci95": {nm: [lo_[nm], hi_[nm]] for nm in lo_},
+                                        "theta_se": list(map(float, se)), "hessian_eig_min": float(np.linalg.eigvalsh(H).min()),
+                                        "hessian_rows": int(len(mh.y)), "hessian_seconds": time.time() - t0,
+                                        "lag_coefficients": {k: list(map(float, v)) for k, v in m.fixed_summary().items() if k in keys}}
+                print(model, json.dumps(res["models"][model], default=float), flush=True)
+                json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
+                continue
             Dte = dz(parts_te["conflict"], parts_te["unrest"])
             eta, sd = m.predict_eta(Dte, None, n_samples=50)
             p = prob_from_eta(eta, sd); nte = int(te.sum())
@@ -480,6 +506,20 @@ def main():
                                 if saved is not None and model in saved.get("models", {}) else "fitted",
                                 "lag_coefficients": {k: list(map(float, fs[k])) for k in keys if k in fs},
                                 "fixed": {k: list(map(float, v)) for k, v in fs.items()}}
+        if a.hessian and model in ("biv", "biv2", "biv3"):
+            import time
+            t0 = time.time()
+            mh = getattr(m, "sub_model", m)
+            H, se = mh.hessian_theta()
+            lo_, hi_, k_ = {}, {}, 0
+            for b, t in zip(mh.blocks, mh._split(mh.theta)):
+                n_ = len(t)
+                lo_.update(b.describe(t - 1.96 * se[k_:k_ + n_])); hi_.update(b.describe(t + 1.96 * se[k_:k_ + n_]))
+                k_ += n_
+            res["models"][model]["hyper_ci95"] = {nm: [lo_[nm], hi_[nm]] for nm in lo_}
+            res["models"][model]["theta_se"] = list(map(float, se))
+            res["models"][model]["hessian_seconds"] = time.time() - t0
+            print(model, "hyper_ci95", json.dumps(res["models"][model]["hyper_ci95"]), flush=True)
         sc = {}
         if f"p_conflict_{model}" in preds:
             sc["conflict"] = dg.scores(parts_te["conflict"]["y"], preds[f"p_conflict_{model}"])
@@ -497,6 +537,8 @@ def main():
         print(model, json.dumps({k: res["models"][model][k] for k in ("hyper", "lag_coefficients", "test_scores")},
                                 default=float), flush=True)
         json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
+    if a.hessian_only:
+        return
     # joint and conditional prediction (Section 5.x): per cell-week, both outcomes together
     yc, yu = parts_te["conflict"]["y"], parts_te["unrest"]["y"]
     cell_te = base.loc[te, "grid_id"].to_numpy(); ctry_te = base.loc[te, "ISO_A3"].astype(str).to_numpy()
