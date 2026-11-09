@@ -10,8 +10,8 @@
 #$ -t 1990-2026
 #$ -tc 4
 # Task 35, item 2: CHIRTS-ERA5 daily Tmax/Tmin, one task per year (download -> daily 0.5-deg cell means -> raw deleted).
-# At most 4 tasks at once (8 cores). Only the paper-region box is read over HTTP (CHIRTS_BOX, default the ame box);
-# no raw files are stored. 2026 is read for the last week of 2025.
+# At most 4 tasks at once (8 cores, about 58 GB of raw files in flight; each task deletes its raw files).
+# Whole files are downloaded (box range reads are rate-limited by the server). 2026 is fetched for the last week of 2025.
 # Afterwards: python realdata/covariates/chirts_weekly.py weekly  (or 35_chirts_weekly via qsub -hold_jid)
 source /users/scastruc/projects/26.Castruccio.conflict.unpublished/crc/jobs/env.sh
 cd "$REPO"
