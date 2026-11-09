@@ -1760,3 +1760,16 @@ What the numbers show:
 - biv2 takes 70-80% of each task.
 - africa_me (tasks 11-20) is running at about 2.3 h, with biv done in every task. Task 12 logged an "Exception ignored ... _after_fork RLock" SystemError
   from a forked worker. It is not fatal: the task continues.
+
+## 2026-11-08 22:30 EST: region change to "ame" (Europe removed); africa_me jobs cancelled; jobs 29, 30, 31 submitted; Figure 1 regenerated
+- **Cancelled, with the owner's confirmation:** 1712445 tasks 11-20 (africa_me hold-out refit). Only 12 and 18 were still running, and both looked stuck after the
+  `_after_fork` RLock error: at 5.6 h, task 12 had used about 1 core-equivalent and its log was silent since 18:05. Also cancelled: 1711845.2 (africa_me biv3,
+  about 9 h, unfinished).
+  africa_me tasks 11, 13-17, 19 and 20 had finished; their fold outputs stay in $WORK/holdout_refit/africa_me_* but are not merged (superseded).
+- Kept: 1711777.4 (zero-frac africa_me biv2) and 1712793 (full-data check of africa_me conflict fold 0). They test the approximation.
+- `29_ame_fits.sh`: **1714069**. `30_ame_holdout.sh`: **1714071** (10 tasks, -hold_jid 1714069).
+- `31_fields.sh`: **1714254** (task 1, west_sahel) and **1714255** (task 2, ame, -hold_jid 1714069). The repo was pulled to 847297d while 29 was
+  still in step A (uni_static), so biv2 and biv3 in 29 export fields too.
+- **Region log line:** `ame: 4,703,980 rows per outcome, 12,995 cells, 78 countries, v on 3,408 cells x 14 steps` and
+  `ame: excluded 724 cells (220,674 rows) in ['ALB', 'BGR', 'BIH', 'ESP', 'FRA', 'GRC', 'HRV', 'ITA', 'KOS', 'MKD', 'MNE', 'PRT', 'ROU', 'RUS', 'SRB']`.
+- **Figure 1:** `paper/figures/data_events.{png,json}` regenerated for ame (cs_fig1 1714083, rc 0) and committed (f6865a9).
