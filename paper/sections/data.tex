@@ -90,21 +90,20 @@ through $h_{st} = \log\bigl(1 + \sum_{j \in \mathcal{J}} L^{(j)}_{st}\bigr)$ for
 outcome being modelled, and through the corresponding quantity for the other outcome
 as an additional covariate. Cell-weeks whose four-week history is incomplete, at the
 start of the series and of each country's coverage, are dropped from the parametric
-latent models. The boosting models, and the boosting offset of the hybrid models,
-keep these rows and receive the incomplete history as missing.
+latent models, and each cell's history at its first usable week enters as a
+covariate, to limit the initial-conditions problem (Section~\ref{sec:methods-persistence}
+of the Supplementary Material).
 
 \subsection{Environmental, socioeconomic and national covariates}\label{sec:data-cov}
 
 Covariates are listed in Table~\ref{tab:covariates}. They vary at three
-resolutions, which is central to the identification arguments of
-Section~\ref{sec:methods-confounding}:
+resolutions:
 \begin{enumerate}
 \item \emph{cell--week}: daily minimum and maximum temperature, heat index and
 wet-bulb globe temperature (CHIRTS), precipitation (CHIRPS), PM$_{2.5}$ (CAMS) and a
 drought index (Global Drought Observatory);
 \item \emph{cell}: population (GHSL), river length and lake area (Natural Earth),
-malaria risk (Malaria Atlas Project), terrestrial biome (RESOLVE Ecoregions) and,
-in the boosting models only, an indicator of $|\mathrm{latitude}| < 30^\circ$;
+malaria risk (Malaria Atlas Project), terrestrial biome (RESOLVE Ecoregions);
 \item \emph{country--year}: GDP per capita, access to electricity, the
 Environmental Performance Index (EPI), the V-Dem liberal democracy index, and
 per-capita greenhouse gas emissions, material footprint and ecological footprint.

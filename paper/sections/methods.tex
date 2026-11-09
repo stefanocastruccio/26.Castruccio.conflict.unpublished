@@ -10,17 +10,16 @@ $Y_{st} \mid \pi_{st} \sim \mathrm{Bernoulli}(\pi_{st})$, with
 \logit \pi_{st}
 = \bx_{st}^\top \bbeta
 + \delta\, h_{st}
-+ \sum_{k \in \mathcal{K}} z_{k,st}\, \beta_k(s)
 + \bz_{c(s),t}^\top \bm{\alpha}
 + u_{c(s)} + w(s) + e_s + v(s,t).
 \end{equation}
 Here $h_{st}$ is the recent event history of Section~\ref{sec:data-history}, so
 $\delta$ measures state dependence, and $\bx_{st}$ holds the cell and cell-week
 covariates with fixed effects, including the missingness indicators, biome and year
-effects. The terms $z_{k,st}\beta_k(s)$ are spatially varying climate effects and
-$\bz_{ct}^\top\bm{\alpha}$ the national indicators; both are used only in the
-univariate analyses of the Supplementary Material (Sections~\ref{sec:methods-svc}
-and~\ref{sec:methods-confounding}). The country effects
+effects, and $\bz_{ct}^\top\bm{\alpha}$ are the national indicators, split into
+between- and within-country parts. National indicators vary mostly between countries,
+so their coefficients are confounded with the country effects and the field; they are
+controls, and we do not interpret them. The country effects
 $u_c \sim \Normal(0, \sigma_u^2)$ and cell effects $e_s \sim \Normal(0, \sigma_e^2)$
 are independent, $w$ is a Mat\'ern field on the sphere
 (Section~\ref{sec:methods-spde}), and $v$ is a space-time field
@@ -32,7 +31,7 @@ evolving episodes ($v$).
 
 Model~\eqref{eq:model} is a latent Gaussian model \citep{rue2009inla}. Stacking all
 latent quantities into
-$\bm{\xi} = (\bbeta, \delta, \bgamma, \bm{\alpha}, \bu, \bw, \bm{e}, \bmeta, \bv)$, the
+$\bm{\xi} = (\bbeta, \delta, \bm{\alpha}, \bu, \bw, \bm{e}, \bv)$, the
 linear predictor is $\bm{\eta} = \bm{o} + \bA \bm{\xi}$ for a sparse design
 matrix $\bA$ and an optional offset $\bm{o}$, and
 $\bm{\xi} \mid \btheta \sim \Normal\{\bm{0}, \bQ(\btheta)^{-1}\}$ with a sparse,
@@ -130,8 +129,7 @@ $Y_{jst}$ are independent Bernoulli variables with
 \end{equation}
 The vector $\bx_{st}$ holds the covariates of model~\eqref{eq:model} that have fixed
 effects, including the initial-conditions term, the national indicators and the
-missingness indicators. All fixed effects are specific to the outcome. There are no
-spatially varying coefficients. For each outcome, $u_{j,c}$ are independent country
+missingness indicators. All fixed effects are specific to the outcome. For each outcome, $u_{j,c}$ are independent country
 effects, $e_j$ independent cell effects and $w_j$ a static Mat\'ern field with sea
 barriers (Remark~\ref{rem:boundary}). The two sets of these terms are independent of
 each other, with their own hyperparameters. The space-time field $v$ is the AR(1)
@@ -165,8 +163,8 @@ Bernoulli observations, so the estimate is noisy and shrunk towards zero. The pa
 the episode that the field does not capture is still visible in $h_{\mathrm{U}st}$,
 which is an observed, if noisy, proxy of the episode. The coefficient of
 $h_{\mathrm{U}st}$ then absorbs it, and $\hat\kappa$ is biased upward. This is the
-random-effects exogeneity problem of Sections~\ref{sec:methods-persistence}
-and~\ref{sec:methods-confounding} in another form. In the joint model the unrest
+random-effects exogeneity problem of Section~\ref{sec:methods-persistence} of the
+Supplementary Material in another form. In the joint model the unrest
 outcomes enter the likelihood of $v$. The episode is estimated from both outcomes,
 and the dependence of $h_{\mathrm{U}st}$ on it is part of the model, because
 $h_{\mathrm{U}st}$ is built from earlier values of a modelled outcome.
@@ -242,7 +240,7 @@ the model it extends, and its new components from their defaults. For the extend
 model in West Africa this reached the same optimum as the cold start in 1.4 hours
 instead of 8.2. Second, \emph{looser outer tolerances} for L-BFGS-B (relative change
 of the objective $10^{-7}$, projected gradient $10^{-3}$). In a simulation replicate of
-S5 these moved the hyperparameters by at most 0.3\% and $\hat\kappa$ by $10^{-4}$, and
+S2 these moved the hyperparameters by at most 0.3\% and $\hat\kappa$ by $10^{-4}$, and
 the fit was 1.25 times faster. Third, \emph{case-control subsampling of
 non-events}. Events are rare, so most of the $10^6$--$10^7$ rows are zeros, and the
 cost of every evaluation grows with the number of rows. For the hyperparameters only,

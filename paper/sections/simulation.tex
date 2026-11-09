@@ -2,19 +2,20 @@
 
 Two simulation studies address what the application cannot settle on its own: whether
 an association between recent unrest and conflict reflects escalation or shared latent
-episodes, and whether a joint model of the two outcomes separates them (S5); and
+episodes, and whether a joint model of the two outcomes separates them (S2); and
 whether the joint model predicts one outcome better where it is not observed but the
-other outcome is (S6). Studies S0--S4 of the Supplementary Material
-(Section~\ref{supp:sim-more}) check the finite-volume SPDE and the Laplace engine (S0)
-and the univariate models (S1--S4). All code is in the supplementary material.
+other outcome is (S3). Two further studies in the Supplementary Material
+(Section~\ref{supp:sim-more}) check the finite-volume SPDE and the Laplace engine (S0),
+and the separation of state dependence from persistent heterogeneity by a space-time
+field in univariate models (S1). All code is in the supplementary material.
 
-\subsection{S5: escalation versus shared episodes}\label{sec:sim-joint}
+\subsection{S2: escalation versus shared episodes}\label{sec:sim-joint}
 
 In the data, recent unrest in a cell predicts conflict there
 (Section~\ref{sec:app-joint}). This can mean that unrest escalates into violence. It can
 also mean that both outcomes respond to the same latent episodes, such as a local
 political crisis, so that recent unrest is only a proxy for the current state of the
-episode. S5 asks whether univariate models with latent fields can tell the two apart,
+episode. S2 asks whether univariate models with latent fields can tell the two apart,
 and whether the joint model of Section~\ref{sec:methods-joint} can.
 
 \paragraph{Design.} The domain is a $16 \times 14$ block of $0.5^\circ$ cells (224
@@ -61,12 +62,12 @@ The joint model is not the data-generating process. It has no shared static fiel
 $a$ must be absorbed by the two outcome-specific fields, and its space-time field is
 piecewise constant over four weeks while $e$ changes weekly. The application differs
 from this design: it uses steps of 13 weeks on a $1^\circ$ lattice, cross-lags in both
-directions and neighbour histories of both outcomes (Section~\ref{sec:app-joint}). Prediction is studied in S6 (Section~\ref{sec:sim-holdout}).
+directions and neighbour histories of both outcomes (Section~\ref{sec:app-joint}). Prediction is studied in S3 (Section~\ref{sec:sim-holdout}).
 
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{figures/s5_estimates.png}
-\caption{S5: estimates of the escalation effect $\kappa$ of recent unrest on
+\caption{S2: estimates of the escalation effect $\kappa$ of recent unrest on
 conflict, over 20 replicates per scenario, without (a, b) and with (c, d) unrest-only
 episodes. Dots are means and lines span the 5th to 95th percentiles of the estimates
 across replicates; the number above each line is the coverage of the nominal 95\%
@@ -112,11 +113,11 @@ estimate of $d_c$ is 0.36--0.38.
 
 The joint model also recovers the shared field. The estimated loading has mean 0.83
 in both scenarios (SD 0.14 without and 0.15 with escalation) against a true 0.8, and the range of the shared field has
-mean 315\,km (SD 40--44) against 300\,km. As in S3 (Section~\ref{sec:sim-persistence}), the standard error of the lag
+mean 315\,km (SD 40--44) against 300\,km. As in S1 (Section~\ref{sec:sim-persistence}), the standard error of the lag
 coefficient is too small when a space-time field is fitted under no escalation: the
 empirical SD of $\hat\kappa$ is 1.20 times the mean SE (0.17 against 0.14). Under
 escalation the ratio is 0.89. With 20 replicates these ratios are imprecise, but
-together with S3 they indicate that plug-in intervals for $\kappa$ near zero are too
+together with S1 they indicate that plug-in intervals for $\kappa$ near zero are too
 short.
 
 
@@ -128,17 +129,17 @@ application are not covered. Unrest-only episodes were tested at one strength (S
 $\kappa$ but misestimates $\lambda$ and $d_c$, so its loading should not be
 interpreted when unrest may have episodes of its own.
 
-\subsection{S6: prediction where one outcome is unobserved}\label{sec:sim-holdout}
+\subsection{S3: prediction where one outcome is unobserved}\label{sec:sim-holdout}
 
 When both outcomes are observed everywhere, the joint model cannot be expected to
 predict either one better than univariate models that use both histories as
 covariates: the shared field is then informed by each outcome's own data in the same
-way, and in S5 the joint and univariate forecasts of conflict differ by at most
+way, and in S2 the joint and univariate forecasts of conflict differ by at most
 $0.0003$ in log score (SE $0.0005$). The joint model should help when one outcome is
 missing in some area and the other is not, for example where conflict events go
-unreported but protests are recorded, or the reverse. S6 tests this.
+unreported but protests are recorded, or the reverse. S3 tests this.
 
-\paragraph{Design.} The data come from the S5 generator, in the scenarios without
+\paragraph{Design.} The data come from the S2 generator, in the scenarios without
 escalation, with escalation, and with escalation and unrest-only episodes, with 20
 replicates each. In each replicate a random block of $6 \times 6$ cells (16\% of the
 domain) is chosen, and one outcome, the target, is removed there in all 130 weeks; the
@@ -152,7 +153,7 @@ are refitted on the remaining data:
 \begin{itemize}
 \item univariate models of the target with a static field, and with a static field
 and a space-time AR(1) field;
-\item the joint model with a shared space-time field of S5, and the extended model;
+\item the joint model with a shared space-time field of S2, and the extended model;
 \item the joint model with, in addition, a shared static field that enters the second
 outcome with its own loading, the structure of the generator.
 \end{itemize}
@@ -164,7 +165,7 @@ conflict and 160 unrest events in the training weeks and 33 and 42 in the test w
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{figures/s6_holdout.png}
-\caption{S6: log score of the target in the held-out block, minus that of the
+\caption{S3: log score of the target in the held-out block, minus that of the
 univariate space-time model, paired by replicate, with conflict (a, b) or unrest (c,
 d) removed in the block; training weeks (a, c) and test weeks (b, d). Dots are means
 over 20 replicates and lines are 95\% intervals (mean $\pm 1.96$ SE). Grey: univariate

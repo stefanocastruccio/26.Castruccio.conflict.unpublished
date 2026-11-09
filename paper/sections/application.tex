@@ -1,28 +1,28 @@
 \section{Application to ACLED 2018--2024}\label{sec:application}
 
 Models are trained on 2018--2022 and evaluated on 2023--2024. The table is the
-repaired version of the cell-week table of \citet{menicali2026conflicts}; the repair,
-and the boosting analysis before and after it, are described in
-Sections~\ref{sec:app-data} and~\ref{sec:app-xgb} of the Supplementary Material. The
+repaired version of the cell-week table of \citet{menicali2026conflicts}; the repair
+is described in Sections~\ref{supp:data-table} and~\ref{sec:app-data} of the
+Supplementary Material. The
 computations were run at the Notre Dame Center for Research Computing.
 
 \subsection{Escalation versus shared episodes}\label{sec:app-joint}
 
 Recent unrest predicts conflict: in every univariate model of conflict fitted here,
 the coefficient of the unrest history is positive and more than two standard errors
-from zero. S5 (Section~\ref{sec:sim-joint}) showed that this is weak evidence of
+from zero. S2 (Section~\ref{sec:sim-joint}) showed that this is weak evidence of
 escalation, because univariate models report escalation that does not exist when the
 two outcomes share latent episodes, and that the joint model recovers $\kappa$. The
-application differs from S5 in using steps of 13 weeks on a $1^\circ$ lattice,
+application differs from S2 in using steps of 13 weeks on a $1^\circ$ lattice,
 cross-lags in both directions and the neighbour histories of both outcomes.
 
 \paragraph{Region and models.} The region is West Africa and the Sahel, longitude
 $18^\circ$W to $16^\circ$E and latitude $4^\circ$N to $25^\circ$N. It has 2{,}505 cells
 in 22 countries and 906{,}810 cell-weeks per outcome with complete history. It contains
-the central Sahel, the Lake Chad basin and the coastal states of West Africa. The shared field $v$ is defined on 641 cells of The shared field $v$ is defined on 641 cells of
+the central Sahel, the Lake Chad basin and the coastal states of West Africa. The shared field $v$ is defined on 641 cells of
 $1^\circ$, with 28 steps of $\Delta = 13$ weeks. We fit four models, with the
 covariates, initial-conditions term, year effects and missingness indicators of
-Section~\ref{sec:app-glmm} of the Supplementary Material, and the own and neighbour
+Section~\ref{sec:data-cov}, and the own and neighbour
 histories of both outcomes:
 \begin{itemize}
 \item \emph{univariate static}: conflict only, with country effects, cell effects and a
@@ -55,12 +55,12 @@ conflict is $\hat\kappa = 0.138$ (SE 0.031). Adding a space-time field for confl
 hardly changes it (0.131, SE 0.032), although the field is clearly present (range
 423\,km, standard deviation 0.69, AR(1) coefficient 0.90 per 13 weeks) and it reduces
 the own-lag coefficient from 0.575 (SE 0.016) to 0.444 (SE 0.017). This is the
-pattern of S5: a field estimated from conflict alone absorbs part of the persistence
+pattern of S2: a field estimated from conflict alone absorbs part of the persistence
 of conflict, but not the information about the current episode that is carried by
 recent unrest. In the joint model the coefficient falls to 0.044 (SE 0.032). The
 plug-in interval of $\pm 1.96$ SE runs from $-0.018$ to $0.106$, but it is likely too
-short. In S5 without escalation, the empirical SD of $\hat\kappa$ from the joint model
-was 1.20 times its mean SE, and in S3 the corresponding ratio for $\hat\delta$ was
+short. In S2 without escalation, the empirical SD of $\hat\kappa$ from the joint model
+was 1.20 times its mean SE, and in S1 the corresponding ratio for $\hat\delta$ was
 1.19 to 1.66 whenever a space-time field was fitted
 (Sections~\ref{sec:sim-joint} and~\ref{sec:sim-persistence}).
 The own-lag coefficient stays at the level of the univariate space-time model (0.459,
@@ -90,7 +90,7 @@ produce, with $\hat\kappa$ attenuated towards zero. The extended model separates
 It raises the log marginal likelihood by 131, its unrest-specific field is substantial
 (range 787\,km, SD 0.49, AR(1) coefficient 0.69 per 13 weeks), the loading of the
 shared field falls from 0.87 to 0.58, and $\hat\kappa$ rises to 0.095 (SE 0.032). In
-S5 the extended model gave slightly larger estimates than the model with one shared
+S2 the extended model gave slightly larger estimates than the model with one shared
 field, so part of this rise may reflect the model rather than the data.
 
 Over Africa and the Middle East (12{,}995 cells in 78 countries, 4.7 million
@@ -126,7 +126,7 @@ a property of occurrence alone.
 
 When both outcomes are observed, the joint model forecasts neither one better than
 the univariate models (Section~\ref{supp:app-jointpred} of the Supplementary
-Material), as expected. As in S6 (Section~\ref{sec:sim-holdout}), we therefore ask
+Material), as expected. As in S3 (Section~\ref{sec:sim-holdout}), we therefore ask
 whether it predicts an outcome better where that outcome is not observed but the
 other one is.
 
@@ -159,7 +159,7 @@ log score of conflict in held-out countries by 0.0023 (SE 0.0012) in the trainin
 years and 0.0018 (SE 0.0015) in the test years, with the largest gains in Palestine,
 Lebanon, Yemen, Syria and Afghanistan. Add a figure of gains by country.}
 
-As in S6, the joint model helps most in filling in an outcome that is unreported in
+As in S3, the joint model helps most in filling in an outcome that is unreported in
 some area while the other is recorded, and less in forecasting it. Where conflict
 reporting is sparse but protests are recorded, or the reverse, the shared field
 transfers information on the current episode from one outcome to the other.

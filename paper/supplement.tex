@@ -115,7 +115,8 @@ Equation, section and table numbers without the prefix S refer to the main paper
 \input{sections/supp_simulation}
 \input{sections/supp_application}
 
-\section{Methods}\label{supp:methods}
+\section{Additional tables}\label{supp:tables}
+
 \begin{table}
 \caption{Latent blocks of the latent Gaussian model of Section~3.1 of the main paper, their precision matrices and
 hyperparameters.}\label{tab:blocks}
@@ -124,11 +125,10 @@ hyperparameters.}\label{tab:blocks}
 \toprule
 Block & Dimension & Precision & Hyperparameters \\
 \midrule
-fixed effects $\bbeta, \delta, \bgamma, \bm{\alpha}$ & $p$ & $10^{-4} \bm{I}$ & -- \\
+fixed effects $\bbeta, \delta, \bm{\alpha}$ & $p$ & $10^{-4} \bm{I}$ & -- \\
 country effects $\bu$ & $n_c$ & $\sigma_u^{-2} \bm{I}$ & $\sigma_u$ \\
 spatial field $\bw$ & $n$ & $\bQ_s(\rho_w, \sigma_w)$, SPDE precision & $\rho_w, \sigma_w$ \\
 cell effects $\bm{e}$ & $n$ & $\sigma_e^{-2} \bm{I}$ & $\sigma_e$ \\
-SVC fields $\bmeta_k$ & $n$ each & $\bQ_s(\rho_k, \sigma_k)$ & $\rho_k, \sigma_k$ \\
 space-time field $\bv$ & $n\,T_v$ & $\bQ_{\mathrm{AR}}(\phi) \otimes \bQ_s(\rho_v, \sigma_v)$ & $\rho_v, \sigma_v, \phi$ \\
 \bottomrule
 \end{tabular}
@@ -149,111 +149,8 @@ qualitatively.}\label{tab:barrier}
 \input{tables/barrier}
 \end{table}
 
-\section{Simulation studies}\label{supp:sim}
 \begin{table}
-\caption{S1: residual diagnostics and recovery of the field (mean and SD over 20
-replicates).}\label{tab:s1-field}
-\centering\small
-\input{tables/s1_field}
-\end{table}
-
-\begin{table}
-\caption{S2: estimation of the effect $\alpha$ of a national indicator (30 replicates
-per scenario). Coverage of nominal 95\% intervals, and the proportion of replicates in
-which the interval excludes zero. $^\ast$The model with $u + w$, in which $Z_0$ is
-replaced by its residual after projection on the 10 smoothest eigenvectors of the
-lattice Laplacian. As in the application, $u$ stays in the model, so the coefficient
-is identified partly through the shrinkage of $u$ under its exchangeable prior; we
-read spatial+ as a sensitivity analysis. $^\dagger$Least-squares slope of SHAP values on
-$Z_0$, with the 95\% block-bootstrap percentile interval and interquartile
-range.}\label{tab:s2}
-\centering\small
-\input{tables/s2}
-\end{table}
-
-\begin{table}
-\caption{S4: estimation of biome-specific temperature effects (30 replicates).
-``Detects sign'': proportion of replicates in which the interval excludes zero on the
-correct side. $^\ddagger$Median SHAP value of raw temperature within the biome, with
-the interquartile range of the bootstrap replicates, as in the original analysis; it
-estimates neither $\gamma_b$ nor $\bar\beta_b$.}\label{tab:s4}
-\centering\small
-\input{tables/s4}
-\end{table}
-
-\begin{table}
-\caption{S4: recovery of the spatially varying coefficient $\beta(s)$ (mean and SD
-over 30 replicates).}\label{tab:s4-extra}
-\centering\small
-\input{tables/s4_extra}
-\end{table}
-
-\section{Application}\label{supp:app}
-\begin{table}
-\caption{Test-period (2023--2024) residual diagnostics, AME region,
-for every model on identical test rows: Moran's $I$ of the standardised cell
-residuals (permutation $p$-value from 999 permutations, bounded below by 0.001) and
-the residual correlation between neighbouring cells in the same country and across a
-border.}\label{tab:app-diag}
-\centering\small
-\input{tables/real_diag}
-\end{table}
-
-\begin{table}
-\caption{Fitted hyperparameters of the hybrid models, AME region:
-range $\rho_w$ and standard deviation $\sigma_w$ of the field, standard deviation of
-the independent cell effects, and standard deviation $\sigma_u$ of the country
-effects.}\label{tab:app-field}
-\centering\small
-\input{tables/real_field}
-\end{table}
-
-\begin{table}
-\caption{Posterior summaries of the field $w$ of the hybrid model averaged over
-regions: mean, standard deviation and posterior probability that the regional average
-is positive. The regions were chosen before the fit, as known conflict zones and
-regions expected to be quiet. The last two rows give the share of all cells whose
-posterior probability of $w(s) > 0$ is above 0.95 or below 0.05.}\label{tab:app-boxes}
-\centering\small
-\input{tables/real_boxes}
-\end{table}
-
-\begin{figure}
-\centering
-\includegraphics[width=0.6\textwidth]{figures/real_variogram.png}
-\caption{Empirical semivariograms of the standardised test-period cell residuals,
-against great-circle distance.}\label{fig:app-variogram}
-\end{figure}
-
-\section{Additional results}\label{supp:additional}
-
-\begin{table}
-\caption{Dynamic experiments for the hybrid models, AME region. In
-all of them the offset is the country cross-fitted XGBoost prediction. (a) Oracle:
-the latent terms are fitted to the 2023--2024 test weeks themselves, with the offset
-fixed, to show how much residual structure the test period contains and whether it is
-smooth in space; the correlation compares this field with the field fitted on
-2018--2022, and Moran's $I$ is computed on the in-sample cell residuals. (b) Scores on
-the 2024 test weeks only (713{,}388 rows per outcome), for models fitted on 2018--2022
-and for models whose offset and latent terms are retrained on 2018--2023 (training
-years in parentheses); differences in log score are
-relative to the corrected XGBoost model, with SEs clustered by country. (c, d)
-Hyperparameters of the space-time hybrids: offset, $u$, independent cell effects $e$
-and an AR(1) $\otimes$ Mat\'ern field $v$ on $1^\circ$ cells, with no static field
-$w$. The field $v$ is defined on the observed cells only, with reflecting edges, which
-departs from the boundary rule of Remark~1 of the main paper; $\phi$ is the AR(1) coefficient
-per time step, and the number of steps in parentheses is the number that falls in the
-training period. (e) Quarterly update: the latent terms are re-estimated at the start
-of each quarter of the test period with all data observed so far, and the
-hyperparameters are kept at their 2018--2022 values. Out-of-sample scores of the
-models in (c), (d) and (e) are in the forecasting comparison of Section~5 of the
-main paper.}\label{tab:app-dynamic}
-\centering\small
-\input{tables/real_dynamic}
-\end{table}
-
-\begin{table}
-\caption{S5: full results for the escalation effect $\kappa$ of recent unrest on
+\caption{S2: full results for the escalation effect $\kappa$ of recent unrest on
 conflict, by scenario and estimator, over 20 replicates per scenario. Mean
 $\hat\kappa$, its empirical SD across replicates and the mean of the estimated SEs;
 coverage of the nominal 95\% intervals for $\kappa$ with its Monte Carlo SE;
@@ -281,20 +178,18 @@ standardised on the training rows. The log marginal likelihood of the joint mode
 includes the unrest data and is not comparable with those of the univariate models.
 Test scores are for 2023--2024 in the same region. The field $v$ is defined on the
 observed $1^\circ$ cells only, with reflecting edges, which departs from the boundary
-rule of Remark~1 of the main paper. SEs are plug-in values; in S3 and S5 such SEs are
+rule of Remark~1 of the main paper. SEs are plug-in values; in S1 and S2 such SEs are
 too small when a space-time field is fitted (ratio of empirical SD to mean SE up to
-1.66 in S3 and 1.20 in S5 without escalation), so intervals from these models are
+1.66 in S1 and 1.20 in S2 without escalation), so intervals from these models are
 likely too narrow. With a single shared space-time field, unrest-only episodes are
-absorbed into $v$, which can bias $\kappa$ towards zero; in S5 they inflated
+absorbed into $v$, which can bias $\kappa$ towards zero; in S2 they inflated
 $\hat\lambda$ instead. The extended model has an additional unrest-specific space-time field $v_{\mathrm{U}}$. Test scores here use the probit approximation to $E\{\operatorname{expit}(\eta)\}$; the model comparisons in the text use common Monte Carlo draws.}\label{tab:app-joint-full}
 \centering\small
 \input{tables/real_joint_full}
 \end{table}
 
-\section{Further simulation results}\label{supp:further-sim}
-
 \begin{table}
-\caption{S3: estimation of the state-dependence parameter $\delta$ for all five truths
+\caption{S1: estimation of the state-dependence parameter $\delta$ for all five truths
 and all step lengths of the space-time field $v$ (20 replicates per truth). The two
 truths with slow $v$ have an AR(1) coefficient of 0.97 per week instead of 0.9. SD/SE
 is the ratio of the empirical SD of $\hat\delta$ to the mean estimated SE; values
@@ -302,15 +197,6 @@ above 1 mean that the plug-in intervals are too narrow. Time is the mean fit tim
 replicate.}\label{tab:s3-full}
 \centering\small
 \input{tables/s3_full}
-\end{table}
-
-\begin{table}
-\caption{S4 with asymmetric biome effects $\gamma = (0, 0.1, 0.2, 0.4)$ (30
-replicates); otherwise as Table~\ref{tab:s4}. Because the cell-weighted mean
-$\bar\gamma$ of $\gamma$ is not zero, the SHAP slope targets
-$(\bar\gamma + \gamma_b)/2$.}\label{tab:s4-asym}
-\centering\small
-\input{tables/s4_asym}
 \end{table}
 
 \IfFileExists{spr-ims-nameyear.bst}{\bibliographystyle{spr-ims-nameyear}}{\bibliographystyle{plainnat}}

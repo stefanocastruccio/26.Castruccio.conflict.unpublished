@@ -1,4 +1,4 @@
-\section{Simulation studies S0--S4}\label{supp:sim-more}
+\section{Further simulation studies}\label{supp:sim-more}
 
 \subsection{Data-generating process}\label{sec:sim-dgp}
 
@@ -6,7 +6,7 @@ The simulator mimics the structure of the ACLED grid. The domain is a
 $40 \times 30$ block of $0.5^\circ$ cells between $10^\circ$E and $30^\circ$E and
 between $5^\circ$S and $10^\circ$N (1{,}200 cells of about 55\,km), with 104 training
 weeks, 52 test weeks and 12 burn-in weeks. Countries are the Voronoi cells of randomly
-placed seeds (14 countries; 25 in S2). Four biomes are latitude bands with boundaries
+placed seeds (14 countries). Four biomes are latitude bands with boundaries
 perturbed by a smooth random field, ordered from ``cold'' (biome 1) to ``tropical''
 (biome 4). Population is a standardised Mat\'ern field (range 250\,km) plus white
 noise. Temperature and precipitation anomalies are standardised AR(1) processes in time
@@ -15,8 +15,7 @@ temperature is also generated, as a climatology $30 - 1.2(\varphi - \varphi_{\mi
 in latitude $\varphi$, which rises from biome 1 to biome 4, plus a seasonal cycle
 $(1 + 0.15|\varphi|)\cos(2\pi t/52)$ and 2.5 times the anomaly. The climatology and
 the seasonal cycle have no effect in the truth. Three national covariates
-$Z_0, Z_1, Z_2$ are standard normal across countries. $Z_1$ and $Z_2$ have no effect
-but, like the national indicators in the data, allow trees to identify countries.
+$Z_0, Z_1, Z_2$ are standard normal across countries. $Z_1$ and $Z_2$ have no effect.
 Outcomes are generated sequentially from
 \begin{equation}\label{eq:sim}
 \logit\pi_{st} = \beta_0 + \beta_{\mathrm{pop}}\mathrm{pop}_s
@@ -32,43 +31,15 @@ from the lattice GMRF of Section~\ref{sec:methods-spde}. Unless stated otherwise
 $\beta_0 = -4$, $\beta_{\mathrm{pop}} = 0.5$, $\delta = 0.6$,
 $\bgamma = (-0.3, -0.1, 0.1, 0.3)$, $\eta \equiv 0$, $\beta_{\mathrm{prec}} = -0.15$,
 $\alpha = 0$, $\sigma_w = 1$, $\rho_w = 400$\,km and $v \equiv 0$. The resulting
-prevalence of event weeks is about 4\%. Spatial confounding (S2) is induced by
-setting $Z_{0,c} = \varrho\,\tilde\ell_c + (1-\varrho^2)^{1/2}\epsilon_c$, where
-$\tilde\ell_c$ is the standardised country average of $u_c + w(s)$ and
-$\epsilon_c \sim \Normal(0,1)$.
+prevalence of event weeks is about 4\%.
 
-The default parameters are not calibrated to the application. The hybrid model fitted
-to the conflict outcome in the AME region (Africa, the Middle East and adjacent
-regions; Section~\ref{sec:app-hybrid}) has
-a field standard deviation of 1.48, a range of 263\,km and a country standard deviation
-of 0.76, and there persistence is about as accurate as cross-fitted boosting (AUC-PR
-0.45 and 0.46). S1 is therefore repeated with $\sigma_w = 1.5$,
-$\rho_w = 260$\,km and $\sigma_u = 0.8$, other parameters at their defaults. All
-covariate effects in \eqref{eq:sim} are linear on the logit scale, and the only
-interaction is between biome and temperature. This setting does not reward the
-flexibility of trees, so the
-comparisons between boosting and latent models below hold for this data-generating
-process and need not carry over to the application.
+The default parameters are not calibrated to the application, and all covariate
+effects in \eqref{eq:sim} are linear on the logit scale.
 
 With $R$ replicates, a proportion $p$ (coverage, rejection rate) has Monte Carlo
 standard error $\{p(1-p)/R\}^{1/2}$, at most 0.09 for $R = 30$ and 0.11 for $R = 20$, and
 a mean estimate has Monte Carlo standard error equal to its empirical SD divided by
 $R^{1/2}$. We give these standard errors where a comparison depends on them.
-
-\paragraph{Boosting.} Two versions of XGBoost are used, both with the hyperparameters
-of the original analysis \citep{menicali2026conflicts}: depth 5, learning rate 0.05,
-row and column subsampling 0.8, minimum child weight 30 and $L_2$ penalty 5. The
-\emph{original-like} version follows the original procedure. Positives are weighted by
-$(n_0/n_1)^{1/2}$. The number of trees is chosen by early stopping on the last 26
-training weeks, after which the model is refitted on all training weeks. Its log-odds
-are prior-corrected before scoring (Section~\ref{sec:methods-hybrid}). The
-\emph{unweighted} version uses 300 trees without class weights. The minimum child weight
-of 30 was chosen for millions of rows. At a prevalence of about 4\% each row contributes
-a Hessian of about 0.04, so a leaf needs several hundred rows, which restricts the trees
-more on the simulated training sets (about 125{,}000 rows, or 37{,}000 for a 30\%
-subsample) than on the data. The features are
-population, distance from the equator, biome, the two anomalies, $Z_0$--$Z_2$ and the
-four-week event count. As in the original analysis, they include no coordinates.
 
 \subsection{S0: accuracy of the field representation and of the Laplace engine}\label{sec:sim-engine}
 
@@ -99,7 +70,7 @@ cover $\beta_0 + w(s)$ for 94.8\% and 94.3\% of cells. Ignoring the uncertainty 
 $\btheta$ therefore costs little here, including at the prevalence of the data. This
 holds for the coefficient of a covariate that is independent in space and time and
 independent of $w$, which is the easiest case. S0 does not check spatially smooth
-covariates that are correlated with the field, and S3 shows that the plug-in standard
+covariates that are correlated with the field, and S1 shows that the plug-in standard
 error of $\delta$ is too small when a space-time field is fitted. A fit takes 2--4
 seconds on one core.
 
@@ -113,194 +84,7 @@ error.}\label{tab:s0}
 \input{tables/s0}
 \end{table}
 
-\subsection{S1: residual structure after boosting}\label{sec:sim-residual}
-
-Data are generated from \eqref{eq:sim} with the default parameters. All models are
-trained on the first 104 weeks and evaluated on the following 52 weeks at the same
-cells, as in the original analysis. We compare the true probabilities (oracle); the
-original-like XGBoost; the same model with each cell's training event rate as an
-additional feature, computed leaving out the row's own 52-week period (the
-location-aware baseline of Section~\ref{sec:methods-diagnostics}); the unweighted
-XGBoost cross-fitted by country; the hybrid model~\eqref{eq:hybrid} with independent
-cell effects and with the Mat\'ern field; the parametric model~\eqref{eq:model} with
-country effects and field; and the persistence baseline. The parametric model has a
-single temperature slope, so it omits the biome-specific slopes of the truth and is not
-correctly specified. Table~\ref{tab:s1} reports
-out-of-sample scores over 20 replicates. Table~\ref{tab:s1-field} reports Moran's $I$
-of the training-period cell residuals of the two XGBoost models and the recovery of the
-field. Figure~\ref{fig:s1} shows one replicate.
-
-Three findings stand out. First, boosting leaves strong spatial structure in its
-residuals. Moran's $I$ of the training-period cell residuals is 0.36 (SD 0.05 across
-replicates) for the original-like XGBoost, which is trained on the same locations, and
-0.64 for the version cross-fitted by country. Under independence it is about
-$-0.001$. The trees recover part of the field through country-identifying national
-covariates, so in-sample residuals understate the spatial structure. The cross-fitted
-offset alone predicts poorly (AUC-PR 0.10 against 0.17), as it must, since it ignores
-everything that is specific to a country.
-
-Second, the field estimated on top of the cross-fitted offset recovers the truth
-(correlation between $\hat w$ and $w$ 0.85), with $\hat\rho_w = 409$\,km against 400 and
-$\hat\sigma_w = 0.83$ against 1.
-
-Third, modelling the latent structure improves forecasts for the same places, but
-against a boosting baseline that is given each cell's own history the gain is small,
-and it reverses in the calibrated setting below. Differences below are paired by replicate, with standard errors over the 20 replicates.
-\begin{itemize}
-\item \emph{Against the original-like XGBoost.} The hybrid model with the field improves
-the log score in all 20 replicates (mean difference $-0.0027$, SE $0.0002$) and AUC-PR
-in all 20 ($+0.011$, SE $0.001$).
-\item \emph{Field against independent cell effects.} The field beats independent cell
-effects in every replicate (log score $-0.0013$, SE $0.0001$; AUC-PR $+0.003$, SE
-$0.0003$): smoothing across neighbouring cells helps.
-\item \emph{Against the location-aware baseline.} The location-aware boosting baseline
-is a strong competitor. It improves on the original-like XGBoost about as much as the
-hybrid model does. Against it, the hybrid model with the field has a better log score
-in 16 of 20 replicates (mean difference $-0.0011$, SE $0.0004$) and a better AUC-ROC in
-18 of 20 ($+0.008$, SE $0.001$). Its Brier score is the same (difference $+0.00002$, SE
-$0.00006$; better in 9 of 20) and its AUC-PR is similar ($-0.001$, SE $0.001$; better
-in 6 of 20). This baseline uses each cell's unsmoothed event rate, computed from 52
-weeks for training rows and from 104 weeks for test rows, so the feature is noisier in
-training than at test. It does not smooth across neighbouring cells, and we have not
-compared the field with a boosting model that does, such as one with neighbour rates
-or a Gaussian process component. The log-score gain closes about a quarter of the gap between the baseline
-and the true probabilities ($0.0042$). The hybrid model with independent cell effects is
-worse than the baseline: its log score is similar ($+0.0002$, SE $0.0004$; better in 6
-of 20) and its AUC-PR is lower ($-0.004$, SE $0.001$; lower in 17 of 20).
-\item \emph{Parametric model.} Although it omits the biome-specific temperature slopes,
-the parametric model beats the baseline in log score in every replicate ($-0.0020$, SE
-$0.0004$) and in AUC-PR in 19 of 20 ($+0.004$, SE $0.001$). It closes about half of
-the log-score gap to the true probabilities.
-\end{itemize}
-Once boosting is given each cell's own history, the gain from the latent field is
-therefore small. It appears in the log score and in AUC-ROC, but not in the Brier score
-or in AUC-PR, so these results do not show whether it comes from calibration or from
-ranking. The persistence baseline reaches an AUC-PR of 0.095, against 0.20 for the true
-probabilities. In the data, persistence is much stronger, because some cells record
-events almost every week. S1 does not reproduce that regime, which is one reason to repeat it with the calibrated
-parameters. With those parameters the prevalence of event weeks in the test period is
-6.9\% (SD 2.8\% across replicates), and persistence reaches an AUC-PR of 0.30 against
-0.47 for the true probabilities. The posterior mean of the field is about as close to the truth as before
-(correlation between $\hat w$ and $w$ 0.84), but the hyperparameters are more biased:
-$\hat\sigma_w = 1.16$ against 1.5 and $\hat\rho_w = 299$\,km against 260. The comparison with the location-aware
-baseline changes, however (paired differences, SE over 20 replicates):
-\begin{itemize}
-\item the hybrid model with the field is now worse than the baseline: log score
-$+0.0011$ (SE $0.0008$; better in 5 of 20), Brier score $+0.0006$ (SE $0.0002$), AUC-PR
-$-0.013$ (SE $0.001$; lower in all 20) and AUC-ROC $-0.0013$ (SE $0.0005$). With
-independent cell effects it is worse again (log score $+0.0021$, SE $0.0008$; AUC-PR
-$-0.014$, SE $0.001$). The offset cross-fitted by country is much weaker here than the
-baseline (AUC-PR 0.26 against 0.45), and the latent effects do not make up the
-difference;
-\item the parametric model still beats the baseline: log score $-0.0026$ (SE $0.0007$;
-better in all 20), Brier score $-0.0005$ (SE $0.0002$; 17 of 20), AUC-PR $+0.003$ (SE
-$0.001$; 15 of 20) and AUC-ROC $+0.004$ (SE $0.0005$; all 20). It closes about 40\% of
-the log-score gap between the baseline and the true probabilities ($0.0064$).
-\end{itemize}
-The gain from a latent field on top of boosting therefore depends on the setting, and
-with a stronger field and stronger country effects it disappears. The model that
-benefits in both settings is the parametric one, whose functional form matches the
-truth up to the omitted biome slopes.
-
-\begin{table}
-\caption{S1: out-of-sample scores on the 52 test weeks (mean over 20 replicates,
-Monte Carlo standard error in parentheses). Lower is better for the log and Brier
-scores. The last two columns give the number of replicates in which the model has a
-better log score than (a) the original-like XGBoost and (b) the location-aware XGBoost
-with the cell training rate.}\label{tab:s1}
-\centering\small
-\input{tables/s1_scores}
-\end{table}
-
-\begin{figure}
-\centering
-\includegraphics[width=\textwidth]{figures/s1_maps.png}
-\caption{S1, one replicate. From left: the true field $w$; standardised cell residuals
-of the XGBoost model cross-fitted by country (training period); posterior mean of $w$
-in the hybrid model~\eqref{eq:hybrid}; semivariogram of the XGBoost cell residuals.
-Colour scales are symmetric and capped at the 98th percentile of the absolute values.
-Lines are country borders.}\label{fig:s1}
-\end{figure}
-
-\subsection{S2: national indicators under spatial confounding}\label{sec:sim-confounding}
-
-Three scenarios with 25 countries and 30 replicates each are considered: no
-confounding with $\alpha = 0$ ($\varrho = 0$); confounding with $\alpha = 0$
-($\varrho = 0.8$); and confounding with a true effect $\alpha = -0.3$. We compare
-estimators (i)--(iv) of Section~\ref{sec:methods-confounding}, with spatial+ using
-$m = 10$ eigenvectors, and the XGBoost summary of the original analysis. For the
-latter, the original-like XGBoost is fitted to a fixed 30\% subsample of the training
-data, as in the original procedure. The effect of $Z_0$ is summarised by the
-least-squares slope of its SHAP values on $Z_0$. Its intervals come from 40 replicates
-of a spatial block bootstrap with $2.5^\circ$ blocks (48 blocks on the domain), each
-refitted with the same number of trees and class weight. The reported estimate is the
-median over bootstrap replicates, as in the original analysis. A single fit to the same
-subsample gives nearly the same estimates (means $-0.01$, $0.34$ and $0.15$ in the three
-scenarios below, against bootstrap medians of $-0.01$, $0.33$ and $0.14$). The estimate
-from a single fit to all training rows is not closer to the truth: its means are
-$-0.01$, $0.40$ and $0.17$ (empirical SD 0.08--0.10). The bias under confounding is
-therefore not an artefact of the subsample or of the bootstrap.
-
-\begin{figure}
-\centering
-\includegraphics[width=\textwidth]{figures/s2_estimates.png}
-\caption{S2: estimates of the effect $\alpha$ of a national indicator over 30 replicates
-per scenario. Dots are means and lines span the 5th to 95th percentiles of the
-estimates across replicates; the number above each line is the coverage of the nominal
-95\% intervals. Blue: latent Gaussian models; red: the XGBoost summary of the original
-analysis (least-squares slope of the SHAP values, block-bootstrap interval). The dashed
-line marks the true value. Full results are in Table~\ref{tab:s2}.}\label{fig:s2}
-\end{figure}
-
-Figure~\ref{fig:s2} summarises the results (Table~\ref{tab:s2} gives
-the numbers). Without confounding, all estimators are
-centred on zero, but intervals that ignore the country-level structure of the covariate
-are badly anticonservative. Logistic regression reports a standard error of 0.016
-against an empirical SD of 0.107. It covers in 23\% of replicates and declares a
-non-existent effect significant in 77\%. Country effects alone restore nominal coverage.
-The block-bootstrap summary of the original analysis is closer to nominal than logistic
-regression, but its 95\% interval still excludes zero in 20\% of replicates (6 of 30;
-Monte Carlo SE 0.07). Its bootstrap standard error is about 0.70 times the empirical SD
-(0.044 against 0.063). Its interquartile range, the criterion used in the original
-analysis, excludes zero in 50\% of replicates although $Z_0$ has no effect. This is the
-rate expected by construction: the interquartile range is a 50\% interval, so as a test
-it has a nominal false-positive rate of 50\%. It is not a significance criterion.
-
-Under confounding with $\alpha = 0$, no estimator is unbiased:
-\begin{itemize}
-\item logistic regression and the country-effects model report $\hat\alpha$ of 0.47 and
-0.49 and always reject;
-\item the spatial field removes about 60\% of the bias ($\hat\alpha = 0.20$), and spatial+
-removes about 70\% (0.15, coverage 0.60);
-\item the spatially adjusted estimators still reject $\alpha = 0$ in 70\% (field), 67\%
-(field and country effects) and 40\% (spatial+) of replicates (Monte Carlo SE about
-0.09);
-\item XGBoost reports a SHAP slope of 0.33, with an interquartile range that excludes zero
-in every replicate.
-\end{itemize}
-With a true protective effect ($\alpha = -0.3$), logistic regression, the
-country-effects model and XGBoost report effects of the \emph{wrong sign} ($+0.22$,
-$+0.24$ and $+0.14$). The XGBoost interquartile range excludes zero in 97\% of
-replicates. The spatial estimators recover the sign on average but only 30--45\% of the
-magnitude ($-0.09$ to $-0.13$).
-
-The lesson for the national sustainability indicators is that spatial adjustment
-reduces confounding bias but does not remove it. Under a confounded null, the adjusted
-estimators still reject in 40--70\% of replicates, so an association that survives
-spatial adjustment is not evidence of an effect, and the data do not identify its causal
-size. A large SHAP contribution of a national indicator, stable across block-bootstrap
-replicates, is fully compatible with no effect at all. These results use a single
-confounder that varies at the country scale.
-
-The block bootstrap resamples spatial blocks, but $Z_0$ varies only between countries,
-and a country spans several blocks. The bootstrap therefore does not reproduce the
-sampling variability of a country-level effect, whose effective sample size is the
-number of countries (Section~\ref{sec:methods-confounding}). This is consistent with the
-bootstrap standard error being about 30\% too small in the scenario without
-confounding (with 30 replicates, the empirical SD has a relative Monte Carlo error of
-about 13\%).
-
-\subsection{S3: state dependence versus persistent heterogeneity}\label{sec:sim-persistence}
+\subsection{S1: state dependence versus persistent heterogeneity}\label{sec:sim-persistence}
 
 Three data-generating processes on a smaller $16 \times 14$ domain (224 cells, 6
 countries, 104 training weeks, 20 replicates each) produce autocorrelation in $Y_{st}$
@@ -320,8 +104,7 @@ weekly steps ($\Delta = 1$, the resolution of the data-generating process), at f
 steps ($\Delta = 4$) and at eight-week steps ($\Delta = 8$, the resolution of the
 regional state-dependence fits in the application). Table~\ref{tab:s3} shows the three
 main truths at $\Delta = 1$ and $\Delta = 4$. The $\Delta = 8$ fits, the two
-persistent truths and the fit times are reported in the text only. We also report the share of total mean absolute SHAP value that the
-unweighted XGBoost (300 trees, not the original procedure) assigns to the lag feature.
+persistent truths and the fit times are reported in the text only.
 
 Under state dependence, ignoring the latent field inflates $\hat\delta$ by about a
 quarter (1.26; coverage 0.60), and all latent specifications are approximately unbiased
@@ -372,130 +155,9 @@ at $\Delta = 1$. Faster space-time dynamics ($\phi < 0.9$) are
 not covered, and neither are the 13-week steps of the joint and space-time fits in
 the application.
 
-Finally, the XGBoost importance of the lag feature is about the same under all
-truths (share 0.09--0.12, Monte Carlo SE about 0.01), including $\delta = 1$ and
-$\delta = 0$. With nine features, this is close to an equal share. This configuration
-of boosting (300 trees, minimum child weight 30, about 23{,}000 rows at a prevalence of
-2.5--4\%) does not respond to state dependence at all, and it does not reproduce the
-dominance of recent history seen in the data. This comparison is therefore
-uninformative, and we draw no conclusion from it. The point that importance alone
-cannot show that violence begets violence is a logical one: S3 shows that the lag
-coefficient itself is strongly inflated by persistent heterogeneity, and an importance
-measure has no mechanism that would separate the two.
-
 \begin{table}
-\caption{S3: estimation of the state-dependence parameter $\delta$ (20 replicates per
-scenario), and the share of the XGBoost mean absolute SHAP value assigned to the lag
-feature.}\label{tab:s3}
+\caption{S1: estimation of the state-dependence parameter $\delta$ (20 replicates per
+scenario).}\label{tab:s3}
 \centering\small
 \input{tables/s3}
 \end{table}
-
-\subsection{S4: biome-specific climate effects}\label{sec:sim-svc}
-
-The temperature effect follows \eqref{eq:svc}, with biome means
-$\bgamma = (-0.3, -0.1, 0.1, 0.3)$ and a within-biome Mat\'ern deviation $\eta$
-($\sigma_\eta = 0.15$, $\rho_\eta = 600$\,km), $\sigma_w = 0.8$ and 30 replicates. We
-compare:
-\begin{itemize}
-\item fixed biome-specific slopes, without and with $u + w$;
-\item the SVC model~\eqref{eq:svc};
-\item two XGBoost summaries fitted to the anomaly: the per-biome least-squares slope of
-the SHAP value of the anomaly on the anomaly, and the same slope computed from the SHAP
-value plus the interaction values credited to the anomaly
-\citep[$\Phi_{jj} + 2\sum_{k\neq j}\Phi_{jk}$ in the notation of][]{lundberg2020trees}.
-For a pure biome-by-temperature interaction $\gamma_b z$ with biome independent of $z$,
-the interventional SHAP value of $z$ is $(\bar\gamma + \gamma_b)(z - \E z)/2$, where
-$\bar\gamma$ is the cell-weighted mean of $\gamma_b$. The first summary therefore targets
-$(\bar\gamma + \gamma_b)/2$, which equals $\gamma_b/2$ here only because the biomes have
-equal sizes and $\bgamma$ is symmetric about zero. The second targets $\gamma_b$ in
-general. A further run with $\bgamma = (0, 0.1, 0.2, 0.4)$ checks this;
-\item the statistic of the original analysis: the median SHAP value of raw temperature
-within each biome, from a model fitted to raw temperature.
-\end{itemize}
-The XGBoost models are original-like. As in the original procedure, each estimate is
-the median over 20 replicates of the $2.5^\circ$ block bootstrap on a fixed 30\%
-subsample, and the 95\% intervals are bootstrap percentiles. With 20 replicates these
-are close to the range of the replicates. For the median SHAP value we report the
-interquartile range of the bootstrap replicates, the criterion of the original
-analysis. We also report the same statistics from a single fit to all training rows. Coverage is reported for both the biome mean $\gamma_b$ and the
-realised biome average $\bar\beta_b$ (Section~\ref{sec:methods-svc}).
-
-\begin{figure}
-\centering
-\includegraphics[width=\textwidth]{figures/s4_estimates.png}
-\caption{S4: estimates of the biome-specific temperature effects over 30 replicates.
-Dots are means and lines span the 5th to 95th percentiles of the estimates across
-replicates; the number above each line is the coverage of the nominal 95\% intervals for
-$\gamma_b$ (not shown for the median SHAP value, which has no corresponding
-estimand). The ordinary SHAP slope targets $(\bar\gamma + \gamma_b)/2$, not
-$\gamma_b$, so its low coverage for $\gamma_b$ in biomes 1 and 4 holds by construction;
-its coverage of its own target is given in the text. Blue: latent Gaussian models; red: XGBoost summaries. The dashed line marks
-$\gamma_b$. Full results are in Tables~\ref{tab:s4} and~\ref{tab:s4-extra}.}\label{fig:s4}
-\end{figure}
-
-In the symmetric design, the SVC model is the only estimator with close to nominal
-coverage for the biome means $\gamma_b$ (0.83--0.97, Monte Carlo SE 0.03--0.07;
-Figure~\ref{fig:s4} and Table~\ref{tab:s4}), although the value of
-0.83 in biome 4 is about 1.7 Monte Carlo SE below 0.95. In the asymmetric design its
-coverage is 0.87, 0.83, 0.77 and 0.77 (Monte Carlo SE 0.06--0.08). This is still the
-highest coverage in most biomes, but it is below nominal, and in biome 1 the
-interaction-credited SHAP slope covers in a similar share of replicates (0.80). Its intervals are
-conservative for the realised biome averages $\bar\beta_b$ (coverage 1.00), as expected, because they also
-account for the sampling of regions within biomes. Fixed biome slopes are nearly
-unbiased, but their intervals ignore heterogeneity within biomes. They cover $\gamma_b$
-in only 50--60\% of replicates (Monte Carlo SE about 0.09), and $\bar\beta_b$ in
-53--90\%. The price of honest intervals is power: the SVC model detects the small effects ($|\gamma_b| = 0.1$) in only
-23--33\% of replicates. The SVC model also recovers the coefficient surface
-(Table~\ref{tab:s4-extra}). The correlation between $\hat\beta(s)$ and $\beta(s)$ is
-0.92, the RMSE is 28\% lower than with biome slopes only (0.106 against 0.147), and
-$\hat\sigma_\eta = 0.13$ against a true 0.15.
-
-The XGBoost summaries are less informative. Each must be judged against its own
-target:
-\begin{itemize}
-\item \emph{SHAP slopes.} The per-biome slopes of the ordinary SHAP values have the right
-ordering but are between 0.26 and 0.48 times $\gamma_b$ (about 0.3 in three of the four
-biomes), below the $\gamma_b/2$ expected in this design from the splitting of
-interactions. Crediting the interaction values to temperature raises them to between
-0.56 and 0.89 times $\gamma_b$. The remaining attenuation may come from this
-configuration of boosting (a 30\% subsample of about 37{,}000 rows, a minimum child
-weight of 30 and early stopping) rather than from boosting in general. With a single fit
-to all training rows, the slopes are between 0.19 and 0.53 times $\gamma_b$ for the
-ordinary SHAP values and between 0.53 and 0.88 times $\gamma_b$ with the interactions
-credited. This fit keeps the minimum child weight of 30, which was chosen for millions
-of rows, so it does not separate the two causes, and we have not done so.
-Against its own target $(\bar\gamma + \gamma_b)/2$, the ordinary SHAP slope covers in
-53--63\% of replicates (60--67\% in the asymmetric design). Fixed biome slopes with the
-field cover $\gamma_b$ in a similar share (53--60\%; 47--67\% asymmetric), so the two
-are about equally poorly calibrated for their own targets. The interaction-credited
-slope, which targets $\gamma_b$, covers it in 27\%, 63\%, 57\% and 40\% of replicates
-(80\%, 67\%, 63\% and 43\% asymmetric), so it under-covers most in the outer
-biomes. With the asymmetric
-$\bgamma = (0, 0.1, 0.2, 0.4)$ the targets $(\bar\gamma + \gamma_b)/2$ are 0.09, 0.14,
-0.19 and 0.29. The ordinary SHAP slopes are 0.11, 0.15, 0.19 and 0.23 (Monte Carlo SE
-about 0.012), so they follow this target in the first three biomes and fall short in the
-fourth. In biome 1, where temperature has no effect, the slope is positive, as its
-target is, and its interval excludes zero in 70\% of replicates. A reader who takes it
-as the effect of temperature in that biome would report an effect that does not
-exist. With the interactions credited the slopes
-are 0.05, 0.12, 0.20 and 0.29, close to $\gamma_b$ except in biome 4 (0.71 times
-$\gamma_b$).
-\item \emph{Median SHAP values.} The median SHAP value of raw temperature within a biome,
-the statistic of the original analysis, is negative in \emph{every} biome as a
-bootstrap median ($-0.05$, $-0.15$, $-0.15$ and $-0.04$), whatever the true effect.
-From a single fit to all training rows it is $-0.02$, $-0.12$, $-0.12$ and $0.00$. Its bootstrap interquartile range excludes zero
-with a negative sign in every replicate in biome 3 and in 53\% of replicates in
-biome 4, where the true effects are positive.
-With the asymmetric $\bgamma$ it is negative in the first three biomes ($-0.23$,
-$-0.17$ and $-0.08$, for true effects of 0, 0.1 and 0.2), and its interquartile range
-excludes zero with a negative sign in 97\%, 100\% and 77\% of replicates.
-Applying the original criterion would therefore report a ``negative contribution of
-temperature'' where the effect is positive.
-\end{itemize}
-The sign of the median SHAP value does not follow the climatology either, since it is
-not monotone across biomes. It appears to depend on how the trees split credit between
-raw temperature and the collinear latitude and biome features, whose levels have no
-effect in the truth. In either case it does not track the effect of temperature
-(Section~\ref{sec:methods-svc}).
-
