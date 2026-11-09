@@ -261,8 +261,15 @@ within 0.6 of its maximum, $\hat\kappa$ was 0.047 against 0.044 (0.1 standard er
 every other coefficient moved by less than 0.1 standard errors, and the test log score
 changed by 0.06\%. With $r = 0.10$ the fit was 6.0 times faster but the loading moved
 from 0.87 to 0.77 and $\hat\kappa$ by 0.3 standard errors, so we use $r = 0.25$
-\todo{add the same check for Africa and the Middle East (job 1711777.3) and for one
-hold-out fold refitted in full}.
+in the hold-out refits. Two further checks were run on an earlier version of the
+larger region that also included southern Europe. For the extended model with
+$r = 0.10$, $\hat\kappa$ was 0.104 (SE 0.015) against 0.105 (SE 0.015), every lag
+coefficient moved by less than 0.6 standard errors and the shared loading moved from
+0.44 to 0.50. Refitting one hold-out fold on all data instead of $r = 0.25$ shifted the
+held-out log score of every model by at most 0.0006, in the same direction, so the
+differences between models were unchanged: the joint model improved on the univariate
+static model by 0.0053 against 0.0054 in the training years and by 0.0035 against
+0.0036 in the test years.
 
 \paragraph{Prediction.} For a new cell-week with design row $\bm{a}$ and
 offset $o$, the posterior predictive probability is
