@@ -1,20 +1,21 @@
 # Standing rules for this project
 
-## Evidence for every model component
-Every latent process or fixed effect in a model we report must come with evidence that it is
-needed, and the Supplementary Material must present that evidence. This applies to the
-components already in the model as well as to new ones.
+## Credible intervals for every model component (always in the Supplementary Material)
+Each model we report must justify its components through their uncertainty. The supplement must
+always contain a table of credible intervals for the main effects and for every hyperparameter of
+each reported model, in each region.
 
-- **Variance components and latent fields** (country effects u, cell effects e, static field w,
-  space-time fields v, and any new field). For a variance component, "interval excludes zero"
-  is the wrong test: zero is the boundary, so the test cannot work. Report both of these:
-  1. the log marginal likelihood of the model without that component, refitted on the same
-     subsample;
-  2. an approximate interval for log sigma (and for the range and AR coefficient), from the
-     Hessian of the Laplace log marginal likelihood at the mode.
-- **Fixed effects and interaction-type parameters** (delta, kappa, neighbour terms, the
-  loading lambda, escalation psi): report the estimate with its SE or interval, and say
-  whether the interval excludes zero.
-- A component without evidence is dropped, or kept and stated as a control with no
-  interpretation.
+- **Fixed effects:** the estimate and a 95% interval, saying whether it excludes zero. Fixed
+  effects are the coefficients of the histories (delta, kappa, the neighbour terms) and the main
+  covariates.
+- **Hyperparameters:** the estimate and a 95% interval. These are the SDs of the country effects,
+  cell effects and static fields; the ranges; the AR coefficients; the loading lambda; and any new
+  parameter such as the escalation coefficients psi. The intervals come from the Hessian of the
+  Laplace log posterior of theta at the estimate (realdata/fit_bivariate.py --hessian-only,
+  crc/jobs/33_hyper_ci.sh). For an SD, report how far the interval lies from zero.
+- Whenever a model or region is added, compute its intervals before any of its results enter the
+  paper.
+- A component whose interval does not support it is dropped, or kept and stated as a control that
+  we do not interpret.
 - A good story is not evidence. Do not justify a component by its interpretation alone.
+- Do not run ablation studies (refits without a component) unless the user asks for them.
