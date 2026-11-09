@@ -2006,3 +2006,26 @@ Top countries by event cell-weeks (share_2plus in brackets):
 Share of both outcomes in a cell-week: ame 0.0031, west_sahel 0.0028.
 **Reading:** in ame, 42% of conflict cell-weeks have 2+ events and they hold 82% of all conflict events. The binary outcome discards most of the event mass, especially in
 Syria and Yemen (62-69% of their event cell-weeks have 2+). In West Africa this is milder (31% / 56%).
+
+## 2026-11-09 16:45 EST: ame step C (biv3) done; job 29 (1714069) complete, no Traceback; 30, 31.2 and 32 released
+`results_real/bivariate/ame/summary_biv3.json` is committed. Fit 42,668 s (11.9 h), warm start from B's biv2, --zero-frac 0.25.
+- **log-ML −315,168.0 against biv2 −315,945.9 (+778).**
+- **New shared static field: sd 1.458, loading 1.141, range 44 km**. As in west_sahel, it is cell-scale and takes over most of the cell iid variance:
+  cell sd conflict 0.990 → **0.159**, unrest 1.386 → **0.853**.
+- Other moves, biv2 → biv3:
+  - **shared_st sd 1.325 → 0.915**, loading 0.519 → **0.352**, rho 0.954 → 0.888, range 500 → 504 km;
+  - field_conflict sd 1.183 → 1.433, 603 → 735 km; field_unrest sd 0.423 → 0.618, 413 → 813 km;
+  - country sd conflict 0.526 → 0.489, unrest 0.982 → 1.012;
+  - st_unrest unchanged (sd 0.453, rho 0.640, 786 km).
+- **κ = conflict:lag_other 0.057 (0.015)** against biv2 0.094. unrest:lag_other is 0.047 against 0.069. As in west_sahel, part of the cross-lag was persistent shared structure.
+- Test: conflict log 0.06079 / AUC-PR 0.528; unrest 0.05278 / 0.515.
+- **Joint log score 0.11353**, against the uni_static product 0.11325 (step A) and biv2 0.11387. Joint − independent −0.00004 (0.00002).
+- **Calibration** (observed / predicted):
+
+| | overall | top 10% | top 1% |
+|---|---|---|---|
+| conflict | 0.0253 / 0.0265 | 0.194 / 0.200 | 0.541 / 0.542 |
+| unrest | 0.0213 / 0.0208 | 0.163 / 0.152 | 0.486 / 0.465 |
+| both | 0.0038 / 0.0034 | 0.0367 / 0.0338 | 0.250 / 0.235 |
+
+  Hotspot marginals are well calibrated, and P(both) is under-predicted by about 6-10%, less than in west_sahel (13-15%).
