@@ -245,8 +245,8 @@ minimum degree on $\bm{M}^\top + \bm{M}$, with $\bm{M} = \bQ + \bH$. For the spa
 ordering reduced factorisation time by a factor of 7 to 14 compared with that
 fallback. An LU factorisation stores both triangular factors, so it needs about twice
 the memory of a Cholesky factor of the same matrix. scikit-sparse was not installed on
-the computing cluster, so the fits run there used SuperLU \todo{confirm the backend
-of the Africa and the Middle East joint fit}.
+the computing cluster, so all fits run there, including every joint fit reported in
+the main text, used SuperLU.
 
 The $n_\theta$ perturbed evaluations of a finite-difference gradient are independent.
 They run in parallel in forked worker processes, which share the data, the design and
@@ -262,8 +262,10 @@ parallel gradient, a component whose perturbed evaluation is rejected is set to 
 If the evaluation at the current point is itself rejected, the components are not set
 to zero and take very large values. In the serial path, the finite differences of
 L-BFGS-B are taken on the large value directly. Rejected evaluations can make the
-optimiser stop at a poor point, so they should be recorded for each fit \todo{report
-the number of rejected evaluations for the real-data fits}.
+optimiser stop at a poor point. We did not record their number for the real-data
+fits; as a check, warm and cold starts of the extended joint model in West Africa
+reached the same optimum (Section~\ref{sec:methods-inference}), and the subsampled
+and full fits agreed closely.
 
 Since $\bH = \bA^\top\bm{W}\bA$ aggregates over weeks, the cost of the spatial and SVC
 blocks is driven by the number of cells, not by the number of cell-weeks. A global

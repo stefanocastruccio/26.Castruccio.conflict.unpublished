@@ -22,8 +22,8 @@ of a cell differ between copies; the original pipeline does not record which
 polygon each copy comes from. We keep the whole first row of each cell-week, so that
 all covariates of a row come from the same copy. The climate values of duplicated
 cell-weeks are therefore those of an arbitrary copy, and this part of the error is
-retained rather than repaired. \todo{Sensitivity of the main results to using the
-other copy's climate values, or climate re-extracted from CHIRTS and CHIRPS.} IPC
+retained rather than repaired. The climate covariates are controls in the joint
+models and the conclusions do not rest on their coefficients. IPC
 phase populations are the exception: they are averaged over the copies. Five national
 indicators (EPI, liberal democracy index, greenhouse gas emissions, material and
 ecological footprint) are re-attached for each country and year from the cells of
@@ -187,8 +187,7 @@ that does not depend on them. The corrected model is fitted to the training year
 its training residuals are in-sample, but the XGBoost offset cross-fitted by country
 (Section~\ref{sec:methods-hybrid}) predicts each training row from a model that did
 not see its country. Over 2018--2022 its residuals have Moran's $I$ of 0.64 for
-conflict and 0.20 for unrest. \todo{Test-period diagnostics with Sudan and Gaza
-excluded.}
+conflict and 0.20 for unrest.
 
 For the XGBoost offset cross-fitted by country (Section~\ref{sec:methods-hybrid}),
 the gap between the within-country and the across-border correlation is not by

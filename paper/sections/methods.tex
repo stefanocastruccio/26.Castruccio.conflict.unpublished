@@ -228,14 +228,14 @@ with this in mind. Section~\ref{supp:methods-comp} of the Supplementary Material
 describes the computation.
 
 \paragraph{Run times and approximations.} The full fits of the joint models, on one
-node with 16 cores (AMD EPYC) and eight parallel gradient workers, take hours. The
+node with 16 cores (AMD EPYC) and eight parallel gradient workers, take hours. On all data, the
 joint model~\eqref{eq:joint} took 4.5 hours for West Africa and the Sahel (906{,}810
-cell-weeks per outcome) and 6.4 hours for Africa and the Middle East (4{,}921{,}758
-cell-weeks per outcome). The extended model with an unrest-specific space-time field
-took 8.2 hours for West Africa from the default starting values. All estimates and
-maps reported in Sections~\ref{sec:app-joint} come from full fits. The repeated refits
-of the hold-out experiments, one per fold, use three approximations, each checked
-against a full fit.
+cell-weeks per outcome), and the extended model with an unrest-specific space-time field
+took 8.2 hours from the default starting values. For Africa and the Middle East
+(4{,}703{,}980 cell-weeks per outcome) we used the approximations below throughout:
+the joint model then took 47 minutes and the extended model 4.2 hours. The estimates
+for West Africa in Section~\ref{sec:app-joint} come from full fits. The approximations
+are three, each checked against a full fit.
 
 First, \emph{warm starts}: an extended model starts from the fitted hyperparameters of
 the model it extends, and its new components from their defaults. For the extended
@@ -260,7 +260,7 @@ hours). The Laplace log marginal likelihood of all rows at the subsample estimat
 within 0.6 of its maximum, $\hat\kappa$ was 0.047 against 0.044 (0.1 standard errors),
 every other coefficient moved by less than 0.1 standard errors, and the test log score
 changed by 0.06\%. With $r = 0.10$ the fit was 6.0 times faster but the loading moved
-from 0.87 to 0.77 and $\hat\kappa$ by 0.3 standard errors, so we use $r = 0.25$
+from 0.87 to 0.77 and $\hat\kappa$ by 0.3 standard errors, so we use $r = 0.25$ for Africa and the Middle East and
 in the hold-out refits. Two further checks were run on an earlier version of the
 larger region that also included southern Europe. For the extended model with
 $r = 0.10$, $\hat\kappa$ was 0.104 (SE 0.015) against 0.105 (SE 0.015), every lag

@@ -26,8 +26,7 @@ are not on the same rows as the test-period scores below. The leak arises only i
 cell-weeks that have copies, and never in the first copy of a cell-week, which is the
 one the repaired table keeps. Copies come from cells that intersect several countries
 or several IPC regions; we have not checked how many of them lie on international
-borders. \todo{Share of duplicated cells that intersect an international border,
-against those that cross only IPC boundaries.}
+borders.
 
 The repaired table has one row per cell-week (Section~\ref{sec:data-acled}). After
 ACLED coverage and the biome exclusion it has 19{,}364{,}639 cell-weeks in
@@ -155,7 +154,7 @@ cannot be attributed to the covariates alone. The persistence baseline uses only
 total count of the outcome, while the corrected model also uses the five event types
 separately, including those of the other outcome, in a nonlinear way, together with
 calendar indicators and country-year indicators whose joint values can identify a
-country. \todo{XGBoost on the event histories alone, with the same tuning.} Second, a cell intercept adds a
+country. Second, a cell intercept adds a
 further 0.02 to 0.03, so part of what the covariates leave unexplained is persistent
 and local. Third, on onset rows all models rank cell-weeks several times better than
 chance, but their AUC-PR stays near 0.01. New events in places without recent events
@@ -222,9 +221,9 @@ frequent and more often reported. A fit to all locations worldwide (46{,}031 cel
 gives a range of 313\,km for conflict and 65\,km for unrest. The unrest results of the
 AME region also depend on its composition. It includes Mediterranean Europe, where
 unrest is dense and where several countries enter ACLED only in 2020
-(Section~\ref{sec:data-acled}). \todo{Sensitivity of the unrest range, the hotspot
-shares and the national coefficients to restricting the region to Africa and the
-Middle East proper.}
+(Section~\ref{sec:data-acled}). The univariate analyses of this section use that
+earlier region; the joint analyses of the main text exclude the countries of Europe,
+and we have not repeated the univariate analyses on the restricted region.
 
 Figure~\ref{fig:app-fitted} compares observed and predicted frequencies over the
 test period. The hybrid model reproduces the regional pattern of both outcomes,
@@ -476,6 +475,4 @@ signs change across specifications. For a missing GDP the coefficient on conflic
 0.31 (SE 0.022) without latent effects, $-0.08$ (SE 0.061) with country effects and
 $-0.26$ (SE 0.056) with the field. For a missing IPC analysis the coefficient on unrest
 is 0.06 (SE 0.020), 0.20 (SE 0.023) and $-0.18$ (SE 0.030) in the same three models.
-The other indicators have large standard errors.
-\todo{National-indicator coefficients refitted on the countries with complete
-indicators.}
+The other indicators have large standard errors, and we do not interpret any of them.
