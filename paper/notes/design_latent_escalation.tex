@@ -19,10 +19,10 @@ field and cannot be told apart from a shared episode. The proposal makes it iden
 lattice. Each outcome has its own latent \emph{episode field}: $a_k(s)$ for conflict and
 $b_k(s)$ for unrest. They evolve jointly:
 \begin{align*}
-a_k(s) &= \underbrace{\phi_C\, a_{k-1}(s)}_{\text{persistence}}
+a_k(s) &= \underbrace{\varphi_C\, a_{k-1}(s)}_{\text{persistence}}
  + \underbrace{\psi_{U\to C}\, \bar b_{k-1}(s)}_{\text{escalation}}
  + \underbrace{\eta_k(s)}_{\text{shared shock}} + \xi^C_k(s),\\
-b_k(s) &= \phi_U\, b_{k-1}(s) + \psi_{C\to U}\, \bar a_{k-1}(s)
+b_k(s) &= \varphi_U\, b_{k-1}(s) + \psi_{C\to U}\, \bar a_{k-1}(s)
  + \underbrace{\lambda\, \eta_k(s)}_{\text{shared shock, loading } \lambda} + \xi^U_k(s),
 \end{align*}
 where $\bar b_{k-1}(s) = (1-\omega)\, b_{k-1}(s) + \omega \cdot \text{mean of } b_{k-1}$
@@ -38,11 +38,11 @@ model is unchanged: $\operatorname{logit} P(Y^C_{st}=1) = \bm{x}^\top\bm{\beta}_
 the same step and place.
 \item $\psi_{U\to C}$: \emph{latent escalation}, an unrest episode at $s$ raising
 conflict risk at $s$ and its neighbours one step later, and then decaying at rate
-$\phi_C$. $\psi_{C\to U}$ is the reverse direction.
+$\varphi_C$. $\psi_{C\to U}$ is the reverse direction.
 \item $\kappa_C$: \emph{short-run local escalation} from recorded events, as now.
 \end{itemize}
 Special cases: with no escalation, $\psi_{U\to C} = \psi_{C\to U} = 0$, and with
-$\phi_C = \phi_U$ and no conflict-only shock ($\xi^C = 0$), $a$ is a single AR(1) field
+$\varphi_C = \varphi_U$ and no conflict-only shock ($\xi^C = 0$), $a$ is a single AR(1) field
 and $b = \lambda a + {}$an unrest-only AR(1) field: exactly the current extended model.
 With $\psi_{U\to C} = \psi_{C\to U} = \lambda = 0$, the two outcomes have independent
 univariate space-time fields.
@@ -54,7 +54,7 @@ escalation parts.
 is Gaussian given the previous one, so the joint precision is sparse (block
 bidiagonal in time, finite-volume sparsity in space). The Laplace engine, METIS ordering
 and case-control subsampling are unchanged. The process is stationary if the $2\times2$
-matrix $\begin{psmallmatrix}|\phi_C| & |\psi_{U\to C}|\\ |\psi_{C\to U}| & |\phi_U|\end{psmallmatrix}$
+matrix $\begin{psmallmatrix}|\varphi_C| & |\psi_{U\to C}|\\ |\psi_{C\to U}| & |\varphi_U|\end{psmallmatrix}$
 has spectral radius below one. Hyperparameters: 11 (against 9 in the extended model).
 
 \textbf{Identification.} Shared episodes move both outcomes in the \emph{same} step;
