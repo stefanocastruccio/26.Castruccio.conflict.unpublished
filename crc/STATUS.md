@@ -1712,3 +1712,51 @@ held-out block minus the base model's (negative = better), with the replicate SE
 - africa_me, target conflict, fold 0, `--zero-frac 1.0`. Submitted while 1712445.11 (the --zero-frac 0.25 run of the same fold) is still
   running, at about 2 h with biv2 left. My watcher that was meant to wait for it timed out, and the check doesn't use that task's output, so they run
   in parallel. The comparison follows when both are done.
+
+## 2026-11-08 19:15 EST: hold-out refit (1712445), west_sahel conflict and unrest done (tasks 1-10, no Traceback); merged
+`results_real/bivariate/holdout_refit/west_sahel_{conflict,unrest}.json` are committed. Hyperparameters were re-estimated in every fold (--zero-frac 0.25,
+warm start). The tables give log-score differences on the held-out countries (negative = better), with country SEs in parentheses.
+
+**Target conflict**
+
+| | past (629,778 rows / 18,641 events) | test (253,864 / 10,994) |
+|---|---|---|
+| biv vs uni_static | −0.00308 (0.00224) | +0.00083 (0.00233) |
+| biv vs uni_st | **−0.00361 (0.00157)** | **−0.00419 (0.00214)** |
+| biv2 vs uni_static | −0.00192 (0.00142) | +0.00087 (0.00303) |
+| biv2 vs uni_st | **−0.00245 (0.00102)** | **−0.00415 (0.00164)** |
+
+Per country, biv against uni_static (number of target events in brackets):
+- past, best: MAR (11) −0.027, NGA (7,766) −0.019, CMR (2,043) −0.010, SLE (45) −0.009.
+- past, worst: CIV (233) +0.006, SEN (42) +0.005, TCD (264) +0.005, GIN (88) +0.001.
+- test, best: MAR (13) −0.028, CMR (1,307) −0.021, SLE (8) −0.018, BEN (262) −0.015.
+- test, worst: SEN (12) +0.029, NGA (4,315) +0.012, TCD (91) +0.007, GIN (33) +0.007.
+
+**Target unrest (mirror)**
+
+| | past (638,808 / 8,383) | test (257,504 / 3,656) |
+|---|---|---|
+| biv vs uni_static | −0.00032 (0.00121) | **+0.00305 (0.00154)** |
+| biv vs uni_st | −0.00081 (0.00133) | +0.00101 (0.00183) |
+| biv2 vs uni_static | −0.00067 (0.00101) | +0.00155 (0.00103) |
+| biv2 vs uni_st | **−0.00115 (0.00055)** | −0.00049 (0.00071) |
+
+Per country, biv against uni_static:
+- past, best: GIN (661) −0.008, LBR (92) −0.005, TCD (142) −0.005, GMB (52) −0.004.
+- past, worst: GHA (549) +0.031, BEN (213) +0.001, SEN (357) +0.001, CIV (589) +0.001.
+- test, best: LBR (20) −0.012, GIN (222) −0.004, SLE (27) −0.004.
+- test, worst: GHA (374) +0.045, TGO (35) +0.015, CIV (155) +0.010.
+
+What the numbers show:
+- **With refitted hyperparameters, the conflict hold-out result is close to the fixed-θ version (1711778).** The joint models beat uni_st in both periods
+  (about 2-2.5 SE). Against uni_static they gain in the past (1.4 SE) and not in the test period.
+- **For target unrest there is no gain;** biv is worse than uni_static in the test period (+0.003, 2 SE). Ghana dominates the loss (+0.045 test, +0.031 past).
+- NGA, the largest contributor, goes from −0.019 in the past to +0.012 in the test period for conflict.
+
+**Wall time per task** (min; in brackets, s for uni_static / uni_st / biv / biv2):
+- conflict: task 1 113 (17/400/1185/5130), 2 122 (21/481/1027/5726), 3 125 (23/446/1185/5755), 4 103 (16/435/968/4663),
+  5 96 (20/362/887/4403);
+- unrest: task 6 108 (20/480/912/4958), 7 91 (15/382/1445/3486), 8 95 (21/390/832/4376), 9 97 (17/427/585/4690), 10 132 (14/422/1925/5400).
+- biv2 takes 70-80% of each task.
+- africa_me (tasks 11-20) is running at about 2.3 h, with biv done in every task. Task 12 logged an "Exception ignored ... _after_fork RLock" SystemError
+  from a forked worker. It is not fatal: the task continues.
