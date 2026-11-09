@@ -53,6 +53,21 @@ field retained only a small part of it. The joint model also under-predicts the
 co-occurrence of the two outcomes in the test period, by about 13--15\% in West
 Africa even with a shared static field.
 
+\paragraph{Occurrence rather than counts.} We model whether at least one event is
+recorded in a cell-week. If events were a log-Gaussian Cox process with intensity
+$\Lambda$, this indicator would be Bernoulli with probability $1 - \exp(-\Lambda)$, so our
+model is a Cox process discretised to cells and weeks and reduced to occurrence, with a
+logit rather than a complementary log-log link, which is almost the same for rare events.
+Point-process models of the events themselves, such as the bivariate Cox processes of
+\citet{zhu2021promise} or the Hawkes processes of \citet{jun2024hawkes}, use the exact
+locations and the number of events. At our resolution little of this is lost:
+\todo{X\% of conflict and Y\% of unrest cell-weeks with an event have two or more events,
+and they account for Z\% of events}. Counts would also carry more of the reporting
+process, since one episode may be coded as several events depending on how many sources
+covered it, and ACLED places events of uncertain location at the centroid of a town or
+administrative unit \citep{zhu2021promise}. A count model with over-dispersion is a natural
+extension where events cluster, as in the most violent cells.
+
 \paragraph{Limitations.} Several limits apply. The plug-in standard errors ignore the
 uncertainty in the hyperparameters and, in simulations, understate the variability of
 the lag coefficients by up to 20\% when a space-time field is fitted, so intervals
