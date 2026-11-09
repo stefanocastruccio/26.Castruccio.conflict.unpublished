@@ -1773,3 +1773,5 @@ What the numbers show:
 - **Region log line:** `ame: 4,703,980 rows per outcome, 12,995 cells, 78 countries, v on 3,408 cells x 14 steps` and
   `ame: excluded 724 cells (220,674 rows) in ['ALB', 'BGR', 'BIH', 'ESP', 'FRA', 'GRC', 'HRV', 'ITA', 'KOS', 'MKD', 'MNE', 'PRT', 'ROU', 'RUS', 'SRB']`.
 - **Figure 1:** `paper/figures/data_events.{png,json}` regenerated for ame (cs_fig1 1714083, rc 0) and committed (f6865a9).
+- 22:45 EST: pulled 6f9da9f (fitted_<model>.parquet export) before 31.2 (1714255) starts. `32_fitted_map.sh`: **1714292** (-hold_jid 1714255; queue
+  moved to the EPYC hostgroups with qalter). 1714254 (west_sahel fields) started with the earlier code, which is fine because the map uses ame only.
