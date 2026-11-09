@@ -9,11 +9,13 @@ with row counts per year. Years already present are skipped (resume after interr
 
 Usage: python download_acled.py --out $WORK/acled/raw [--years 1997 2025] [--limit 5000]
 
-API (check against https://acleddata.com/api-documentation/ before the first full run):
+API (checked 2026-11-09 against https://acleddata.com/api-documentation/getting-started and elements-acleds-api):
   token:  POST https://acleddata.com/oauth/token  form: username, password, grant_type=password,
-          client_id=acled  -> access_token (about 24 h), refresh_token
+          client_id=acled, scope=authenticated  -> access_token (24 h), refresh_token (14 days)
   read:   GET  https://acleddata.com/api/acled/read?_format=json  header Authorization: Bearer <token>
-          params: year, limit, page  -> {"success", "count", "data": [...]}
+          params: year, limit, cursor  -> {"success", "count", "next_cursor", "data": [...]}
+          Offset pagination (page=) is deprecated since 2026-10-27 except for export_type=monadic; cursor pagination
+          starts at cursor=0 and follows next_cursor until it is null. Default limit 5000; no documented maximum.
 """
 from __future__ import annotations
 
@@ -55,7 +57,8 @@ class Session:
 
     def login(self):
         r = self.http.post(TOKEN_URL, data={"username": self.email, "password": self._pw,
-                                            "grant_type": "password", "client_id": "acled"}, timeout=60)
+                                            "grant_type": "password", "client_id": "acled",
+                                            "scope": "authenticated"}, timeout=60)
         if r.status_code != 200:
             sys.exit(f"token request failed: HTTP {r.status_code} {r.text[:300]}")
         j = r.json()
@@ -107,8 +110,10 @@ def main():
     os.makedirs(a.out, exist_ok=True)
     s = Session()
     if a.test:
-        j = s.get({"year": a.years[0], "limit": 5, "page": 1})
-        print("test ok:", j.get("count"), "rows; fields:", sorted(j["data"][0]) if j.get("data") else None)
+        j = s.get({"year": a.years[0], "limit": 5, "cursor": 0})
+        print("test ok:", len(j.get("data", [])), "rows; next_cursor present:", "next_cursor" in j,
+              "; restrictions:", json.dumps(j.get("data_query_restrictions"))[:300],
+              "; fields:", sorted(j["data"][0]) if j.get("data") else None)
         return
     man_path = os.path.join(a.out, "manifest.json")
     man = json.load(open(man_path)) if os.path.exists(man_path) else {}
@@ -116,12 +121,13 @@ def main():
         f = os.path.join(a.out, f"acled_{year}.parquet")
         if os.path.exists(f):
             print(f"{year}: present, skipped", flush=True); continue
-        rows, page, t0 = [], 1, time.time()
+        rows, page, cursor, t0 = [], 1, 0, time.time()
         while True:
-            j = s.get({"year": year, "limit": a.limit, "page": page})
+            j = s.get({"year": year, "limit": a.limit, "cursor": cursor})
             data = j.get("data", [])
             rows += data
-            if len(data) < a.limit:
+            cursor = j.get("next_cursor")
+            if cursor in (None, "", 0, "0") or not data:
                 break
             page += 1
             if page % 20 == 0:

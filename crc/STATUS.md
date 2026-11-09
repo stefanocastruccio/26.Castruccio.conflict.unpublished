@@ -1856,3 +1856,33 @@ The same picture as africa_me: no joint gain over uni_static.
   Joint − independent −0.00002 (0.00003).
 - Calibration (observed / predicted): overall conflict 0.0253 / 0.0265; both 0.0038 / 0.0035.
   Top 1%: conflict 0.544 / 0.542, unrest 0.483 / 0.464, both 0.249 / 0.237.
+
+## 2026-11-09 13:30 EST: task 34 (search for raw ACLED before 2018) and task 36 (ACLED API download: stopped at the token step)
+### Task 34: search, read-only, nothing moved or copied
+- Searched `/groups/scastruc` (including `lmenical`), `/users/scastruc` and `$WORK` (= /groups/scastruc/conflict_spatial_work) for file names containing acled, events,
+  africa_19 or 1997 with extensions csv / csv.gz / xlsx / xls / parquet / rds / zip / feather / dta. Conda envs, Rlib, .git and .cache were pruned.
+  **No match: there is no raw ACLED event file and no pre-2018 data anywhere on these trees.**
+- `/groups/scastruc/lmenical/` contains only:
+  - `drew/data/partitions/`: 50 files `data_final_world_01..50.csv`, 16 GB in total, all dated 2026-09-14, about 300 MB each.
+    **`week_start` runs from 2017-12-26 (file 01) to 2024-12-24 (file 50).** These are the 2018-2024 cell-week tables already loaded into $CLEAN.
+    Columns (34): week_start, grid_id, Protests, Battles, Strategic_developments, ExplosionsRemote_violence, Violence_against_civilians,
+    Riots, population, gdp, phase_1..phase_5, river_length, lake_area, drought, malaria, electricity_access, tmin, tmax, hi, wbgt, ppt, pm25,
+    lon, lat, EPI_index, BIOME_NAME, GHG_pc_t, MF_pc_t, ECO_pc_gha, v2x_libdem. These are aggregated counts, not events.
+  - `SAI_Fellowship/`: unrelated (Dedalus convection runs, diffusion-model .keras files, VAE latents).
+- **No script or notebook of Luca's pipeline** is on the cluster (no .py / .ipynb / .R / .sh under `lmenical`). So there is no record here of where or how
+  ACLED was downloaded. An earlier entry (line 17) had already noted that the source files were not found elsewhere.
+
+### Task 36: ACLED download (stopped at step 2)
+1. **`realdata/acled/download_acled.py` checked against ACLED's API docs** (getting-started, acled-endpoint and elements pages, read 2026-11-09) and fixed:
+   - Token request: added **`scope=authenticated`**, which getting-started requires. The URL, grant_type=password, client_id=acled and the Bearer header were already
+     correct. Refresh (grant_type=refresh_token, client_id=acled) is unchanged.
+   - **Pagination: switched from `page=` to cursor pagination** (`cursor=0`, then `next_cursor` until it is null). ACLED: "As of October 27, 2026, offset pagination
+     has been deprecated and will remain supported only for requests where export_type = monadic."
+   - `--test` now also prints whether next_cursor is present and the `data_query_restrictions` block.
+   - The default limit is 5000; the docs give no maximum. Year filter: `year=`.
+   - Installed `requests` into the conflict env (it was missing).
+2. **Test run failed at the token request: `HTTP 400 {"error":"invalid_grant","error_description":"The user credentials were incorrect."}`**
+   - `~/.acled_credentials` is mode 600 and well formed: two lines, ACLED_EMAIL and ACLED_PASSWORD present, non-empty, no quotes, no stray spaces, no CRLF or BOM, and
+     the email contains "@". Checked without printing anything from the file.
+   - So ACLED rejects the email/password pair itself. **Please check the credentials** (the ACLED account login, myACLED). Note that API access needs an account
+     with API rights. **Stopped here as instructed.** Nothing was downloaded; `$WORK/acled/raw` is empty.
