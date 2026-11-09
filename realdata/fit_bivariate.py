@@ -281,6 +281,19 @@ def export_fields(m, model, L, observed, Lv, T, a, week0):
     tt.to_csv(os.path.join(a.out, f"fields_{model}_st.csv.gz"), index=False, float_format="%.4f")
 
 
+def export_fitted(m, model, base, tr, tstep, a):
+    """Plug-in fitted probabilities expit(eta at the posterior mode) on the TRAINING rows of both
+    outcomes, for the maps of fitted intensity (paper/make_fitted_map.py). Written to --out only
+    (it is row-level and sits next to the event data on the cluster), never to the repository."""
+    from scipy.special import expit
+    eta = np.asarray(m.offset + m.A @ m.x_hat).ravel()
+    n = int(tr.sum())
+    d = base.loc[tr, ["grid_id", "lon", "lat", "week_start"]].reset_index(drop=True)
+    d["step"] = tstep[tr]
+    d["p_conflict"] = expit(eta[:n]).astype("float32"); d["p_unrest"] = expit(eta[n:2 * n]).astype("float32")
+    d.to_parquet(os.path.join(a.out, f"fitted_{model}.parquet"), index=False)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("table"); ap.add_argument("--region", default="west_sahel")
@@ -480,6 +493,7 @@ def main():
             res["models"][model]["subsample"] = dict(m.sub_info, zero_frac=a.zero_frac)
         if model in ("biv", "biv2", "biv3"):
             export_fields(m, model, L, observed, Lv, T, a, base["week_start"].min())
+            export_fitted(m, model, base, tr, tstep, a)
         print(model, json.dumps({k: res["models"][model][k] for k in ("hyper", "lag_coefficients", "test_scores")},
                                 default=float), flush=True)
         json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
