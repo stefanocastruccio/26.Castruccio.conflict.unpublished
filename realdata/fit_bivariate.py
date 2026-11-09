@@ -46,6 +46,39 @@ from fit_acled import REGIONS, build_lattice, sea_cells
 from fit_glmm import prepare
 
 REGIONS = dict(REGIONS, west_sahel=(-18, 16, 4, 25), central_sahel=(-6, 16, 9, 20))
+# "ame": the africa_me box without its European countries (2026-11-09). They enter the box only
+# through its corner, ACLED covers most of them only from 2020, and their dense, well-reported
+# protest with almost no conflict is unrest-only variation that the joint model must absorb.
+EUROPE = ["ALB", "AND", "BGR", "BIH", "ESP", "FRA", "GRC", "HRV", "ITA", "KOS", "MCO", "MKD", "MLT",
+          "MNE", "PRT", "ROU", "RUS", "SMR", "SRB", "VAT", "SVN", "HUN", "MDA", "UKR"]
+REGIONS["ame"] = REGIONS["africa_me"]
+EXCLUDE = {"ame": EUROPE}
+
+
+def region_rows(raw, region, box, shp):
+    """Rows of `raw` in the box, minus the cells whose nearest country (by polygon, from the
+    Natural Earth file `shp`, ADM0_A3 codes; the table's ISO_A3 is -99 for some countries)
+    is excluded for this region."""
+    x0, x1, y0, y1 = box
+    raw = raw[raw.lon.between(x0, x1) & raw.lat.between(y0, y1)]
+    if region not in EXCLUDE:
+        return raw.copy()
+    import geopandas as gpd
+    land = gpd.read_file(shp).to_crs(4326)
+    code = "ADM0_A3" if "ADM0_A3" in land.columns else "ISO_A3"
+    cells = raw[["lon", "lat"]].drop_duplicates().reset_index(drop=True)
+    pts = gpd.GeoDataFrame(cells, geometry=gpd.points_from_xy(cells.lon, cells.lat), crs=4326)
+    import warnings
+    with warnings.catch_warnings():   # nearest in degrees: only decides coastal cells
+        warnings.simplefilter("ignore", UserWarning)
+        near = gpd.sjoin_nearest(pts, land[[code, "geometry"]], how="left")
+    near = near[~near.index.duplicated()]
+    drop = cells[near[code].isin(EXCLUDE[region]).to_numpy()]
+    key = pd.MultiIndex.from_frame(raw[["lon", "lat"]])
+    out = raw[~key.isin(pd.MultiIndex.from_frame(drop[["lon", "lat"]]))].copy()
+    print(f"{region}: excluded {len(drop):,} cells ({len(raw) - len(out):,} rows) in "
+          f"{sorted(set(near[code][near[code].isin(EXCLUDE[region])]))}", flush=True)
+    return out
 OUTS = ("conflict", "unrest")
 
 
@@ -254,7 +287,7 @@ def main():
     raw = pd.read_parquet(a.table)
     raw["week_start"] = pd.to_datetime(raw["week_start"])
     x0, x1, y0, y1 = a.box if a.box else REGIONS[a.region]
-    raw = raw[raw.lon.between(x0, x1) & raw.lat.between(y0, y1)].copy()
+    raw = region_rows(raw, a.region, (x0, x1, y0, y1), a.land)
     dfs, covs = {}, {}
     for o in OUTS:
         dfo, cov, _ = prepare(raw, o)

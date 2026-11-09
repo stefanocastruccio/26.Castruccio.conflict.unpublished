@@ -1,5 +1,5 @@
 """Data figure (Section 2): where and when ACLED events are recorded, in the analysis
-region (Africa and the Middle East, lon -20..65, lat -36..45).
+region (Africa and the Middle East: lon -20..65, lat -36..45, without the European countries).
 
 (a), (b) share of covered weeks with at least one event in each 0.5-degree cell,
          2018-2024, for violent conflict and social unrest (log colour scale; grey:
@@ -26,14 +26,13 @@ import numpy as np
 import pandas as pd
 from matplotlib.colors import ListedColormap, LogNorm
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "realdata"))
+from fit_bivariate import EUROPE, region_rows  # noqa: E402
+
 BOX = (-20.0, 65.0, -36.0, 45.0)
 BORDERS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "ne_50m_countries.geojson")
 OUTCOMES = [("Conflict", "Violent conflict", "#B2182B"), ("Unrest", "Social unrest", "#2166AC")]
 RES = 0.5
-# European countries inside the box: in the analysis region, but not shown in (a, b), where their
-# dense, well-reported protests would dominate the unrest map (hatched grey instead).
-EUROPE = ["ALB", "AND", "BGR", "BIH", "ESP", "FRA", "GRC", "HRV", "ITA", "KOS", "MCO", "MKD", "MLT",
-          "MNE", "PRT", "ROU", "RUS", "SMR", "SRB", "VAT"]
 WEST_AFRICA = (-18.0, 16.0, 4.0, 25.0)
 
 
@@ -56,25 +55,22 @@ def main(path, out):
                Unrest=("Unrest", "mean"), weeks=("Conflict", "size"))
     summary = {"global": summarise(df, df.groupby("grid_id").agg(**agg))}
     x0, x1, y0, y1 = BOX
-    df = df[df.lon.between(x0, x1) & df.lat.between(y0, y1)]
+    df = region_rows(df, "ame", BOX, BORDERS)   # the box without its European countries
     cells = df.groupby("grid_id").agg(**agg)
     weekly = df.groupby("week_start")[["Conflict", "Unrest"]].mean()
     ncell = df.groupby("week_start").size()
-    summary["africa_me"] = summarise(df, cells)
+    summary["ame"] = summarise(df, cells)
     for o, _, _ in OUTCOMES:
         w = weekly[o]
-        summary["africa_me"][o].update(weekly_share_min=float(w.min()), weekly_share_max=float(w.max()),
+        summary["ame"][o].update(weekly_share_min=float(w.min()), weekly_share_max=float(w.max()),
                                        weekly_share_median=float(w.median()))
         low = w[w < 0.6 * w.median()]
-        summary["africa_me"][o]["weeks_below_60pct_of_median"] = {
+        summary["ame"][o]["weeks_below_60pct_of_median"] = {
             str(k.date()): {"share": float(v), "cells_in_week": int(ncell[k])} for k, v in low.items()}
 
     world = gpd.read_file(BORDERS)
     eur = world[world.ADM0_A3.isin(EUROPE)]
-    pts = gpd.GeoDataFrame(cells[[]], geometry=gpd.points_from_xy(cells.lon, cells.lat), crs=world.crs)
-    in_eur = gpd.sjoin(pts, eur[["geometry"]], how="left", predicate="within")
-    in_eur = in_eur[~in_eur.index.duplicated()]["index_right"].notna()
-    shown = cells[~in_eur.reindex(cells.index, fill_value=False).to_numpy()]
+    shown = cells
     nx, ny = int((x1 - x0) / RES), int((y1 - y0) / RES)
     fig = plt.figure(figsize=(11, 8.6))
     gs = fig.add_gridspec(2, 3, height_ratios=[1, 0.42], width_ratios=[1, 1, 0.035], hspace=0.22, wspace=0.06)
@@ -89,7 +85,7 @@ def main(path, out):
                   cmap=ListedColormap(["#D9D9D9"]), interpolation="nearest", zorder=1)
         im = ax.imshow(np.where(g > 0, g, np.nan), origin="lower", extent=[x0, x1, y0, y1], cmap="magma_r",
                        norm=LogNorm(vmin=1 / 400, vmax=1), interpolation="nearest", zorder=2)
-        eur.plot(ax=ax, facecolor="#EDEDED", edgecolor="#B5B5B5", hatch="////", linewidth=0, zorder=1.5)
+        eur.plot(ax=ax, facecolor="#F7F7F5", edgecolor="none", zorder=1.5)   # outside the region
         world.boundary.plot(ax=ax, color="#3D3D3D", linewidth=0.35, zorder=3)
         wx0, wx1, wy0, wy1 = WEST_AFRICA
         ax.plot([wx0, wx1, wx1, wx0, wx0], [wy0, wy0, wy1, wy1, wy0], color="#1F5FAE", lw=1.1, zorder=4)

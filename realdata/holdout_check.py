@@ -40,7 +40,7 @@ import scipy.sparse as sp
 from sc import design as de, diagnostics as dg
 from sc.gmrf import CopyBlock, FixedBlock, IIDBlock, MaternBlock, SpaceTimeAR1Block
 from sc.laplace import LatentGaussianModel
-from fit_bivariate import (REGIONS, OUTS, neighbour_mean, stack, theta_from_hyper, theta0_from_init, subsample,
+from fit_bivariate import (REGIONS, region_rows, OUTS, neighbour_mean, stack, theta_from_hyper, theta0_from_init, subsample,
                            mc_prob, joint_eval, _logb)
 from fit_acled import build_lattice, sea_cells
 from fit_glmm import prepare
@@ -128,7 +128,7 @@ def main():
     raw = pd.read_parquet(a.table)
     raw["week_start"] = pd.to_datetime(raw["week_start"])
     x0, x1, y0, y1 = a.box if a.box else REGIONS[a.region]
-    raw = raw[raw.lon.between(x0, x1) & raw.lat.between(y0, y1)].copy()
+    raw = region_rows(raw, a.region, (x0, x1, y0, y1), a.land)
     dfs0, covs = {}, {}
     for o in OUTS:
         dfo, cov, _ = prepare(raw, o)
