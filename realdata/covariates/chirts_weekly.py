@@ -4,7 +4,8 @@
                                                                # each; reading only a box is rate-limited by the server, HTTP 429),
                                                                # aggregate to daily 0.5-degree cell means (all cells), save the daily
                                                                # cache, DELETE the raw files
-  python realdata/covariates/chirts_weekly.py weekly           # after all years: weekly means from the daily caches (weeks may cross
+  python realdata/covariates/chirts_weekly.py daily_tif <year> # heat index and WBGT (daily GeoTIFFs only; one day at a time)
+  python realdata/covariates/chirts_weekly.py weekly [vars]    # after all years: weekly means from the daily caches (weeks may cross
                                                                # into the next year; 2026's first days come from 2026 if cached)
 
 Daily cache: $WORK/covariates/daily/{tmax,tmin}_<year>.npz (dates, values (T, ncell) float32), about 80 MB per variable-year.
@@ -28,6 +29,8 @@ import common as C  # noqa: E402
 
 URL = "https://data.chc.ucsb.edu/experimental/CHIRTS-ERA5/{v}/netcdf/daily/CHIRTS-ERA5.daily_{V}.{y}.nc"
 VARS = {"tmax": "Tmax", "tmin": "Tmin"}
+TIFVARS = {"hi": "HI", "wbgt": "WBGT"}   # heat index and WBGT: only daily GeoTIFFs (about 27 MB per day)
+TIFURL = "https://data.chc.ucsb.edu/experimental/CHIRTS-ERA5/{v}/tifs/daily/{y}/{V}.{y}.{m:02d}.{d:02d}.tif"
 RAWD, DAILY = os.path.join(C.RAW, "chirts"), os.path.join(C.COV, "daily")
 CHUNK = 19   # days per read = the file's time chunk
 
@@ -75,9 +78,47 @@ def daily(y):
               f"cells with data {inbox:.3f}; raw deleted", flush=True)
 
 
-def weekly():
+def daily_tif(y, which=("hi", "wbgt")):
+    """HI / WBGT of year y: one daily GeoTIFF at a time (download, aggregate to the 0.5-degree cells, delete)."""
+    import rasterio
+    cl = C.cells(); r, c = cl.row.to_numpy(), cl.col.to_numpy()
+    os.makedirs(RAWD, exist_ok=True); os.makedirs(DAILY, exist_ok=True)
+    last = f"{y}-12-31" if y <= C.YEARS[-1] else f"{y}-01-07"   # the year after the last only feeds the final week
+    days = pd.date_range(f"{y}-01-01", last, freq="D")
+    for v in which:
+        V = TIFVARS[v]
+        if os.path.exists(cache(v, y)):
+            print(y, v, "cached"); continue
+        t = time.time(); vals = np.full((len(days), len(cl)), np.nan, "float32"); nbytes = 0; miss = 0
+        for i, d in enumerate(days):
+            f = os.path.join(RAWD, f"{V}.{y}.{d.month:02d}.{d.day:02d}.{os.getpid()}.tif")
+            ok = False
+            for k in range(6):
+                rc = subprocess.run(["curl", "-sfL", "--retry", "5", "--retry-delay", "30", "--retry-all-errors", "-o", f,
+                                     TIFURL.format(v=v, V=V, y=y, m=d.month, d=d.day)]).returncode
+                if rc == 0:
+                    ok = True; break
+                time.sleep(60 * (k + 1))
+            if not ok:
+                miss += 1; print(f"  {y} {v} {d.date()}: download failed", flush=True); continue
+            nbytes += os.path.getsize(f)
+            with rasterio.open(f) as src:
+                a = src.read(1).astype("float32"); tr = src.transform
+            os.remove(f)
+            a[(a < -100) | (a > 150)] = np.nan
+            lat = tr.f + tr.e * (np.arange(a.shape[0]) + 0.5); lon = tr.c + tr.a * (np.arange(a.shape[1]) + 0.5)
+            vals[i] = C.to_half_degree(a[None], lat, lon, "mean")[0][r, c]
+        np.savez(cache(v, y) + ".tmp.npz", dates=days.values, values=vals)
+        os.replace(cache(v, y) + ".tmp.npz", cache(v, y))
+        print(f"{y} {v}: {len(days)} days, {nbytes / 1e9:.1f} GB downloaded and deleted, {miss} days missing, "
+              f"cells with data {np.isfinite(vals).any(0).mean():.3f}, {time.time() - t:.0f} s", flush=True)
+
+
+def weekly(which=None):
     cl = C.cells(); wd = C.weekday()
-    for v in VARS:
+    for v in (which or list(VARS) + list(TIFVARS)):
+        if not any(os.path.exists(cache(v, y)) for y in C.YEARS):
+            continue
         for y in C.YEARS:
             parts = [np.load(cache(v, yy)) for yy in (y, y + 1) if os.path.exists(cache(v, yy))]
             if not parts or not os.path.exists(cache(v, y)):
@@ -98,5 +139,7 @@ def weekly():
 if __name__ == "__main__":
     if sys.argv[1] == "daily":
         daily(int(sys.argv[2]))
+    elif sys.argv[1] == "daily_tif":
+        daily_tif(int(sys.argv[2]))
     else:
-        weekly()
+        weekly(sys.argv[2:] or None)

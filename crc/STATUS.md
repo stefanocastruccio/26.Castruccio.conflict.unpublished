@@ -2130,3 +2130,19 @@ Over all 56,354 cells, 21.9% have PfPR in 2024/2025, mean 0.11 where defined. Re
 - **Luca's variable is MAP PfPR 2-10.** The rank agreement is about 0.99 every year. His values are about 5-17% lower and drift down over time against the 202608 release.
   The likely reasons are an older MAP release and/or an area mean rather than a population-weighted one. In 2017 $CLEAN has only week 2017-12-26, and its malaria is all 0 there.
 - $CLEAN: malaria > 0 in 21% of cell-years, max 0.946. MAP's `value_fill0` matches it (0 outside the modelled area).
+
+## 2026-11-09 19:30 EST: task 35 extended to all of Luca's covariates (owner's request)
+Luca's table has 7 covariates beyond the task list. The owner wants all of them. Status:
+- **hi (heat index) and wbgt: submitted.** CHIRTS-ERA5 has them only as daily GeoTIFFs (about 27 MB per day, about 10 GB per variable-year, about 720 GB in total).
+  - `chirts_weekly.py daily_tif <year>` downloads one day at a time, aggregates it to the cells and deletes it.
+  - Array `crc/jobs/35_hiwbgt.sh` **1718220** (1990-2026; 2026 only 1-7 January; 4 at a time × 2 cores) is held until the Tmax/Tmin array 1717964 ends, so task 35
+    stays at 8 cores.
+  - Then `crc/jobs/35_weekly.sh` **1718221** (weekly means of tmax, tmin, hi, wbgt; region cells only) runs.
+  - Rough timing: Tmax/Tmin done about 03:00, HI/WBGT about 10-12 h more.
+- **pm25: in progress.** CAMS needs an account; using Washington University ACAG V6.GL satellite PM2.5 instead (public; about 1998-2022). Locating the download.
+- **EPI_index: in progress.** Yale EPI (biennial; back-cast series). Locating the file.
+- **MF_pc_t (material footprint per capita): not yet.** The UN SDG API (12.2.1, EN_MAT_FTPRPC) and OWID carry **regional aggregates only** (36 areas). Country
+  values are in UNEP-IRP's Global Material Flows Database; its download terms still need checking.
+- **ECO_pc_gha (ecological footprint): blocked**, needs a Global Footprint Network data account or API key (the owner will provide it).
+- **phase_1..5 (IPC food insecurity): blocked**, needs an IPC API key (the owner will provide it).
+- Also pending from the owner: corrected ACLED credentials (task 36), and optionally a Copernicus CDS account for precipitation north of 50N.
