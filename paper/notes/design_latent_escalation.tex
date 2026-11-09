@@ -16,46 +16,47 @@ cell. Escalation over months and hundreds of kilometres is absorbed by the share
 field and cannot be told apart from a shared episode. The proposal makes it identifiable.
 
 \textbf{Model.} Time steps $k = 1,\dots,K$ of $\Delta$ weeks; cells $s$ of a coarse
-lattice. Each outcome has its own latent \emph{episode field}: $a_k(s)$ for conflict and
-$b_k(s)$ for unrest. They evolve jointly:
+lattice. The latent episode of conflict, $a_k(s)$, and of unrest, $b_k(s)$, are built
+from three space-time components:
+\[
+a_k(s) = v_k(s) + c_k(s), \qquad b_k(s) = \lambda\, v_k(s) + d_k(s),
+\]
+\vspace{-14pt}
 \begin{align*}
-a_k(s) &= \underbrace{\varphi_C\, a_{k-1}(s)}_{\text{persistence}}
- + \underbrace{\psi_{U\to C}\, \bar b_{k-1}(s)}_{\text{escalation}}
- + \underbrace{\eta_k(s)}_{\text{shared shock}} + \xi^C_k(s),\\
-b_k(s) &= \varphi_U\, b_{k-1}(s) + \psi_{C\to U}\, \bar a_{k-1}(s)
- + \underbrace{\lambda\, \eta_k(s)}_{\text{shared shock, loading } \lambda} + \xi^U_k(s),
+v_k(s) &= \varphi_v\, v_{k-1}(s) + \eta_k(s) && \text{shared episodes},\\
+c_k(s) &= \varphi_C\, c_{k-1}(s) + \underbrace{\psi_{U\to C}\, \bar b_{k-1}(s)}_{\text{escalation}} + \xi^C_k(s) && \text{conflict-only episodes},\\
+d_k(s) &= \varphi_U\, d_{k-1}(s) + \psi_{C\to U}\, \bar a_{k-1}(s) + \xi^U_k(s) && \text{unrest-only episodes},
 \end{align*}
 where $\bar b_{k-1}(s) = (1-\omega)\, b_{k-1}(s) + \omega \cdot \text{mean of } b_{k-1}$
 over the neighbours of $s$ (so an unrest episode can spill into neighbouring cells), and
-likewise $\bar a$. The innovations $\eta_k$ (shared), $\xi^C_k$, $\xi^U_k$ (outcome-specific)
-are independent Mat\'ern fields with sea barriers, independent over $k$. The observation
-model is unchanged: $\operatorname{logit} P(Y^C_{st}=1) = \bm{x}^\top\bm{\beta}_C + \delta_C h_C +
-\kappa_C h_U + \dots + u_C + e_C + w_C + a_{k(t)}(s)$, and the same for unrest with $b$.
+likewise $\bar a$. The innovations $\eta_k$, $\xi^C_k$, $\xi^U_k$ are independent
+Mat\'ern fields with sea barriers, independent over $k$, each with its own range and
+SD. The observation model is unchanged: $\operatorname{logit} P(Y^C_{st}=1) =
+\bm{x}^\top\bm{\beta}_C + \delta_C h_C + \kappa_C h_U + \dots + u_C + e_C + w_C +
+a_{k(t)}(s)$, and the same for unrest with $b$.
 
 \textbf{What each parameter answers.}
 \begin{itemize}
-\item $\lambda$ (with $\eta$): \emph{shared episodes}, shocks that hit both outcomes in
-the same step and place.
+\item $\lambda$ (with $v$): \emph{shared episodes}, which move both outcomes in the same
+step and place; $\varphi_v$ is their persistence.
 \item $\psi_{U\to C}$: \emph{latent escalation}, an unrest episode at $s$ raising
-conflict risk at $s$ and its neighbours one step later, and then decaying at rate
+conflict risk at $s$ and its neighbours one step later, decaying at rate
 $\varphi_C$. $\psi_{C\to U}$ is the reverse direction.
 \item $\kappa_C$: \emph{short-run local escalation} from recorded events, as now.
 \end{itemize}
-Special cases: with no escalation, $\psi_{U\to C} = \psi_{C\to U} = 0$, and with
-$\varphi_C = \varphi_U$ and no conflict-only shock ($\xi^C = 0$), $a$ is a single AR(1) field
-and $b = \lambda a + {}$an unrest-only AR(1) field: exactly the current extended model.
-With $\psi_{U\to C} = \psi_{C\to U} = \lambda = 0$, the two outcomes have independent
-univariate space-time fields.
-The main summary is the impulse response: the change in conflict risk over the next
-$1, 2, \dots$ steps after a one-SD unrest episode, split into its shared and its
-escalation parts.
+\textbf{Special cases.} With $\psi_{U\to C} = \psi_{C\to U} = 0$ and no conflict-only
+episodes ($c \equiv 0$), this is exactly the current extended model: $v$ is its shared
+field and $d$ its unrest-only field, each with its own persistence. Dropping $d$ as well
+gives the current joint model. The main summary is the impulse response: the change in
+conflict risk over the next $1, 2, \dots$ steps after a one-SD unrest episode, split
+into its shared and its escalation parts.
 
-\textbf{Why it fits our machinery.} Keeping $(a, b, \eta)$ as latent variables, each step
+\textbf{Why it fits our machinery.} Keeping $(v, c, d)$ as latent variables, each step
 is Gaussian given the previous one, so the joint precision is sparse (block
 bidiagonal in time, finite-volume sparsity in space). The Laplace engine, METIS ordering
-and case-control subsampling are unchanged. The process is stationary if the $2\times2$
-matrix $\begin{psmallmatrix}|\varphi_C| & |\psi_{U\to C}|\\ |\psi_{C\to U}| & |\varphi_U|\end{psmallmatrix}$
-has spectral radius below one. Hyperparameters: 11 (against 9 in the extended model).
+and case-control subsampling are unchanged. Stationarity requires the transition of
+$(v, c, d)$ to have spectral radius below one, which we check at the estimate.
+Hyperparameters: 13 (against 9 in the extended model).
 
 \textbf{Identification.} Shared episodes move both outcomes in the \emph{same} step;
 escalation moves conflict \emph{after} unrest. They are separated by timing, so the
@@ -75,6 +76,6 @@ $\kappa$.
 \textbf{Cost.} Implementation and tests: 1 day. Simulation: 1 day on the CRC. Real-data
 fits (two regions, warm-started, $r = 0.25$): 1--2 days. Rewriting methods and
 application: 1 day. Paper: Section 3 gains the latent escalation model as the main
-model; the current extended model becomes its special case without escalation; the application
+model; the current extended model becomes its special case without escalation or conflict-only episodes; the application
 reports $\psi$, $\lambda$, $\kappa$ and impulse responses.
 \end{document}
