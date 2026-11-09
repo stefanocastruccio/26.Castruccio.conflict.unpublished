@@ -60,13 +60,18 @@ model is a Cox process discretised to cells and weeks and reduced to occurrence,
 logit rather than a complementary log-log link, which is almost the same for rare events.
 Point-process models of the events themselves, such as the bivariate Cox processes of
 \citet{zhu2021promise} or the Hawkes processes of \citet{jun2024hawkes}, use the exact
-locations and the number of events. At our resolution little of this is lost:
-\todo{X\% of conflict and Y\% of unrest cell-weeks with an event have two or more events,
-and they account for Z\% of events}. Counts would also carry more of the reporting
-process, since one episode may be coded as several events depending on how many sources
-covered it, and ACLED places events of uncertain location at the centroid of a town or
-administrative unit \citep{zhu2021promise}. A count model with over-dispersion is a natural
-extension where events cluster, as in the most violent cells.
+locations and the number of events. The reduction is not innocuous. In Africa and the
+Middle East, 42\% of the cell-weeks with conflict have two or more conflict events, and
+they hold 82\% of all conflict events; for unrest the shares are 34\% and 70\%, and in
+West Africa 31\% and 56\% for conflict. Multiple events concentrate in Syria and Yemen,
+where about two thirds of the cell-weeks with conflict have more than one event. We
+nevertheless model occurrence, for two reasons. The question is whether conflict follows
+unrest in a place, not how much conflict there is. And the number of recorded events
+carries more of the reporting process than their occurrence: one episode may be coded as
+several events depending on how many sources covered it, and events of uncertain location
+are placed at the centroid of a town or administrative unit \citep{zhu2021promise}. A
+model for the counts, with over-dispersion and the same latent structure, is the natural
+check that the conclusions do not depend on this choice.
 
 \paragraph{Limitations.} Several limits apply. The plug-in standard errors ignore the
 uncertainty in the hyperparameters and, in simulations, understate the variability of
