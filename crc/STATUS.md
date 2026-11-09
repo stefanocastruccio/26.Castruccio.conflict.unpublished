@@ -2080,3 +2080,37 @@ Syria and Yemen (62-69% of their event cell-weeks have 2+). In West Africa this 
 ## 2026-11-09 18:10 EST: 31.2 (ame fields, 1714255) done, no Traceback
 `results_real/bivariate/ame/fields_{biv,biv2,biv3}_{static,st}.csv.gz` are committed. 32 (map, 1714292) is now running.
 Task 35: malaria job `crc/jobs/35_malaria.sh` 1718079 (2 cores). The CHIRTS array was lowered to 3 concurrent tasks (qalter -tc 3) to stay within 8 cores.
+
+## 2026-11-09 18:50 EST: job 33, ame biv2 intervals → `results_real/bivariate/ame/ci_biv2.json`; 32 (map) done; malaria done
+### ame biv2: **λ = shared_st.loading 0.519, 95% CI [0.463, 0.575]**
+Hessian on the 1,778,323-row subsample, 11,500 s. **hessian_eig_min = 6.21 (> 0).**
+
+| hyperparameter | estimate | 95% CI |
+|---|---|---|
+| **shared_st.loading (λ)** | **0.519** | **[0.463, 0.575]** |
+| shared_st.sd | 1.325 | [1.214, 1.447] |
+| shared_st.rho | 0.954 | [0.945, 0.963] |
+| shared_st.range_km | 500 | [453, 551] |
+| st_unrest.sd | 0.447 | [0.399, 0.502] |
+| st_unrest.rho | 0.645 | [0.538, 0.731] |
+| st_unrest.range_km | 841 | [726, 973] |
+| field_conflict.sd | 1.183 | [0.990, 1.413] |
+| field_conflict.range_km | 603 | [440, 826] |
+| field_unrest.sd | 0.423 | [0.287, 0.624] |
+| field_unrest.range_km | 413 | [192, 890] |
+| country_conflict.sd | 0.526 | [0.380, 0.729] |
+| country_unrest.sd | 0.982 | [0.796, 1.213] |
+| cell_conflict.sd | 0.990 | [0.944, 1.039] |
+| cell_unrest.sd | 1.386 | [1.340, 1.433] |
+
+theta_se: 0.166, 0.107, 0.024, 0.017, 0.160, 0.091, 0.392, 0.199, 0.050, 0.045, 0.051, 0.029, 0.075, 0.059, 0.084.
+The biv2 λ interval [0.463, 0.575] lies entirely below biv's [0.638, 0.728]: the unrest-only space-time field takes part of the shared loading.
+Still to run in job 33: west_sahel biv, then west_sahel biv2 (all rows, no subsample).
+
+### 32 (fitted map, 1714292): done, rc 0, no Traceback
+`paper/figures/real_episodes.png` is committed. The script's one-line printout:
+`step 7 2021-07-20 2022-01-17 cells 12995 conflict cells 1758 unrest cells 1758`
+
+### Task 35, malaria (MAP PfPR 2-10): done (1718079, rc 0)
+`grid/malaria/malaria_2000_2025.parquet`: population-weighted (GHSL), area mean as fallback; `value` is NaN outside MAP's modelled area and `value_fill0` is 0 there.
+Over all 56,354 cells, 21.9% have PfPR in 2024/2025, mean 0.11 where defined. Restricted to the five regions. The comparison with $CLEAN's malaria follows.

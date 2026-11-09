@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -N cs_malaria
 #$ -q long@@crc_d32cepyc,long@@acms_d32cepyc
-#$ -pe smp 4
+#$ -pe smp 2
 #$ -l mem_free=64G
 #$ -l h_rt=12:00:00
 #$ -cwd
@@ -11,6 +11,6 @@
 # Raw rasters first: bash realdata/covariates/map_download.sh (login node)
 source /users/scastruc/projects/26.Castruccio.conflict.unpublished/crc/jobs/env.sh
 cd "$REPO"
-export OMP_NUM_THREADS=4
+export OMP_NUM_THREADS=2
 python realdata/covariates/malaria.py && python realdata/covariates/restrict_outputs.py
 echo "rc=$?"
