@@ -1775,3 +1775,41 @@ What the numbers show:
 - **Figure 1:** `paper/figures/data_events.{png,json}` regenerated for ame (cs_fig1 1714083, rc 0) and committed (f6865a9).
 - 22:45 EST: pulled 6f9da9f (fitted_<model>.parquet export) before 31.2 (1714255) starts. `32_fitted_map.sh`: **1714292** (-hold_jid 1714255; queue
   moved to the EPYC hostgroups with qalter). 1714254 (west_sahel fields) started with the earlier code, which is fine because the map uses ame only.
+
+## 2026-11-09 00:10 EST: zero-frac africa_me biv2 (1711777.4), full-data fold check (1712793) and west_sahel fields (1714254) done; no Traceback
+### Zero-frac africa_me biv2, r = 0.10, cold start (1711777.4)
+`results_real/bivariate_zf/africa_me_biv2_r0.10/summary_biv2.json` is committed.
+- **Fit 37,306 s (10.4 h; hyper 35,724 s, 63 iterations / 1,136 evaluations), against the full warm-started biv2 at 16,742 s.**
+  Subsampling does not offset the cold start for biv2: hyperparameter search dominates, and the cold start needs about 40% more evaluations.
+- log-ML −353,987.4 against −353,977.4 (−10.0).
+- Hyperparameters (full / zf):
+  - shared_st loading 0.440 / 0.500, sd 1.260 / 1.299, 472 / 519 km, rho 0.948 / 0.955;
+  - st_unrest sd 0.429 / 0.399, 697 / 747 km, rho 0.696 / 0.649;
+  - field_conflict sd 1.214 / 1.118, 598 / 563 km;
+  - field_unrest sd 0.476 / 0.400, 417 / 372 km;
+  - country and cell sd within 0.015.
+- **κ 0.104 (0.015) against 0.105 (0.015).** All lag coefficients are within 0.6 SE.
+- Test MC scores: conflict log 0.05858 / AUC-PR 0.526; unrest 0.06372 / 0.533. The full biv2 summary values (0.05969, 0.06457) are from the older
+  approximation and not comparable. The MC rescoring of full biv isn't available for biv2.
+
+### Full-data check of the hold-out refit approximation: africa_me, target conflict, fold 0 (1712793, --zero-frac 1.0, against 1712445.11, --zero-frac 0.25)
+Copies in `results_real/bivariate/holdout_refit_check/africa_me_conflict_fold0_zf{0.25,1.0}.json`.
+
+| model | past log score: r = 0.25 / full (Δ) | test: r = 0.25 / full (Δ) | fit s: r = 0.25 / full |
+|---|---|---|---|
+| uni_static | 0.12778 / 0.12813 (+0.00034) | 0.11563 / 0.11587 (+0.00024) | 100 / 311 |
+| uni_st | 0.12646 / 0.12640 (−0.00005) | 0.11698 / 0.11703 (+0.00006) | 1,027 / 1,382 |
+| biv | 0.12252 / 0.12270 (+0.00017) | 0.11212 / 0.11228 (+0.00015) | 2,727 / 4,408 |
+| biv2 | 0.12164 / 0.12202 (+0.00038) | 0.11105 / 0.11163 (+0.00058) | 8,481 / 7,697 |
+
+- The approximation shifts each model's score by at most 0.0006, and in the same direction for all models. **The model differences are preserved:**
+  biv − uni_static past −0.00526 (r = 0.25) against −0.00543 (full); test −0.00351 against −0.00359. biv2 − uni_static test −0.00458 against −0.00424.
+- Hyperparameters agree closely:
+  - biv shared loading 0.662 / 0.665; biv2 loading 0.463 / 0.421;
+  - field ranges within 4%; country_conflict sd 0.02-0.04 lower in the full fit.
+- The r = 0.25 runs are slightly *better* on held-out countries (by 0.0002-0.0006), so the approximation does not favour the joint models.
+
+### west_sahel latent fields (1714254, conditioning at saved hyperparameters)
+`results_real/bivariate/west_sahel/fields_{biv,biv2,biv3}_{static,st}.csv.gz` are committed (35-158 kB each).
+
+ame: 29_ame_fits (1714069) is running. Then 30 (1714071), 31.2 (1714255) and 32 (1714292) follow on holds.
