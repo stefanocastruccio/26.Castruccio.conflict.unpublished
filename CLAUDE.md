@@ -1,9 +1,11 @@
 # Standing rules for this project
 
-## Credible intervals for every model component (always in the Supplementary Material)
-Each model we report must justify its components through their uncertainty. The supplement must
-always contain a table of credible intervals for the main effects and for every hyperparameter of
-each reported model, in each region.
+## 95% credible intervals for every estimated parameter
+Whenever we estimate parameters (fixed effects and other parameters of interest), report them with
+95% credible intervals, as long as computing the intervals does not substantially increase the cost.
+- Parameters that are part of the narrative go in the main text, with their intervals.
+- All others go in the Supplementary Material, with their intervals.
+Each model we report must justify its components through this uncertainty.
 
 - **Fixed effects:** the estimate and a 95% interval, saying whether it excludes zero. Fixed
   effects are the coefficients of the histories (delta, kappa, the neighbour terms) and the main
