@@ -46,6 +46,14 @@
 \RequirePackage{multirow}
 \RequirePackage{bm}
 \RequirePackage{xcolor}
+\makeatletter
+% Labels of the other document (main <-> supplement), read from a file of its \newlabel
+% lines (made by build.sh); the IMS class does not allow the xr package.
+\def\extlabels@nl#1#2{\@ifundefined{r@#1}{\global\@namedef{r@#1}{#2}}{}}
+\def\extlabels#1{\IfFileExists{#1}{\begingroup\let\newlabel\extlabels@nl
+  \input{#1}\endgroup}{}}
+\makeatother
+\AtBeginDocument{\extlabels{supp-labels.tex}}
 
 \startlocaldefs
 \numberwithin{equation}{section}
@@ -106,9 +114,9 @@ Global Affairs, University of Notre Dame}
 \kwd{ACLED}
 \kwd{latent Gaussian models}
 \kwd{SPDE}
-\kwd{spatial confounding}
-\kwd{spatially varying coefficients}
-\kwd{gradient boosting}
+\kwd{coregionalisation}
+\kwd{escalation}
+\kwd{missing data}
 \end{keyword}
 \end{frontmatter}
 

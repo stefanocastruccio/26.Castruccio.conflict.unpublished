@@ -1,0 +1,27 @@
+\newlabel{sec:intro}{{1}{1}{Introduction}{section.1}{}}
+\newlabel{sec:data}{{2}{1}{Data}{section.2}{}}
+\newlabel{sec:data-acled}{{2.1}{1}{Conflict and unrest events}{subsection.2.1}{}}
+\newlabel{fig:data}{{1}{2}{ACLED events on the $0.5^\circ $ grid in the AME region (Africa, the Middle East and adjacent regions), 2018--2024, over covered cell-weeks. (a, b) Share of weeks with at least one event in each cell, for violent conflict and social unrest (logarithmic colour scale); grey cells have no event week. (c) Weekly share of covered cells in the region with at least one event. The dashed line marks the start of the test period}{figure.1}{}}
+\newlabel{sec:data-history}{{2.2}{3}{Recent event history}{subsection.2.2}{}}
+\newlabel{sec:data-cov}{{2.3}{3}{Environmental, socioeconomic and national covariates}{subsection.2.3}{}}
+\newlabel{sec:methods}{{3}{3}{Methods}{section.3}{}}
+\newlabel{sec:methods-model}{{3.1}{3}{A latent Gaussian model for event occurrence}{subsection.3.1}{}}
+\newlabel{eq:model}{{3.1}{3}{A latent Gaussian model for event occurrence}{equation.3.1}{}}
+\newlabel{sec:methods-spde}{{3.2}{4}{Mat\'ern fields on the sphere via a finite-volume SPDE}{subsection.3.2}{}}
+\newlabel{eq:spde}{{3.2}{4}{Mat\'ern fields on the sphere via a finite-volume SPDE}{equation.3.2}{}}
+\newlabel{eq:Qs}{{3.3}{4}{Mat\'ern fields on the sphere via a finite-volume SPDE}{equation.3.3}{}}
+\newlabel{sec:methods-st}{{3.3}{4}{Space-time persistence}{subsection.3.3}{}}
+\newlabel{sec:methods-joint}{{3.4}{5}{A joint model of conflict and unrest}{subsection.3.4}{}}
+\newlabel{eq:joint}{{3.4}{5}{A joint model of conflict and unrest}{equation.3.4}{}}
+\newlabel{sec:methods-inference}{{3.5}{6}{Inference}{subsection.3.5}{}}
+\newlabel{eq:laplace}{{3.5}{6}{Inference}{equation.3.5}{}}
+\newlabel{sec:simulation}{{4}{7}{Simulation studies}{section.4}{}}
+\newlabel{sec:sim-joint}{{4.1}{7}{S5: escalation versus shared episodes}{subsection.4.1}{}}
+\newlabel{fig:s5}{{2}{9}{S5: estimates of the escalation effect $\kappa $ of recent unrest on conflict, over 20 replicates per scenario, without (a, b) and with (c, d) unrest-only episodes. Dots are means and lines span the 5th to 95th percentiles of the estimates across replicates; the number above each line is the coverage of the nominal 95\% intervals for $\kappa $. Grey: univariate models of conflict; blue: the joint model with one shared space-time field; red: the extended joint model with an additional space-time field for unrest. The dashed line marks the true value. Full results are in Table~\ref {tab:s5} of the Supplementary Material}{figure.2}{}}
+\newlabel{sec:sim-holdout}{{4.2}{9}{S6: prediction where one outcome is unobserved}{subsection.4.2}{}}
+\newlabel{fig:s6}{{3}{10}{S6: log score of the target in the held-out block, minus that of the univariate space-time model, paired by replicate, with conflict (a, b) or unrest (c, d) removed in the block; training weeks (a, c) and test weeks (b, d). Dots are means over 20 replicates and lines are 95\% intervals (mean $\pm 1.96$ SE). Grey: univariate model with a static field only; blue: joint model with a shared space-time field; red: joint model with shared space-time and static fields. Negative values favour the model. The extended joint model is within $0.0005$ of the blue model throughout and is not shown}{figure.3}{}}
+\newlabel{sec:application}{{5}{11}{Application to ACLED 2018--2024}{section.5}{}}
+\newlabel{sec:app-joint}{{5.1}{11}{Escalation versus shared episodes}{subsection.5.1}{}}
+\newlabel{tab:app-joint}{{1}{12}{Conflict and unrest in West Africa and the Sahel: lag coefficients (standard errors) of the conflict equation, hyperparameters of the space-time field, and test scores for 2023--2024. Own: conflict in the previous four weeks; other: unrest in the previous four weeks ($\kappa $); neighbour terms: the same histories averaged over the rook neighbours of the cell. In the joint model the space-time field is shared by the two outcomes and enters unrest with loading $\lambda $; its AR(1) coefficient is per step of 13 weeks. Full results in Table~\ref {tab:app-joint-full} of the Supplementary Material. Test scores here use the probit approximation to $E\{\operatorname {expit}(\eta )\}$; the model comparisons in the text use common Monte Carlo draws}{table.1}{}}
+\newlabel{sec:app-holdout}{{5.2}{13}{Prediction where one outcome is unobserved}{subsection.5.2}{}}
+\newlabel{sec:discussion}{{6}{14}{Discussion}{section.6}{}}

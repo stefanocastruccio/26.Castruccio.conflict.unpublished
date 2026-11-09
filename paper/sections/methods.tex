@@ -14,39 +14,21 @@ $Y_{st} \mid \pi_{st} \sim \mathrm{Bernoulli}(\pi_{st})$, with
 + \bz_{c(s),t}^\top \bm{\alpha}
 + u_{c(s)} + w(s) + e_s + v(s,t).
 \end{equation}
-Here $h_{st}$ is the recent event history of Section~\ref{sec:data-history},
-so $\delta$ measures state dependence (Section~\ref{sec:methods-persistence}).
-The vector $\bx_{st}$ holds the cell and cell-week covariates with fixed effects.
-In the application these are the other outcome's event history, population,
-malaria risk, the IPC phase 3+ population, river length and lake area, the climate
-anomalies and climatologies of Section~\ref{sec:data-cov}, biome effects and year
-effects. The variables $z_{k,st}$, $k \in \mathcal{K}$, are climate anomalies whose
-effects $\beta_k(s)$ vary in space (Section~\ref{sec:methods-svc}); in the
-application $\mathcal{K}$ contains maximum temperature only. The vector
-$\bz_{ct}$ holds the national indicators with effects $\bm{\alpha}$
-(Section~\ref{sec:methods-confounding}). GDP per capita is one of them: it is
-national GDP divided by national population and enters as its logarithm. The
-country effects $u_c \sim \Normal(0, \sigma_u^2)$ are independent, $w$ is a
-Mat\'ern field on the sphere (Section~\ref{sec:methods-spde}), the cell effects
-$e_s \sim \Normal(0, \sigma_e^2)$ are independent, and $v$ is a space-time field
+Here $h_{st}$ is the recent event history of Section~\ref{sec:data-history}, so
+$\delta$ measures state dependence, and $\bx_{st}$ holds the cell and cell-week
+covariates with fixed effects, including the missingness indicators, biome and year
+effects. The terms $z_{k,st}\beta_k(s)$ are spatially varying climate effects and
+$\bz_{ct}^\top\bm{\alpha}$ the national indicators; both are used only in the
+univariate analyses of the Supplementary Material (Sections~\ref{sec:methods-svc}
+and~\ref{sec:methods-confounding}). The country effects
+$u_c \sim \Normal(0, \sigma_u^2)$ and cell effects $e_s \sim \Normal(0, \sigma_e^2)$
+are independent, $w$ is a Mat\'ern field on the sphere
+(Section~\ref{sec:methods-spde}), and $v$ is a space-time field
 (Section~\ref{sec:methods-st}). The four latent terms capture persistent
-\emph{recorded} risk at four scales. Each mixes occurrence with reporting
-(Section~\ref{sec:data-acled}): national institutions and reporting regimes ($u$),
-regional hotspots that cross borders ($w$), single cells such as a town, a mine or
-a border crossing ($e$), and slowly evolving episodes ($v$). The cell effect is
-needed because a field with $\nu = 1$ and a range of several cells cannot represent
-risk that differs between adjacent cells. Without it, such risk would be absorbed
-by $w$ or by the history term $\delta h_{st}$ (Section~\ref{sec:methods-persistence}).
-
-Missing covariate values are kept as missing through the construction of the
-features. In particular, a cell-week without an IPC assessment has a missing IPC
-value, not a food-insecure population of zero. After standardisation, missing values
-are set to the training-period mean, and a missingness indicator is added as a
-further fixed effect for each covariate group: one indicator for each national
-indicator and one for IPC. Without these indicators, the imputed value would be
-confounded with the fact of not being assessed, which is itself associated with
-conflict. The boosting models receive the missing values as such, since XGBoost
-handles them natively.
+\emph{recorded} risk at four scales, each mixing occurrence with reporting:
+national institutions and reporting regimes ($u$), regional hotspots that cross
+borders ($w$), single cells such as a town or a border crossing ($e$), and slowly
+evolving episodes ($v$).
 
 Model~\eqref{eq:model} is a latent Gaussian model \citep{rue2009inla}. Stacking all
 latent quantities into
@@ -54,7 +36,7 @@ $\bm{\xi} = (\bbeta, \delta, \bgamma, \bm{\alpha}, \bu, \bw, \bm{e}, \bmeta, \bv
 linear predictor is $\bm{\eta} = \bm{o} + \bA \bm{\xi}$ for a sparse design
 matrix $\bA$ and an optional offset $\bm{o}$, and
 $\bm{\xi} \mid \btheta \sim \Normal\{\bm{0}, \bQ(\btheta)^{-1}\}$ with a sparse,
-block-diagonal precision whose blocks are listed in Table~S1 of the Supplementary Material
+block-diagonal precision whose blocks are listed in Table~\ref{tab:blocks} of the Supplementary Material
 \citep{rue2005gmrf}. Fixed effects receive vague $\Normal(0, 10^4)$ priors and are
 integrated out together with the random effects.
 
@@ -73,95 +55,23 @@ $\sigma^2 = 1/(4\pi\kappa^2\tau^2)$, provided $\rho$ is small relative to the
 Earth's radius $R$. We parameterise the field by $(\rho, \sigma)$, in kilometres and
 logit units.
 
-The grid cells are natural control volumes, so instead of a triangulated mesh
-we discretise \eqref{eq:spde} by finite volumes on the longitude--latitude
-lattice itself \citep[for finite-volume SPDE discretisations on regular grids,
-see][]{fuglstad2015exploring}. Integrating \eqref{eq:spde} over cell $A_i$ and
-applying the divergence theorem with a two-point flux approximation gives
-\[
-\tau\Bigl\{\kappa^2 a_i w_i + \sum_{j \sim i} \frac{\ell_{ij}}{d_{ij}}(w_i - w_j)\Bigr\}
-= \mathcal{W}(A_i) \sim \Normal(0, a_i),
-\]
-where $a_i$ is the area of cell $i$, $j \sim i$ ranges over the cells sharing an
-edge with $i$, $\ell_{ij}$ is the length of the shared edge and $d_{ij}$ the
-great-circle distance between the centres. For a grid with spacings
-$\Delta\lambda, \Delta\varphi$ and centre latitude $\varphi_i$,
-\begin{align*}
-a_i &= R^2 \Delta\lambda\,\{\sin(\varphi_i + \Delta\varphi/2) - \sin(\varphi_i - \Delta\varphi/2)\},\\
-\ell_{ij}/d_{ij} &= \Delta\varphi / (\cos\varphi_i\, \Delta\lambda) \quad \text{(east--west neighbours)},\\
-\ell_{ij}/d_{ij} &= \cos\varphi_{ij}\,\Delta\lambda / \Delta\varphi \quad \text{(north--south neighbours)},
-\end{align*}
-with $\varphi_{ij}$ the latitude of the shared edge. Writing
-$\bC = \mathrm{diag}(a_i)$ and $\bG$ for the weighted graph Laplacian with edge
-weights $\ell_{ij}/d_{ij}$, we get $\tau \bK \bw = \bC^{1/2}\bm{\epsilon}$ with
-$\bK = \kappa^2 \bC + \bG$ and $\bm{\epsilon} \sim \Normal(\bm{0}, \bm{I})$, so
+The grid cells are natural control volumes, so instead of a triangulated mesh we
+discretise \eqref{eq:spde} by finite volumes on the longitude--latitude lattice
+itself \citep{fuglstad2015exploring}. With $\bC$ the diagonal matrix of cell areas and
+$\bG$ the graph Laplacian of the lattice with edge weights given by the ratio of
+shared edge length to centre distance, $\bK = \kappa^2 \bC + \bG$ and
 \begin{equation}\label{eq:Qs}
 \bw \sim \Normal\{\bm{0}, \bQ_s^{-1}\}, \qquad
 \bQ_s(\rho, \sigma) = \tau^2 \bK \bC^{-1} \bK,
-\qquad
-\log|\bQ_s| = 2n\log\tau + 2\log|\bK| - \textstyle\sum_i \log a_i .
 \end{equation}
-$\bQ_s$ has at most 13 non-zeros per row. The construction is the lumped-mass
-finite-volume analogue of the finite-element representation in
-\citet{lindgren2011spde}. Because it uses the physical cell geometry, it accounts
-for the shrinking east--west spacing towards the poles. It can also be restricted to
-land cells by deleting rows and columns, and it wraps around in longitude for global
-analyses. The continuum relations between $(\kappa, \tau)$ and $(\rho, \sigma)$
-hold on the lattice only when $\rho$ spans several cells. A fitted range below two
-or three cells (100--150\,km) indicates a field that the $0.5^\circ$ lattice does
-not resolve; its $\hat\sigma$ is then not the marginal standard deviation, and we
-interpret such fields as cell-level effects.
-
-\begin{remark}\label{rem:boundary}
-The discretisation imposes reflecting (Neumann) conditions on the boundary of the
-lattice, which roughly doubles the marginal variance of boundary cells
-\citep[Section~\ref{sec:sim-engine}; see][for the effect of boundary conditions on
-SPDE fields]{khristenko2019boundary}. For a land grid the boundaries are the
-coastlines. Extending the lattice into the sea removes the inflation but lets
-correlation leak across narrow seas, for example between Yemen and Somalia across the
-Gulf of Aden, which is substantively wrong for conflict risk. We therefore use the
-barrier model of \citet{bakka2019barrier}: the SPDE is written as
-\[
-u(s) - \nabla\cdot\Bigl\{\tfrac{r(s)^2}{8}\nabla u(s)\Bigr\} = r(s)\sqrt{\pi/2}\,\sigma\,\mathcal{W}(s),
-\]
-which reduces to \eqref{eq:spde} with $\kappa = \sqrt{8}/\rho$ when
-$r(s) \equiv \rho$. The lattice is extended by six rings of cells (3$^\circ$)
-without data. Sea cells, identified from the Natural Earth country polygons, get
-range $r(s) = f\rho$. Land cells without data, such as those outside a regional
-analysis box, keep the range $\rho$, so that the field is not artificially
-decorrelated at the edge of the region. The finite-volume form is
-$\bK\bu = \bm{D}\bm{\epsilon}$ with $\bK = \bC + (\rho^2/8)\bG_m$, where $\bG_m$
-has edge weights $2m_im_j/(m_i + m_j)\cdot\ell_{ij}/d_{ij}$, $m_i = r_i^2/\rho^2$
-(the harmonic mean, the usual two-point flux choice for a discontinuous
-coefficient), and $\bm{D} = \mathrm{diag}\{r_i\sigma(\pi a_i/2)^{1/2}\}$, so that
-$\bQ_s = \bK\bm{D}^{-2}\bK$. Table~S2 of the Supplementary Material reports the marginal variance
-at the coast and the correlation across straits of two to six cells for several
-choices of $f$, at $\rho = 400$\,km. At this range, $f = 0.1$, the value of
-\citet{bakka2019barrier}, gives a barrier range of 40\,km, less than one cell, and
-the coastline behaves almost like a reflecting boundary. We use $f = 0.5$. At
-$\rho = 400$\,km it keeps the coastal variance within about 30\% of nominal and the
-correlation across straits of four cells or more (about 220\,km) below 0.04, while
-a strait of two cells still has a correlation of 0.16. Straits narrower than one
-cell are not resolved at this grid resolution. These figures depend on $\rho$,
-because the barrier range $f\rho$ and the buffer of six rings scale differently with
-it. The fitted ranges of the static fields in the application are mixed. In
-model~\eqref{eq:model} for Africa and the Middle East, $\hat\rho$ is 544\,km for
-conflict and 465\,km for unrest. In the regional fits of the state-dependence analysis
-it is 430--469\,km for conflict and 333--335\,km for unrest. In the joint model it is
-453\,km for $w_{\mathrm{C}}$ and 369\,km for $w_{\mathrm{U}}$. The fields of the
-spatially varying coefficients have ranges of 465\,km (conflict) and 972\,km (unrest).
-Below 400\,km the barrier range $f\rho$ is shorter, and the coastline is closer to a
-reflecting boundary than in Table~S2. For ranges of 800\,km or more, such as that of
-the unrest coefficient field, $f\rho$ exceeds the buffer, so the coastal variance
-inflation returns and correlation leaks across the wider straits. The residual fields
-of the hybrid models (Section~\ref{sec:methods-hybrid}) have ranges of 263\,km
-(conflict) and 65\,km (unrest). The latter is not resolved by the lattice and is read
-as cell-level effects (Section~\ref{sec:app-hybrid}). Table~S2 is also computed for a
-sea strait inside a closed rectangle of land, not for the geometry of the application,
-which has an open coast, a buffer of six rings and a reflecting outer edge. It shows
-the order of magnitude of the effects, not their size in the application. The stored
-real-data fits use the sea cells of the country polygons as barriers.
-\end{remark}
+the lumped-mass finite-volume analogue of the finite-element representation of
+\citet{lindgren2011spde}, with at most 13 non-zeros per row. It accounts for the
+shrinking east--west spacing towards the poles and can be restricted to land cells.
+To keep correlation from leaking across narrow seas, for example between Yemen and
+Somalia, and to avoid inflated variance at the coast, we use the barrier model of
+\citet{bakka2019barrier} on a lattice extended by six rings of cells, with range
+$0.5\rho$ in sea cells. Section~\ref{supp:methods-fv} of the Supplementary Material
+gives the discretisation and the barrier construction, and checks them.
 
 \paragraph{Priors.} We use penalised-complexity priors
 \citep{simpson2017pc, fuglstad2019pc}: $P(\rho < \rho_0) = 0.05$ and
@@ -182,78 +92,10 @@ autoregression of Mat\'ern innovations,
 \citep{cameletti2013pm10}, so that $\bv$ has precision
 $\bQ_{\mathrm{AR}}(\phi) \otimes \bQ_s(\rho_v,\sigma_v)$, where
 $\bQ_{\mathrm{AR}}$ is the tridiagonal precision of a unit-variance AR(1) process.
-To control cost, $\tau$ indexes blocks of $\Delta$ weeks, and
-$v(s,t) = v_{s,\lceil t/\Delta \rceil}$. We use $\Delta = 1$ and $\Delta = 4$ in the
-simulations. In the application we use $\Delta = 8$ for the regional fits of the
-state-dependence analysis, and $\Delta = 13$ and $\Delta = 26$ for the space-time
-forecasting models and the joint model of Section~\ref{sec:methods-joint}. In the
-last two, $v$ is also coarsened in space: it is defined on the $1^\circ$ cells that
-contain observed $0.5^\circ$ cells, and each $0.5^\circ$ cell takes the value of its
-$1^\circ$ cell. The field $v$ is defined on the observed land cells only, with no
-buffer, so it cannot link cells across the sea. Its lattice has reflecting boundaries
-at the coast and at the edges of the analysis box. This departs from
-Remark~\ref{rem:boundary}, under which land cells outside a regional box keep the
-range $\rho$. Near these edges the prior variance of $v$ is inflated, roughly doubled
-at an edge. The Central Sahel box of the state-dependence analysis is
-$22^\circ \times 11^\circ$, about $2400 \times 1200$\,km. The fitted range of $v$ there
-is 230\,km for conflict and 485\,km for unrest, so for unrest a large part of the box
-lies within one range of an edge, in particular in the north--south direction.
-Estimates of $\delta$ and $\kappa$ conditional on $v$ should be read with this caveat.
-In the state-dependence and joint models, the static field $w$ uses the same lattice
-as elsewhere: the observed cells, a buffer of six rings and sea barriers with
-$f = 0.5$ (Remark~\ref{rem:boundary}). The space-time forecasting models contain no
-$w$. Their static part is the country effects and independent cell effects, so their
-predictor is the boosting offset plus $\beta_0 + u + e + v$. The prior on
-$\operatorname{atanh}\phi$ is $\Normal(0, 1.5^2)$. Non-separable alternatives exist
-\citep{lindgren2024diffusion} but are not needed for the questions asked here.
-
-\subsection{State dependence versus persistent heterogeneity}\label{sec:methods-persistence}
-
-Recent event counts dominated the importance rankings of the original boosting
-analysis \citep{menicali2026conflicts}. Part of that dominance was an artefact of
-duplicated rows (Section~\ref{sec:app-xgb}), but after correction recent history
-remains the strongest single predictor. This has several explanations, which
-model~\eqref{eq:model} separates only partially:
-\begin{enumerate}
-\item \emph{state dependence}: recorded events raise the probability of further
-recorded events in the same place, through retaliation, mobilisation or the arrival
-of armed groups;
-\item \emph{persistent heterogeneity}: some places are simply riskier ($u$, $w$, $e$ or $v$
-is large there), and past events are informative only as a proxy for that latent
-risk \citep{heckman1981heterogeneity};
-\item \emph{reporting dynamics}: media attention and reporting networks themselves
-persist, so a place that has been reported on is more likely to be reported on
-again, whatever happens there \citep{weidmann2016closer}.
-\end{enumerate}
-All three produce strong autocorrelation in $Y_{st}$ and a large predictive
-contribution of $h_{st}$. In the conflict literature the distinction appears as
-the question of whether apparent contagion between neighbouring places reflects
-spillover or shared conditions \citep{buhaug2008contagion}. Self-exciting point
-process models address it by decomposing intensity into a background and a
-triggering component
-\citep{mohler2011self, mohler2013multisource, porter2012hurdle, clark2018selfexciting,
-reinhart2018review, jun2024hawkes}.
-
-In model~\eqref{eq:model}, $\delta$ is the effect of recent recorded history
-conditional on the latent persistence $u + w + e + v$, and it is identified only
-under the assumed latent structure. It is conditional on heterogeneity at the scales
-that are modelled. Persistent heterogeneity that none of the latent terms can
-represent loads onto $\delta h_{st}$ and inflates $\hat\delta$. This is why the
-cell effect $e$ is included: without it, time-invariant risk that varies between
-adjacent cells could only be represented by $h_{st}$.
-The space-time field $v$ is resolved at steps of $\Delta$ weeks, and $h_{st}$ covers the previous four weeks. When the two time scales are
-similar, separating $\delta$ from $v$ relies on the AR(1) form, so we report
-$\delta$ for several $\Delta$ (Section~\ref{sec:sim-persistence}). We therefore read
-$\hat\delta$ as conditional dependence of recorded events, not as a causal contagion
-effect. To limit the initial-conditions problem of dynamic random-effects models
-\citep{wooldridge2005initial}, we drop weeks whose four-week history is incomplete
-(the first weeks of each cell and of each country's ACLED coverage). We also add each
-cell's history at its first usable week as a covariate, following
-\citet{wooldridge2005initial}. This is a limited version of that device. A single
-four-week window is a noisy proxy for a cell's initial state, and its coefficient
-does not vary in time, whereas under the AR(1) form of $v$ the dependence of later
-weeks on the initial state decays with time. The device therefore only partly
-removes the initial-conditions bias.
+To control cost, $\tau$ indexes blocks of $\Delta$ weeks; in the application $v$ uses
+$\Delta = 13$ weeks and is defined on the $1^\circ$ cells that contain observed
+$0.5^\circ$ cells (Section~\ref{supp:methods-st}). The prior on
+$\operatorname{atanh}\phi$ is $\Normal(0, 1.5^2)$.
 
 \subsection{A joint model of conflict and unrest}\label{sec:methods-joint}
 
@@ -269,21 +111,21 @@ linear predictor \citep{racek2025diffusion}. Neither separates the two readings.
 so by modelling both outcomes jointly, with a space-time field that is common to them.
 
 Let $j \in \{\mathrm{C}, \mathrm{U}\}$ index conflict and unrest, and let $Y_{jst}$ be the
-indicator of a recorded event of type $j$ in cell $s$ and week $t$. The histories are
-$h_{jst} = \log(1 + \text{number of events of type } j \text{ in cell } s \text{ in weeks }
-t-4, \dots, t-1)$, and $\bar h_{jst}$ is the mean of $h_{js't}$ over the rook neighbours
+indicator of a recorded event of type $j$ in cell $s$ and week $t$. The history
+$h_{jst}$ is $\log(1 + n)$, where $n$ is the number of events of type $j$ in cell $s$ in
+weeks $t-4, \dots, t-1$, and $\bar h_{jst}$ is the mean of $h_{js't}$ over the rook neighbours
 $s'$ of $s$, standardised on the training rows. Conditionally on the latent effects, the
 $Y_{jst}$ are independent Bernoulli variables with
 \begin{equation}\label{eq:joint}
 \begin{aligned}
 \logit \pi_{\mathrm{C}st} &= \bx_{st}^\top \bbeta_{\mathrm{C}}
 + \delta_{\mathrm{C}}\, h_{\mathrm{C}st} + \kappa\, h_{\mathrm{U}st}
-+ \delta^{\mathrm{nb}}_{\mathrm{C}}\, \bar h_{\mathrm{C}st} + \kappa^{\mathrm{nb}}\, \bar h_{\mathrm{U}st}
-+ u_{\mathrm{C},c(s)} + e_{\mathrm{C}}(s) + w_{\mathrm{C}}(s) + v(s,t),\\
++ \delta^{\mathrm{nb}}_{\mathrm{C}}\, \bar h_{\mathrm{C}st} + \kappa^{\mathrm{nb}}\, \bar h_{\mathrm{U}st}\\
+&\quad + u_{\mathrm{C},c(s)} + e_{\mathrm{C}}(s) + w_{\mathrm{C}}(s) + v(s,t),\\
 \logit \pi_{\mathrm{U}st} &= \bx_{st}^\top \bbeta_{\mathrm{U}}
 + \delta_{\mathrm{U}}\, h_{\mathrm{U}st} + \kappa_{\mathrm{U}}\, h_{\mathrm{C}st}
-+ \delta^{\mathrm{nb}}_{\mathrm{U}}\, \bar h_{\mathrm{U}st} + \kappa^{\mathrm{nb}}_{\mathrm{U}}\, \bar h_{\mathrm{C}st}
-+ u_{\mathrm{U},c(s)} + e_{\mathrm{U}}(s) + w_{\mathrm{U}}(s) + \lambda\, v(s,t).
++ \delta^{\mathrm{nb}}_{\mathrm{U}}\, \bar h_{\mathrm{U}st} + \kappa^{\mathrm{nb}}_{\mathrm{U}}\, \bar h_{\mathrm{C}st}\\
+&\quad + u_{\mathrm{U},c(s)} + e_{\mathrm{U}}(s) + w_{\mathrm{U}}(s) + \lambda\, v(s,t).
 \end{aligned}
 \end{equation}
 The vector $\bx_{st}$ holds the covariates of model~\eqref{eq:model} that have fixed
@@ -298,47 +140,14 @@ predictor with loading one and the unrest predictor with loading $\lambda$. The
 symbol $\kappa$ here denotes the escalation coefficient. It is unrelated to the SPDE
 parameter of Section~\ref{sec:methods-spde}.
 
-\paragraph{The copy construction.} A loading in the design matrix would make $\bA$
-depend on $\btheta$. We instead keep $\bA$ fixed and put $\lambda$ in the prior
-precision, as in the copy construction of R-INLA. Let $\bm{a}$ be the vector of the
-$m$ values of $v$ and introduce a second vector
-\[
-\bm{b} = \lambda\bm{a} + \bm{\varepsilon}, \qquad \bm{\varepsilon} \sim \Normal(\bm{0}, \tau_c^{-1}\bm{I}),
-\qquad \tau_c = 10^4 .
-\]
-Conflict rows of the design load on $\bm{a}$ and unrest rows on $\bm{b}$. The standard
-deviation of $\bm{\varepsilon}$ is $0.01$, small compared with that of $v$, so the
-unrest predictor receives $\lambda v$ up to a negligible perturbation. If
-$\bQ_a = \bQ_{\mathrm{AR}}(\phi) \otimes \bQ_s(\rho_v, \sigma_v)$ is the precision of
-$\bm{a}$, the precision of $(\bm{a}, \bm{b})$ is
-\[
-\bQ_{ab} =
-\begin{pmatrix}
-\bQ_a + \lambda^2\tau_c\bm{I} & -\lambda\tau_c\bm{I}\\
--\lambda\tau_c\bm{I} & \tau_c\bm{I}
-\end{pmatrix}
-= \bm{R}_{ab}^\top\bm{R}_{ab},
-\qquad
-\bm{R}_{ab} =
-\begin{pmatrix}
-\bm{R}_a & \bm{0}\\
--\lambda\tau_c^{1/2}\bm{I} & \tau_c^{1/2}\bm{I}
-\end{pmatrix},
-\]
-with $\bm{R}_a^\top\bm{R}_a = \bQ_a$, and
-$\log|\bQ_{ab}| = \log|\bQ_a| + m\log\tau_c$. The loading therefore does not enter the
-log-determinant, and the explicit factor $\bm{R}_{ab}$ is used for posterior sampling
-(Section~\ref{sec:methods-inference}). The sparsity pattern of $\bQ_{ab}$ does not
-depend on $\lambda$. The loading has a $\Normal(0, 2^2)$ prior. The loading of conflict
-is fixed at one, which fixes the scale and the sign of $v$, so $\lambda$ and its sign
-are identified. With $\lambda = 0$, the conflict equation of~\eqref{eq:joint} is the
-univariate conflict model with its own space-time field, and the two outcomes are
-independent given their histories. The comparison of the joint fit with that
-univariate fit shows the effect of letting unrest inform $v$, under the assumption that
-there is no outcome-specific space-time variation (see \emph{Identification and
-limits} below). In the
-application $v$ uses $\Delta = 13$ weeks on the $1^\circ$ lattice of
-Section~\ref{sec:methods-st}.
+A loading in the design would make $\bA$ depend on the hyperparameters; as in the copy
+construction of R-INLA we instead introduce $\bm{b} = \lambda\bm{a} + \bm{\varepsilon}$,
+with $\bm{a}$ the values of $v$ and $\bm{\varepsilon} \sim \Normal(\bm{0}, 10^{-4}\bm{I})$,
+let unrest rows load on $\bm{b}$, and put $\lambda$ in the prior precision of
+$(\bm{a}, \bm{b})$, whose log-determinant does not depend on $\lambda$
+(Section~\ref{supp:methods-joint}). The loading has a $\Normal(0, 2^2)$ prior; the
+loading of conflict is fixed at one, which identifies the sign of $\lambda$. With
+$\lambda = 0$ the conflict equation is the univariate model.
 
 \paragraph{The estimand.} The coefficient $\kappa$ is the association between recent
 unrest in a cell and conflict in the same cell, conditional on the shared episode
@@ -346,7 +155,6 @@ $v(s,t)$ and on the other terms of~\eqref{eq:joint}; $\kappa^{\mathrm{nb}}$ is t
 for unrest in the neighbouring cells. We call $\kappa$ escalation conditional on
 shared episodes. Like $\delta$ (Section~\ref{sec:methods-persistence}), it is a
 conditional association of recorded events, not a causal effect.
-
 Univariate models of conflict estimate a different quantity, even when they include
 their own space-time field. Suppose shared episodes drive both outcomes. Unrest in
 the previous four weeks was then generated in part by the episode at that time, and
@@ -362,11 +170,7 @@ and~\ref{sec:methods-confounding} in another form. In the joint model the unrest
 outcomes enter the likelihood of $v$. The episode is estimated from both outcomes,
 and the dependence of $h_{\mathrm{U}st}$ on it is part of the model, because
 $h_{\mathrm{U}st}$ is built from earlier values of a modelled outcome.
-Section~\ref{sec:sim-joint} checks this argument by simulation. The simulation as
-reported has a single shared space-time field and no outcome-specific space-time field
-in the data-generating process, with steps of four weeks on a $0.5^\circ$ lattice. It
-checks the upward bias of the univariate estimate, but not the bias in the opposite
-direction described below.
+Section~\ref{sec:sim-joint} checks this argument by simulation.
 
 \paragraph{Identification and limits.} The shared field is identified from the joint
 movement of the two outcomes at its own resolution, beyond what the fixed effects
@@ -391,346 +195,37 @@ occur; the unrest-only episodes instead inflated the estimated loading
 (Section~\ref{sec:sim-joint}).
 
 The shared component mixes common shocks to occurrence with common shocks to
-reporting. Reporting rates vary in space \citep{weidmann2016closer}, reporting of
-protest clusters in space and time through sequential attention
-\citep{hellmeier2018spotlight}, and non-fatal events are under-reported selectively
-\citep{croicu2022reporting}. A period of attention to a place raises the recorded
-counts of both event types, and the joint model treats it as a shared episode. The
-two sources of co-movement could be separated with several independent sources of
-event data \citep{cook2017twowrongs}. With a single source they cannot. We therefore
-read $\kappa$ as conditional on shared episodes of either kind, and we do not
-interpret $v$ as occurrence or as reporting. The loading $\lambda$ also mixes the two.
-It reflects how strongly unrest follows the shared episodes and how differently the
-two event types are reported.
-
-Model~\eqref{eq:joint} is a linear model of coregionalisation with a single
-space-time component and fixed loading one for conflict
-\citep{gelfand2004nonstationary}. Outcome-specific persistent variation enters
-through $u_j$, $e_j$ and $w_j$, but there is no outcome-specific space-time field.
-Space-time variation of conflict that is not shared with unrest therefore also loads
-on $v$, and $\lambda$ is estimated against it. Space-time variation of unrest that is
-not shared with conflict loads on $v$ as well, with the attenuation of $\hat\kappa$
-described above. A second space-time component, as in the extended model, relaxes
-this at the cost of a second latent block of the size of $v$. Multivariate Hawkes
-models of event data \citep{jun2024hawkes} and discrete-time Hawkes models of ACLED
-\citep{browning2026hawkes} explain co-occurrence by triggering, with a background rate
-that does not contain a shared time-varying latent component. In such models a shared
-episode can only appear as cross-excitation. Model~\eqref{eq:joint} can be read as
-adding a shared stochastic background to cross-lagged terms. Spatio-temporal SPDE
-models of political violence \citep{python2019bayesian, egbon2024spatio} have so far
-modelled one outcome at a time.
-
-\subsection{Spatially varying climate effects}\label{sec:methods-svc}
-
-To assess whether climate effects differ across biomes and how much variation
-remains within them, the effect of anomaly $k$ is decomposed as
-\begin{equation}\label{eq:svc}
-\beta_k(s) = \gamma_{k,b(s)} + \eta_k(s),
-\qquad \bmeta_k \sim \Normal\{\bm{0}, \bQ_s(\rho_k, \sigma_k)^{-1}\},
-\end{equation}
-a spatially varying coefficient model \citep{gelfand2003svc,dambon2021svc} whose
-mean is pooled by biome. The biome means $\gamma_{k,b}$ are fixed effects with the
-vague prior of Section~\ref{sec:methods-model}. The field $\bmeta_k$ has PC priors
-with $P(\rho_k < 100\,\mathrm{km}) = 0.05$ and $P(\sigma_k > 0.5) = 0.01$, and
-$\sigma_k$ measures heterogeneity within biomes. The design of $\bmeta_k$ is the
-sparse matrix with entry $z_{k,st}$ in row $(s,t)$ and column $s$.
-
-Three summaries of a biome-specific effect should be distinguished:
-\begin{itemize}
-\item \emph{Fixed biome slopes.} A model with fixed biome-specific slopes and no
-$\bmeta_k$ estimates an information-weighted average,
-$\sum_{s \in \mathcal{S}_b}\omega_s\beta_k(s) / \sum_{s \in \mathcal{S}_b}\omega_s$,
-with $\omega_s \approx \sum_t z_{k,st}^2\pi_{st}(1-\pi_{st})$. This average puts
-most weight on the high-risk cells of the biome.
-\item \emph{Biome means.} Model~\eqref{eq:svc} targets the biome mean $\gamma_{k,b}$,
-the mean of the process that generated the biome's coefficients. This is a
-superpopulation quantity. Because $\bmeta_k$ is not constrained to average zero
-within biomes and biomes are large contiguous regions, $\gamma_{k,b}$ is separated
-from the biome average of $\bmeta_k$ mainly when $\rho_k$ is small relative to the
-size of the biome. When $\rho_k$ is comparable to biome size, the separation rests
-partly on the prior. A nearly constant component of $\bmeta_k$ is then confounded
-with a common shift of all $\gamma_{k,b}$. The intervals for $\gamma_{k,b}$ are
-conditional on $(\hat\rho_k, \hat\sigma_k)$ (Section~\ref{sec:methods-inference}),
-and in this situation the uncertainty in these hyperparameters may be the largest
-source of error. They should be read with this in mind.
-\item \emph{Median SHAP value.} The summary used in the SHAP-based analysis of
-\citet{menicali2026conflicts}, the median SHAP value within a biome, differs from
-both. The following identities are on the logit scale of the model. They hold for
-interventional SHAP values when the features are independent. The path-dependent
-TreeSHAP of XGBoost \citep{lundberg2020trees}, which we use, satisfies them only
-approximately, and features correlated with biome, such as distance from the
-equator, can absorb part of an interaction. For a feature with
-an additive effect $f_k(z)$, the SHAP value is $f_k(z) - \E f_k(Z_k)$, so the median
-within a biome is $\operatorname{median}_{(s,t):\, b(s) = b}\{f_k(z_{k,st}) - \E
-f_k(Z_k)\}$. For a linear effect $\beta_k z$ this is $\beta_k$ times the median of
-$z_{k,st} - \E z_k$ in the biome. It reflects where the biome's covariate values lie
-relative to the global mean as much as the strength of the effect. When the effect
-is a biome-by-feature interaction, SHAP also splits the interaction between the
-feature and biome \citep{kumar2020problems,aas2021explaining}. A pure interaction
-$g(b)z$, with $B$ independent of $Z$, contributes
-$\{g(b) + \E g(B)\}(z - \E z)/2$ to the SHAP value of $z$. Within biome $b$, the
-least-squares slope of the SHAP value of $z$ on $z$ therefore targets
-$\{g(b) + \E g(B)\}/2$, which is pulled towards the average effect across biomes. It
-equals $g(b)/2$ only when $\E g(B) = 0$. The SHAP value with the interaction credited
-fully to $z$, $\Phi_{zz} + 2\sum_{j \neq z}\Phi_{zj}$ with $\Phi$ the SHAP
-interaction values \citep{lundberg2020trees}, equals $g(b)(z - \E z)$ in this case,
-so its slope within biome $b$ targets $g(b)$ whatever the mean of $g$.
-\end{itemize}
-
-\subsection{National indicators and spatial confounding}\label{sec:methods-confounding}
-
-National indicators $\bz_{ct}$, such as GDP per capita, the EPI or the ecological
-footprint, take one value per country and year. GDP per capita is computed at the
-national level (Section~\ref{sec:methods-model}), so that it is constant within each
-country and year like the other indicators. We decompose each into a
-between-country component, its country mean over the training years
-$\bar z_c$, and a within-country component $z_{ct} - \bar z_c$, with separate
-coefficients (a Mundlak decomposition). Year effects absorb trends common to all
-countries. The between coefficients are identified from contrasts between the
-$n_c$ countries only, so their effective sample size is of order $n_c$, not the
-number of cell-weeks. Modelling cell-weeks as conditionally independent, or
-bootstrapping spatial blocks that cut across countries, therefore produces intervals
-that are far too narrow. The within coefficients rest on the few years of change
-within each country. A missing value of an indicator is set to the training mean, and
-the indicator's missingness indicator is set to one (Section~\ref{sec:methods-model}).
-The missingness indicator is defined per country and year. It varies mostly between
-countries, so its coefficient also rests on few contrasts. An indicator that is never
-missing in the training years has a constant missingness indicator there, which is
-dropped. This is the case for the EPI and liberal democracy. Their missing values in
-the test years are therefore set to the training mean without a flag
-(Section~\ref{sec:app-glmm}).
-
-If the indicators are associated with unobserved country-level risk, so that
-$\E\{u_c + \bar w_c \mid \bar z_c\} \neq 0$ with $\bar w_c$ the country average of
-$w$, then the between coefficients are confounded. An indicator of environmental
-performance that tracks state capacity, or reporting capacity, is the leading
-example. This is the spatial confounding problem
-\citep{reich2006effects, hodges2010adding, paciorek2010importance}. Adding a spatial
-random effect changes the estimate of a spatially smooth covariate's coefficient,
-and in general neither the estimate with the random effect nor the one without it is
-unbiased for a causal effect \citep{khan2022restricted, zimmerman2022deconfounding}.
-Recent work has made this more precise. Generalised least squares with a spatial
-random effect can be consistent when the covariate has non-spatial variation
-\citep{gilbert2025consistency}. Confounding in the data-generating process should be
-distinguished from the behaviour of the analysis model \citep{khan2026rethinking}.
-The bias depends on how the covariate and the confounder are spread across spatial
-scales \citep{guan2023spectral, dupont2026demystifying}. A country-constant indicator
-has no within-country spatial variation, so these results give little reassurance
-here.
-
-We report the following estimators and treat their disagreement as a measure of how
-fragile the national-level conclusions are:
-\begin{enumerate}
-\item model~\eqref{eq:model} without latent effects;
-\item model~\eqref{eq:model} with $\bu$ (the cell effects $\bm{e}$ enter only together
-with $\bw$);
-\item model~\eqref{eq:model} with $\bu$, $\bw$ and $\bm{e}$;
-\item a \emph{spatial+} estimator \citep{dupont2022spatial}: model~\eqref{eq:model}
-with $\bu$, $\bw$ and $\bm{e}$, in which each between component is replaced by its
-residual after an area-weighted projection, over the observed land cells, on the $m$
-smoothest eigenvectors $\bm{\psi}$ of $\bG\bm{\psi} = \mu\bC\bm{\psi}$.
-\end{enumerate}
-These eigenvectors are the lattice analogue of the thin-plate eigenvectors of
-\citet{dupont2022spatial}. A country-constant indicator varies only by steps at
-borders. After the projection, the residual keeps these steps, minus a smooth
-function of the eigenvectors. The projection removes the part of the between
-component that is smooth on the scales of $\bw$, so that it cannot be confounded with
-$\bw$. It does nothing about confounding with $\bu$. The remaining border steps are
-country-level jumps, which $\bu$ can absorb. With $\bu$ in the model, the between
-coefficient is therefore identified partly through the shrinkage of $\bu$ under its
-exchangeable prior, which is independent of the indicator. This is the random-effects
-exogeneity assumption $\E(u_c \mid \bar z_c) = 0$, which we have just called
-implausible. The same holds for estimators (ii) and (iii): the between component
-$\bar z_c$ and $u_c$ vary at the same country level, so the Mundlak decomposition does
-not protect the between coefficients. Their larger standard errors reflect the $n_c$
-contrasts, not robustness to confounding. The between conclusions under every
-estimator are conditional on this assumption. The projection also gives the residual
-some within-country variation that is a function of the smooth eigenvectors. We
-therefore treat (iv) as a sensitivity analysis and not as a preferred estimate.
-
-The default $m^*$ is the number of eigenvalues below
-$\kappa_w^2 = 8/\hat\rho_w^2$, the eigenvectors that vary on scales longer than the
-fitted range of $w$. We take $\hat\rho_w$ from estimator (iii): 544\,km for conflict
-and 465\,km for unrest. The eigenvalues are computed on the 13{,}719 observed land
-cells, up to a maximum of 400 eigenpairs. This gives $m^* = 138$ for conflict and
-$m^* = 176$ for unrest, both below the cap. By Weyl's law, for a region of area
-$|D|$ the count is approximately $|D|\kappa_w^2/(4\pi) = 2|D|/(\pi\hat\rho_w^2)$. With
-$|D| \approx 3.9\times10^7$\,km$^2$ this gives about 84 and 114. The computed counts
-are larger, which is consistent with the positive boundary correction to Weyl's law
-under reflecting boundaries and the long coastline of the region. We report $m = 10$,
-$m = 20$ and $m^*$, that is $m \in \{10, 20, 138\}$ for conflict and
-$m \in \{10, 20, 176\}$ for unrest. The restricted spatial regression
-of \citet{reich2006effects} is not used, because its intervals are known to be
-anticonservative \citep{hanks2015restricted, khan2022restricted}.
-
-\subsection{Hybrid models: boosting offsets with latent effects}\label{sec:methods-hybrid}
-
-To retain the flexibility of gradient boosting for the many weakly informative
-covariates, we also fit a semiparametric version of~\eqref{eq:model}. Its fixed part
-is replaced by the logit $\hat f(\bx_{st})$ of an XGBoost classifier
-\citep{chen2016xgboost}, which enters as an offset:
-\begin{equation}\label{eq:hybrid}
-\logit \pi_{st} = \hat f^{(-k(s))}(\bx_{st}) + \beta_0 + u_{c(s)} + \omega(s),
-\end{equation}
-where $\omega$ is either the Mat\'ern field $w$ or independent cell effects. The
-offset is \emph{cross-fitted by country}. Countries are assigned at random to $K = 5$
-folds. For each fold $k$, $\hat f^{(-k)}$ is trained on the 2018--2022 rows of the
-other folds, with its number of trees chosen by early stopping on 2022 after training
-on 2018--2021. It then provides the offset for every row of fold $k$, in both the
-training and test periods. The offset and the latent effects are fitted on the
-Africa and the Middle East box only. Trees that receive national indicators can identify
-countries, and through population, biome and distance from the equator, approximate
-locations. Cross-fitting by country ensures that the offset of a cell was learned
-without any data from its own country, so that $u$ does not count that country's
-data twice. It does not exclude data from neighbouring countries. The offset of a
-cell near a border can be learned from the outcomes of cells across the border, and
-$\omega$ is estimated from the residuals of those same cells. Regional hotspots that
-cross borders can therefore enter both the offset and $\omega$. The fitted $\omega$
-is a residual field. Its range and standard deviation are not comparable with those
-of $w$ in model~\eqref{eq:model}. The offset enters with its coefficient fixed at
-one, so fold models whose logits are over- or under-dispersed are not rescaled; $u$
-absorbs shifts between folds but not differences in scale. Inference for $u$ and
-$\omega$ is conditional on the offset, whose estimation uncertainty is not
-propagated, so their posterior uncertainty is understated. Cross-fitting is used here
-in the loose sense of sample splitting, not with an orthogonal score as in
-\citet{chernozhukov2018dml}.
-
-The price of cross-fitting is that the offset is weaker than a boosting model trained
-on all locations. The cross-fitted XGBoost model never sees the country it predicts,
-while $u$ and $\omega$ are estimated from that country's training data. A gain of the
-hybrid model over the cross-fitted offset alone is therefore not evidence that the
-latent effects add anything. The hybrid models are compared, on identical test rows,
-with the corrected boosting model trained on all locations, with the location-aware
-boosting baseline, with each other ($\omega$ as a field or as independent cell
-effects) and with the persistence baseline (Section~\ref{sec:methods-diagnostics}).
-The offset uses the same rows, features and hyperparameters as the corrected
-boosting model (Section~\ref{sec:app-xgb}). It is trained without class weights, so
-it is on the log-odds scale.
-
-Model~\eqref{eq:hybrid} differs from GPBoost \citep{sigrist2022gpboost,
-sigrist2023lagaboost}, which alternates boosting steps with latent Gaussian model
-updates: here the boosting fit is fixed before the latent model is fitted. This
-makes the model cheap enough for the global data and allows the same Laplace
-machinery to be used. Random forests with spatially correlated errors
-\citep{saha2023rfgls} are a further alternative.
-
-The boosting analysis of \citet{menicali2026conflicts} trained XGBoost with positives
-weighted by $\omega_+ = (n_0/n_1)^{1/2}$. For the unrestricted minimiser of the
-logistic loss, this shifts the fitted log-odds by $\log\omega_+$
-\citep{king2001rare}. We therefore prior-correct the predictions of the weighted
-models, $\hat f \leftarrow \hat f - \log\omega_+$, before probabilistic scoring. For
-boosted trees the correction is only approximate, because the weights also act on
-the leaf penalty, on the minimum leaf weight, which is defined on weighted Hessians,
-and on early stopping. The scores of the weighted models therefore include any
-remaining miscalibration. Class reweighting does not improve discrimination and
-miscalibrates probabilities \citep{vandengoorbergh2022harm}, and the corrected
-boosting model is trained without it (Section~\ref{sec:app-xgb}).
+reporting, such as a period of media attention to a place
+\citep{weidmann2016closer, hellmeier2018spotlight}. With a single source of event data
+the two cannot be separated \citep{cook2017twowrongs}, so we read $\kappa$ as
+conditional on shared episodes of either kind. Model~\eqref{eq:joint} is a linear model
+of coregionalisation \citep{gelfand2004nonstationary}; unlike multivariate Hawkes models
+of event data \citep{jun2024hawkes, browning2026hawkes}, which explain co-occurrence by
+triggering, it adds a shared stochastic background to cross-lagged terms
+(Section~\ref{supp:methods-joint}).
 
 \subsection{Inference}\label{sec:methods-inference}
 
-For fixed hyperparameters $\btheta$, the posterior mode
-$\bm{\xi}^* = \arg\max_{\bm{\xi}}\{\log p(\bm{y}\mid\bm{\xi}) - \tfrac12 \bm{\xi}^\top \bQ \bm{\xi}\}$
-is found by damped Newton iterations,
-\[
-\bm{\xi} \leftarrow \bm{\xi} + \ell\,(\bQ + \bA^\top \bm{W} \bA)^{-1}
-\{\bA^\top(\bm{y} - \bm{\pi}) - \bQ\bm{\xi}\},
-\qquad \bm{W} = \mathrm{diag}\{\pi_{st}(1-\pi_{st})\},
-\]
-with step length $\ell$ halved until the objective does not decrease. If $\ell$ falls
-below $10^{-6}$, the step is taken even if the objective has decreased. For the joint
-model~\eqref{eq:joint} the rows of both outcomes are stacked, so $\bm{y}$, $\bm{\pi}$
-and $\bm{W}$ run over the cell-weeks of both. The Laplace approximation to the marginal likelihood is
+For fixed hyperparameters $\btheta$, the posterior mode $\bm{\xi}^*$ of the latent
+vector is found by damped Newton iterations, and the Laplace approximation to the
+marginal likelihood is
 \begin{equation}\label{eq:laplace}
 \log \tilde p(\bm{y}\mid\btheta) = \log p(\bm{y}\mid\bm{\xi}^*)
 - \tfrac12 \bm{\xi}^{*\top}\bQ\bm{\xi}^* + \tfrac12\log|\bQ| - \tfrac12\log|\bQ + \bH|,
 \qquad \bH = \bA^\top\bm{W}^*\bA .
 \end{equation}
-The hyperparameters are set to
-$\hat\btheta = \arg\max\{\log\tilde p(\bm{y}\mid\btheta) + \log p(\btheta)\}$ by
-L-BFGS-B on the internal scale: logarithms of ranges and standard deviations,
-$\operatorname{atanh}\phi$, and the loading $\lambda$ itself. The internal parameters
-are bounded: standard deviations to $[0.005, 20]$, ranges to $[10, 2\times10^4]$\,km,
-$\operatorname{atanh}\phi$ to $[-3, 3]$ and $\lambda$ to $[-5, 5]$. The bounds keep the
-inner problem well conditioned; an estimate at a bound would indicate a poorly
-identified hyperparameter. Gradients are forward differences with step $10^{-4}$ on
-the internal scale, taken inwards at an upper bound. Each evaluation warm-starts
-Newton at the previous mode. Given $\hat\btheta$, the latent posterior is approximated
-by $\Normal\{\bm{\xi}^*, (\bQ + \bH)^{-1}\}$. Samples reuse the factorisation of
-$\bQ + \bH$ already computed at the mode, through the perturbation identity
-\[
-\bm{\xi} = \bm{\xi}^* + (\bQ + \bH)^{-1}\bigl(\bm{R}^\top\bm{\epsilon}_1 + \bA^\top\bm{W}^{*1/2}\bm{\epsilon}_2\bigr),
-\]
-where $\bm{R}^\top\bm{R} = \bQ$ is block-wise explicit, for instance
-$\bm{R} = \bm{D}^{-1}\bK$ for a Mat\'ern block and a Kronecker product of a
-bidiagonal AR(1) factor with that matrix for $\bv$, and $\bm{R}_{ab}$ of
-Section~\ref{sec:methods-joint} for the shared field of the joint model. This is an empirical Bayes
-version of INLA \citep{rue2009inla} and is similar in spirit to TMB
-\citep{kristensen2016tmb}. Laplace approximations are generally accurate for
-binary GLMMs but can understate uncertainty when there are few observations per
-latent variable and events are rare \citep{fong2010glmm, ferkingstad2015improving}.
-The intervals also ignore the uncertainty in $\hat\btheta$.
-Section~\ref{sec:sim-engine} therefore checks coverage at the event prevalence of
-the data, and Section~\ref{sec:sim-persistence} checks it for the space-time model,
-where each latent value is informed by only $\Delta$ Bernoulli observations. When a
-space-time field is fitted and the data contain one, the plug-in standard errors are
-too small. In S3 the ratio of the empirical standard deviation of $\hat\delta$ to its
-mean standard error is between 1.19 and 1.66, and the coverage of nominal 95\%
-intervals is between 0.80 and 0.95. In S5 without escalation the ratio for
-$\hat\kappa$ is 1.20 (Section~\ref{sec:sim-joint}). Intervals from the space-time and
-joint models in the application are therefore likely too narrow, and an estimate whose
-nominal interval only just excludes zero should not be read as clearly different from
-zero.
-
-\paragraph{Computation.} All prior precisions are sparse. Every Newton step and every
-log-determinant requires a factorisation of $\bQ + \bH$, whose sparsity pattern does
-not depend on $\btheta$. The design $\bA$ has a few dense columns, those of the fixed
-effects, and many sparse ones. Writing $\bA = (\bm{X}_d, \bm{S})$, we store
-$\bm{X}_d$ as a dense array and assemble $\bH = \bA^\top\bm{W}\bA$ by blocks. The blocks
-$\bm{X}_d^\top\bm{W}\bm{X}_d$ and $\bm{S}^\top\bm{W}\bm{X}_d$ are accumulated over chunks
-of 250{,}000 rows by dense matrix products (BLAS), which bounds the memory used by
-each process. Only $\bm{S}^\top\bm{W}\bm{S}$ is computed as a sparse product. The dense
-blocks are stored with their explicit zeros, so the sparsity pattern of $\bQ + \bH$
-is the same at every evaluation.
-
-Two factorisations are implemented. The first is the supernodal Cholesky
-factorisation of CHOLMOD, through scikit-sparse. Its symbolic analysis, which includes
-the fill-reducing ordering, is computed once per model and reused for every numerical
-factorisation. The second, used when CHOLMOD is not available, is a sparse LU
-factorisation in symmetric mode (SuperLU). For matrices of dimension above 2{,}000
-its fill-reducing ordering is a nested dissection computed once by METIS
-\citep{karypis1998metis}. If METIS is not available, the code falls back to multiple
-minimum degree on $\bm{M}^\top + \bm{M}$, with $\bm{M} = \bQ + \bH$. For the space-time model the nested-dissection
-ordering reduced factorisation time by a factor of 7 to 14 compared with that
-fallback. An LU factorisation stores both triangular factors, so it needs about twice
-the memory of a Cholesky factor of the same matrix. scikit-sparse was not installed on
-the computing cluster, so the fits run there used SuperLU \todo{confirm the backend
-of the Africa and the Middle East joint fit}.
-
-The $n_\theta$ perturbed evaluations of a finite-difference gradient are independent.
-They run in parallel in forked worker processes, which share the data, the design and
-the symbolic analysis without copying them and start Newton from the current mode.
-The joint model~\eqref{eq:joint} has $n_\theta = 12$ hyperparameters: two for the
-country effects, two for the cell effects, four for the static fields and four for
-the shared field. Newton iterations stop when the relative change of the objective is
-below $10^{-8}$ and the largest step is below $10^{-5}$, or after 50 steps. An inner
-solve that stops at 50 steps without converging gives a Laplace value that is
-meaningless and often spuriously high. Such evaluations are rejected, as are those at
-which the factorisation fails: the objective is set to a very large value. In a
-parallel gradient, a component whose perturbed evaluation is rejected is set to zero.
-If the evaluation at the current point is itself rejected, the components are not set
-to zero and take very large values. In the serial path, the finite differences of
-L-BFGS-B are taken on the large value directly. Rejected evaluations can make the
-optimiser stop at a poor point, so they should be recorded for each fit \todo{report
-the number of rejected evaluations for the real-data fits}.
-
-Since $\bH = \bA^\top\bm{W}\bA$ aggregates over weeks, the cost of the spatial and SVC
-blocks is driven by the number of cells, not by the number of cell-weeks. A global
-$0.5^\circ$ land grid gives about $6\times10^4$ latent values per spatial field. The
-space-time block has $nT_v$ latent values, and twice as many in the joint model,
-which is why it is fitted on regional subsets or on a coarser lattice. The cost of
-forming $\bH$ grows with the number of cell-weeks and the number of fixed effects. For
-the joint model both are doubled, since each outcome has its own rows and its own
-fixed effects.
+The hyperparameters are set to the maximiser $\hat\btheta$ of
+$\log\tilde p(\bm{y}\mid\btheta) + \log p(\btheta)$, found by L-BFGS-B with
+finite-difference gradients, whose evaluations run in parallel. Given $\hat\btheta$,
+the latent posterior is approximated by $\Normal\{\bm{\xi}^*, (\bQ + \bH)^{-1}\}$,
+sampled by reusing the sparse Cholesky factorisation computed at the mode. This is an
+empirical Bayes version of INLA \citep{rue2009inla}, similar in spirit to TMB
+\citep{kristensen2016tmb}. The intervals ignore the uncertainty in $\hat\btheta$, and
+in simulations with a space-time field the plug-in standard errors of lag
+coefficients are too small, by a factor of up to 1.2 for $\hat\kappa$
+(Section~\ref{sec:sim-joint}); intervals that only just exclude zero should be read
+with this in mind. Section~\ref{supp:methods-comp} of the Supplementary Material
+describes the computation.
 
 \paragraph{Run times and approximations.} The full fits of the joint models, on one
 node with 16 cores (AMD EPYC) and eight parallel gradient workers, take hours. The
@@ -776,69 +271,3 @@ $m$ and $s^2$ are the posterior mean and variance of $o + \bm{a}^\top\bm{\xi}$; 
 is estimated from posterior samples. Test years beyond the training period take the
 year effect of the last training year.
 
-\subsection{Diagnostics and evaluation}\label{sec:methods-diagnostics}
-
-\paragraph{Residual diagnostics.} Binary residuals are uninformative one at a
-time, so we aggregate over the test weeks within cells. The standardised cell
-residual is
-\[
-r_s = \sum_{t} (y_{st} - \hat\pi_{st}) \Big/ \Bigl\{\sum_t \hat\pi_{st}(1-\hat\pi_{st})\Bigr\}^{1/2},
-\]
-with the sums over the test period 2023--2024. All residual diagnostics reported in
-the paper are computed in this way for every model, including the cross-fitted
-offset, on the same test rows. Residuals of in-sample latent-model fits are shrunk
-and spatially dependent through the smoother, and we do not use training-period
-residuals as evidence.
-
-Even for a correct model, the test residuals are neither standard normal nor
-independent across cells. The predictions $\hat\pi_{st}$ carry the estimation error
-of the training period, for example in $\hat w(s)$. A logit error $\epsilon_s$
-contributes about $\epsilon_s\{\sum_t \pi_{st}(1-\pi_{st})\}^{1/2}$ to $r_s$, which
-grows with the number of test weeks, and the errors of a smoothed field are
-positively correlated between neighbours. The diagnostics below are therefore used
-to compare models on the same rows, not as tests against a null of independence. We
-report:
-\begin{itemize}
-\item Moran's $I$ \citep{moran1950notes} of $\{r_s\}$ for rook adjacency. We also give
-a permutation $p$-value from $B = 999$ permutations, which is bounded below by
-$1/(B + 1)$. Its null hypothesis of exchangeable residuals does not hold even for a
-correct model, so it is descriptive only;
-\item the empirical semivariogram of $\{r_s\}$ against great-circle distance;
-\item the correlation of $r_s$ between neighbouring cells in the same country and
-across a border.
-\end{itemize}
-A larger within-country correlation can point to effects at the country level, of
-occurrence or of reporting. For the cross-fitted offset it also has a mechanical
-source. Neighbours in the same country are always predicted by the same fold model,
-while neighbours across a border are usually predicted by different fold models,
-whose differences create a country-level residual component. For this model we
-therefore also split the across-border pairs into pairs whose two countries are in
-the same fold and pairs in different folds.
-
-\paragraph{Out-of-sample evaluation.} Models are trained on 2018--2022 and
-evaluated on 2023--2024, matching the original analysis. All models are compared on
-identical test rows. We report the logarithmic score and the Brier score, both
-strictly proper \citep{gneiting2007strictly}, and the area under the
-precision--recall curve, computed as average precision \citep{boyd2013area}. The
-latter is more informative than the ROC curve at the low prevalence of the data
-\citep{saito2015precision}. Paired differences in log score and Brier score are
-reported with two standard errors: one clustered by cell and one clustered by
-country, with the number of clusters. The cell-clustered errors allow for dependence
-over time within a cell but not between cells. The latent fields and the national
-indicators induce dependence at regional and national scales
-(Section~\ref{sec:methods-confounding}), so the country-clustered errors are the
-more reliable of the two, although they rest on few clusters. Since prediction in
-the same places is dominated by persistence \citep{mueller2022hard}, every model is
-compared with a persistence baseline that ranks cell-weeks by the number of events in
-the previous four weeks. We also report all scores on \emph{onset} rows: test
-cell-weeks in cells that had no event of that outcome in the previous 52 weeks. On
-these rows recent history carries no information, so they show how well a model
-anticipates events in places that have been quiet.
-
-We also compare every model with a \emph{location-aware} boosting baseline that adds
-each cell's training-period event rate as a feature. For the fit used to choose the
-number of trees by early stopping on 2022, this rate is computed from 2018--2021
-only, so it uses no 2022 outcomes. For the final fit on 2018--2022 it is computed
-leaving out the row's own year, and for the test rows it is the rate over
-2018--2022. This baseline is the boosting counterpart of a cell intercept, and the
-latent fields have to improve on it to be worth their cost.

@@ -46,6 +46,14 @@
 \RequirePackage{multirow}
 \RequirePackage{bm}
 \RequirePackage{xcolor}
+\makeatletter
+% Labels of the other document (main <-> supplement), read from a file of its \newlabel
+% lines (made by build.sh); the IMS class does not allow the xr package.
+\def\extlabels@nl#1#2{\@ifundefined{r@#1}{\global\@namedef{r@#1}{#2}}{}}
+\def\extlabels#1{\IfFileExists{#1}{\begingroup\let\newlabel\extlabels@nl
+  \input{#1}\endgroup}{}}
+\makeatother
+\AtBeginDocument{\extlabels{main-labels.tex}}
 
 \startlocaldefs
 \numberwithin{equation}{section}
@@ -101,6 +109,11 @@ Global Affairs, University of Notre Dame}
 
 This supplement contains the detailed tables and figures referred to in the main paper.
 Equation, section and table numbers without the prefix S refer to the main paper.
+
+\input{sections/supp_data}
+\input{sections/supp_methods}
+\input{sections/supp_simulation}
+\input{sections/supp_application}
 
 \section{Methods}\label{supp:methods}
 \begin{table}
@@ -299,5 +312,8 @@ $(\bar\gamma + \gamma_b)/2$.}\label{tab:s4-asym}
 \centering\small
 \input{tables/s4_asym}
 \end{table}
+
+\IfFileExists{spr-ims-nameyear.bst}{\bibliographystyle{spr-ims-nameyear}}{\bibliographystyle{plainnat}}
+\bibliography{refs}
 
 \end{document}

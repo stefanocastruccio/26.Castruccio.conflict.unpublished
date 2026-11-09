@@ -73,79 +73,15 @@ have no event week. (c) Weekly share of covered cells in the region with at leas
 event. The dashed line marks the start of the test period.}\label{fig:data}
 \end{figure}
 
-The grid consists of all $0.5^\circ$ cells that intersect a country polygon of
-Natural Earth (1:10m), excluding cells without a terrestrial biome (rock and ice, and
-large lakes). Each cell is assigned to the country that contains its centroid. A
-coastal cell whose centroid falls in the sea is assigned to the nearest country. Every
-cell-week appears exactly once, and national indicators are attached through the
-assigned country, with the exceptions described below. The result is 59{,}339 cells observed for up to 366 weeks.
-
-The table built by the original pipeline differs in one important respect.
-About 8.5\% of its 34.7 million distinct cell-weeks (before the biome exclusion)
-occur more than once, with multiplicities such as $2^k$, $3^k$ and $2\cdot 3^k$, the
-signature of many-to-many joins between the grid and polygons of countries, IPC
-regions and national indicators. These copies make up 50.5\% of its 70.0 million
-rows. The copies of a cell-week share its events but often disagree on the
-covariates. Among duplicated cell-weeks, the copies differ in the EPI and the
-liberal democracy index in 62\% of cases, in GDP in 49\%, in the IPC phases in about
-25\% and in the climate variables in 7--11\%. We do not know why the climate values
-of a cell differ between copies; the original pipeline does not record which
-polygon each copy comes from. We keep the whole first row of each cell-week, so that
-all covariates of a row come from the same copy. The climate values of duplicated
-cell-weeks are therefore those of an arbitrary copy, and this part of the error is
-retained rather than repaired. \todo{Sensitivity of the main results to using the
-other copy's climate values, or climate re-extracted from CHIRTS and CHIRPS.} IPC
-phase populations are the exception: they are averaged over the copies. Five national
-indicators (EPI, liberal democracy index, greenhouse gas emissions, material and
-ecological footprint) are re-attached for each country and year from the cells of
-that country that were not duplicated. When a country-year has no value in these
-cells, which happens when the indicator is missing for that country, the code falls
-back to the most common value of the kept first copies of that country-year. Since
-every country has non-duplicated cells, such values come from copies joined to a
-neighbouring country's polygon. The fallback therefore can give a country its
-neighbour's value and turns a missing value into an observed one, so the missingness
-indicator is not set. In the whole repaired table, 14.5\% of rows take at least one
-national indicator from this fallback. Access to electricity is not re-attached at
-all: every cell-week keeps the value of its first copy, which in cells that had copies
-can come from a neighbouring country. It is therefore not constant within a
-country-year, and its decomposition into between- and within-country parts
-(Section~\ref{sec:methods-confounding}) mixes differences across borders with change
-over time. GDP per capita is a national quantity: World Bank GDP of the country
-divided by the sum of the GHSL population of its cells, and it is constant within
-each country-year. Section~\ref{sec:app-data} describes the consequences of the
-duplication for the original analysis.
-
-Two features of ACLED matter for modelling. First, geographic coverage expanded over
-time, and several countries entered the dataset after 2018. Cell-weeks in a country
-before its coverage start are \emph{unobserved}, not event free, so they are removed
-rather than coded as zeros. Coverage start dates are taken from ACLED's country
-coverage table. Territories not listed there take the date of the country or region
-that contains them. Before the biome exclusion, coverage removes 7{,}078{,}822
-cell-weeks in 79 countries and territories; 3{,}998{,}319 of them are in Antarctica,
-which the biome exclusion would remove in any case. The event history is treated as
-incomplete in the first four covered weeks. After both exclusions the table has
-19{,}364{,}639 cell-weeks.
-Second, the probability that an event is recorded depends on media and partner
-density, so the outcome combines occurrence and reporting
-\citep{weidmann2016closer}. The two are not separately identified
-without auxiliary information. The latent fields of Section~\ref{sec:methods}
-absorb spatially smooth reporting differences together with unmeasured drivers of
-risk, and we interpret them accordingly. Reporting intensity also changes over time
-and by country, for example when ACLED adds sources or partners. The year effects are
-global, and at test time they are held at their 2022 value, so they cannot absorb
-country-specific changes in reporting. Such changes may explain part of the rise in
-recorded unrest above, and they can inflate both the estimated state dependence and
-the persistence of the space-time fields.
-
-ACLED also codes the spatial and temporal precision of each event. An event whose
-exact location is unknown is placed at the centroid of the town or administrative
-unit named in the source, and an event whose exact date is unknown at a nominal date
-within the reported period. The data available to us are weekly counts by cell, and
-they carry no precision codes, so we cannot filter or weight events by precision.
-Imprecisely located events accumulate in the cells that contain administrative
-centroids and capitals. This can inflate both the persistence of events in those
-cells and the cell-level latent effects estimated there, and it is one more reason
-to read those effects as recorded rather than actual risk.
+The grid consists of the $0.5^\circ$ cells that intersect a country, excluding cells
+without a terrestrial biome. Cell-weeks in a country before its ACLED coverage start
+are unobserved, not event free, and are removed. Since the probability that an event
+is recorded depends on media and partner density, the outcome combines occurrence
+and reporting \citep{weidmann2016closer}; the latent fields of
+Section~\ref{sec:methods} absorb spatially smooth reporting differences together with
+unmeasured drivers of risk, and we interpret them accordingly. The construction of the
+table, including the repair of duplicated cell-weeks in the original pipeline, is
+described in Section~\ref{supp:data-table} of the Supplementary Material.
 
 \subsection{Recent event history}\label{sec:data-history}
 
@@ -178,130 +114,12 @@ per-capita greenhouse gas emissions, material footprint and ecological footprint
 Food insecurity, the population in each IPC phase, is available for subnational
 regions and periods and is apportioned to cells by population share.
 
-The climate variables enter all models only through their means over the four weeks
-before the current week, so that they precede the outcome; values of the current
-week are not used. The original analysis also used the current week's values. In the
-boosting models, as in the original analysis, precipitation is centred by its global
-mean for the calendar month over 2018--2022 (a single mean for all cells, not a local
-anomaly), and the other climate variables enter on their original scale. The boosting
-models also receive the month and season as features. A raw temperature
-means different things in different climates. In the latent models, the five
-climate variables (maximum and minimum temperature, precipitation, drought and
-PM$_{2.5}$) therefore enter as standardised anomalies with respect to a cell- and
-calendar-month-specific climatology estimated from the training years 2018--2022,
-\[
-z_{st} = \bigl(x_{st} - \bar{x}_{s,\mathrm{m}(t)}\bigr) / \mathrm{sd}_{s,\mathrm{m}(t)},
-\]
-where $\mathrm{m}(t)$ is the calendar month of week $t$. Precipitation is
-transformed to $\log(1 + x)$ before the anomaly is computed. In dry seasons of arid
-cells the training-period standard deviation can be zero or close to zero, and any
-later rain would then give an extreme anomaly. We therefore floor
-$\mathrm{sd}_{s,\mathrm{m}}$ at the 10th percentile of the positive cell-month
-standard deviations of the same variable, and set $z_{st} = 0$ where the
-climatological standard deviation is zero. In the AME region the floor applies, by
-construction, to 10\% of the 164{,}628 cell-months for temperature and precipitation.
-The drought index is constant over the training years in 138{,}600 cell-months (84\%),
-so its anomaly is zero there, and the floor applies to a further 1.3\%. The drought
-anomaly is therefore informative only in a minority of cell-months. The PM$_{2.5}$
-anomaly is worse. Its climatological standard deviation is undefined in 91{,}392
-cell-months (56\%), where PM$_{2.5}$ is missing, and the floor computed from the other
-cell-months is about $10^{-9}$, so it does not prevent extreme anomalies. The
-PM$_{2.5}$ anomaly is missing in 55.5\% of training rows, is then set to zero and has
-no missingness indicator. We do not interpret its coefficient. The anomaly coefficients are identified
-from variation over time within cells. They are therefore not confounded by the
-time-invariant spatial pattern of the climatology. They can still be confounded by
-regional shocks that vary over time, since the year effects are global. The cell's
-mean over the training years enters separately as a cell-level covariate. A
-five-year climatology is noisy, especially for precipitation, and a longer reference
-period would be preferable where available. The anomalies are therefore best read
-as departures from recent conditions.
+Climate variables enter as their means over the four weeks before the current week,
+as standardised anomalies with respect to a cell- and calendar-month-specific
+climatology of the training years 2018--2022. Covariates are standardised with
+training-period means; missing values are set to zero and a missingness indicator
+enters for each national indicator and for IPC. Missingness is substantial (IPC phases
+62.7\% of rows, PM$_{2.5}$ 55.5\%, GDP 3.6\%) and unlikely to be at random.
+Section~\ref{supp:data-cov} of the Supplementary Material lists the covariates and
+sources (Table~\ref{tab:covariates}) and details the anomalies and missing values.
 
-\paragraph{Missing covariates.} Table~\ref{tab:covariates} hides substantial
-missingness. In the repaired table over the AME region
-(4{,}976{,}634 cell-weeks), the IPC phase populations are missing in 62.7\% of rows,
-PM$_{2.5}$ in 55.5\%, and GDP in 3.6\%, mainly in South Sudan, Yemen,
-Somaliland, Eritrea, Western Sahara and Syria. The other national indicators (EPI,
-liberal democracy index, greenhouse gas emissions, material and ecological footprint)
-are missing in 0.3\% of rows, at most about 850 cell-weeks in any country. These
-shares are after the fallback described in Section~\ref{sec:data-acled}, which fills
-some missing values with a neighbouring country's value. The
-climate means over the previous four weeks are missing in 1.1\% of rows, and the event
-histories in 1.1\%. Over all cell-weeks worldwide the IPC phases
-are missing in 89.6\% of rows and precipitation in 20.8\%. IPC analyses are carried
-out mainly where food crises are expected, and several of the countries without GDP
-data are among the most conflict-affected in the region. Missingness is
-therefore unlikely to be at random with respect to the outcome.
-
-Apart from that fallback, we keep missing values as missing through the construction
-of the features. In particular, a cell-week without an IPC analysis has a missing IPC value, not a
-food-insecure population of zero. All covariates of the latent models other than the
-event histories are standardised with training-period means and standard
-deviations. Missing values are then set to zero, the training mean, and a
-missingness indicator enters the model for each covariate group: one for each
-national indicator and one for IPC (Section~\ref{sec:methods-model}). The boosting
-models receive the missing values as such.
-
-\begin{table}
-\caption{Covariates, resolution and source.}\label{tab:covariates}
-\centering\small
-\begin{tabular}{@{}lll@{}}
-\toprule
-Covariate & Resolution & Source \\
-\midrule
-Minimum / maximum temperature & cell--week & CHIRTS \\
-Heat index, wet-bulb globe temperature & cell--week & CHIRTS \\
-Precipitation & cell--week & CHIRPS \\
-PM$_{2.5}$ & cell--week & CAMS \\
-Drought index & cell--week & Global Drought Observatory \\
-Events of each type in previous 4 weeks & cell--week & ACLED \\
-Population & cell & GHSL \\
-River length, lake area & cell & Natural Earth \\
-Malaria risk & cell & Malaria Atlas Project \\
-Biome & cell & RESOLVE Ecoregions \\
-Tropical indicator ($|\mathrm{latitude}| < 30^\circ$; boosting only) & cell & derived \\
-Food insecurity (IPC phases 1--5) & subnational--period & IPC \\
-GDP per capita & country--year & World Bank \\
-Access to electricity & country--year & World Bank \\
-Environmental Performance Index & country--year & Yale EPI \\
-Liberal democracy index & country--year & V-Dem \\
-GHG emissions, material and ecological footprint p.c. & country--year & OWID, GFN \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Exploratory evidence of residual spatial dependence}\label{sec:data-eda}
-
-Before introducing the latent models, we check whether a flexible model of the
-covariates and recent history leaves spatial structure in its residuals. We take the
-corrected XGBoost model of Section~\ref{sec:app-xgb}, trained on all locations, and
-compute the standardised cell residuals of Section~\ref{sec:methods-diagnostics} over
-the test period 2023--2024. In the AME region, Moran's $I$ of these
-residuals is 0.42 for conflict and 0.15 for unrest. The residual correlation
-between neighbouring cells is 0.45 within countries and 0.21 across borders
-for conflict, and 0.16 and 0.08 for unrest. Table~S7 of the Supplementary Material gives the
-same diagnostics for every model, and the semivariogram is reported in
-Section~\ref{sec:app-hybrid}. The test period contains the onsets of the wars in Sudan
-and Gaza, which no model trained on 2018--2022 can anticipate, so these residuals mix
-persistent structure with unforeseeable new events. The training period gives a check
-that does not depend on them. The corrected model is fitted to the training years, so
-its training residuals are in-sample, but the XGBoost offset cross-fitted by country
-(Section~\ref{sec:methods-hybrid}) predicts each training row from a model that did
-not see its country. Over 2018--2022 its residuals have Moran's $I$ of 0.64 for
-conflict and 0.20 for unrest. \todo{Test-period diagnostics with Sudan and Gaza
-excluded.}
-
-For the XGBoost offset cross-fitted by country (Section~\ref{sec:methods-hybrid}),
-the gap between the within-country and the across-border correlation is not by
-itself evidence of country-level effects. Neighbours in the same country are always
-predicted by the same fold model, which never saw that country, while neighbours
-across a border are usually predicted by different fold models. This design creates
-a country-level residual component. We therefore base the motivation for the latent
-effects on the corrected model, which has no such component, and report the
-cross-fitted offset's across-border pairs separately for countries in the same fold
-and in different folds (0.25 and 0.28 for conflict, on 264 and 1{,}776 pairs of
-cells). The two are similar, so in the test period the fold design does not appear to
-drive the across-border correlation of the offset. Over the training period they
-differ, 0.65 for pairs in the same fold and 0.41 for pairs in different folds for
-conflict, so there the fold design does contribute; for unrest they are 0.10 and 0.11. Residual structure that
-remains after the corrected model motivates the latent effects of
-Section~\ref{sec:methods}.
