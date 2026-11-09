@@ -52,16 +52,29 @@ def weeks(year, wd=None):
     return d[d.dayofweek == wd]
 
 
+def region_cells():
+    """grid_id of the cells in the five study regions (grid/cell_region.parquet, from cell_region.py), or None."""
+    f = os.path.join(GRID, "cell_region.parquet")
+    if not os.path.exists(f):
+        return None
+    cr = pd.read_parquet(f)
+    return cr.loc[cr.region.notna(), "grid_id"].astype("int32").to_numpy()
+
+
 def write(var, year, grid_id, week_start, value):
+    """Write one variable-year; only cells in the study regions are kept (task 35 scope)."""
     out = os.path.join(GRID, var); os.makedirs(out, exist_ok=True)
     df = pd.DataFrame({"grid_id": np.asarray(grid_id, "int32"), "week_start": pd.to_datetime(week_start),
                        "value": np.asarray(value, "float32")})
+    keep = region_cells()
+    if keep is not None:
+        df = df[df.grid_id.isin(keep)]
     f = os.path.join(out, f"{var}_{year}.parquet")
     df.to_parquet(f + ".tmp", index=False); os.replace(f + ".tmp", f)
     return f
 
 
-def to_half_degree(arr, lat, lon, how="mean"):
+def to_half_degree(arr, lat, lon, how="mean", res=0.5):
     """Aggregate a (T, nlat, nlon) array on a regular lat/lon grid to the global (T, 360, 720) 0.5-degree lattice
     (rows/cols as in cells()), assigning each pixel to the cell that contains its centre (so grids offset from the
     lattice, e.g. GHSL, work too). 'mean' is the area-weighted (cos latitude) mean over the pixels with data; 'sum' adds
@@ -71,12 +84,13 @@ def to_half_degree(arr, lat, lon, how="mean"):
         arr, lat = arr[:, ::-1, :], lat[::-1]
     lon = ((lon + 180) % 360) - 180
     o = np.argsort(lon, kind="stable"); arr, lon = arr[:, :, o], lon[o]
-    r = np.clip(np.floor((lat + 90) / 0.5).astype(int), 0, 359)
-    c = np.clip(np.floor((lon + 180) / 0.5).astype(int), 0, 719)
+    NR, NC = int(round(180 / res)), int(round(360 / res))   # target lattice (res = 0.5 by default)
+    r = np.clip(np.floor((lat + 90) / res + 1e-9).astype(int), 0, NR - 1)
+    c = np.clip(np.floor((lon + 180) / res + 1e-9).astype(int), 0, NC - 1)
     rb = np.r_[0, np.flatnonzero(np.diff(r)) + 1]; cb = np.r_[0, np.flatnonzero(np.diff(c)) + 1]
     ru, cu = r[rb], c[cb]
     T = arr.shape[0]
-    out = np.full((T, 360, 720), np.nan, "float32")
+    out = np.full((T, NR, NC), np.nan, "float32")
     w = np.cos(np.deg2rad(lat)).astype("float32")[:, None] if how == "mean" else None
     for t in range(T):
         a = np.asarray(arr[t], "float32"); ok = np.isfinite(a)

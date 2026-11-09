@@ -2045,3 +2045,34 @@ Syria and Yemen (62-69% of their event cell-weeks have 2+). In West Africa this 
   - Now `crc/jobs/35_chirts.sh` **1717964** (37 tasks, 1990-2026, at most 4 at once, 2 cores each): curl the whole file (resumable, with retries), aggregate all cells
     (global again), delete the raw file. The weekly step follows.
 - Disk: `$WORK/covariates`: raw 9.8 GB (CHIRPS 2.7 + GHSL 3.8 + CHIRTS in flight), grid about 0.8 GB.
+
+## 2026-11-09 18:00 EST: task 35 scope = five regions; cell → region lookup
+`realdata/covariates/cell_region.py` → `$WORK/covariates/grid/cell_region.parquet` (grid_id, lon, lat, ISO_A3, adm0, region).
+- Method: nearest Natural Earth polygon (ADM0_A3), then the region by country: Africa = UN region Africa; Latin America = World Bank LAC; Middle East and South/SE Asia =
+  the coordinator's lists; Europe = continent Europe minus RUS/UKR/BLR. Natural Earth's own codes are mapped too: PSX = Palestine, SAH = Western Sahara,
+  SDS = South Sudan, SOL = Somaliland, BRT = Bir Tawil, CYN = Northern Cyprus, KAS = Siachen/Kashmir, ALD = Åland.
+
+| region | cells |
+|---|---|
+| africa | 10,169 |
+| latam | 6,654 |
+| south_asia | 3,294 |
+| europe | 2,746 |
+| middle_east | 2,218 |
+| **total in scope** | **25,081** (of 56,354 cells between 40S and 72N) |
+
+- **Unassigned within the boxes:**
+  - Africa box: 2 cells (TKM; the box reaches the Caspian).
+  - South/SE Asia box: 2,362 cells (CHN 2,116, JPN 98, TKM 42, KOR 38, PNG 25, TJK 19, TWN 13, AUS 6, UZB 5).
+  - Latin America box: 445 cells (USA).
+  All are outside the scope by design. **No in-scope country code is left unassigned.**
+- The nearest-polygon country and $CLEAN's ISO_A3 disagree for 238 cells (coastal or border cells). The region uses the polygon, as in fit_bivariate.
+- Outputs:
+  - **`common.write` now keeps only in-region cells** (CHIRTS weekly and the future SPI reruns).
+  - `restrict_outputs.py` rewrote the existing outputs (ppt, ppt_month, spi3, spi3_month, pop, pop_epochs; national restricted to the in-region countries):
+    **1.27 → 0.65 GB**.
+  - The malaria job runs it after malaria.py.
+  - Raw source files are global per year anyway, so processing stays per file. The climate variables keep 1990-2025.
+- **Precipitation gap for Europe:** CHIRPS covers 50S-50N, so **European cells north of 50N** (UK, Ireland, Benelux north, Germany, Poland, the Baltics,
+  Scandinavia, Iceland) have no ppt or SPI-3. Temperature (CHIRTS-ERA5, to 70N) covers them. If Europe needs precipitation, a second source north of 50N is needed
+  (e.g. ERA5 daily precipitation from the Copernicus CDS, which needs a free account). Not done.
