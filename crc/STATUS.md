@@ -1920,3 +1920,19 @@ Outputs go to `$WORK/covariates/{raw,grid}`, never the repo.
   **But they are not constant over weeks:** river_length varies within 14,131 cells, lake_area within 3,735 and malaria within 13,836. Worth checking which value to use
   (e.g. malaria may be yearly); `$WORK/covariates/static_missing_cells.csv` is empty.
 - Disk: `$WORK/covariates` about 2.7 GB (CHIRPS raw) so far.
+
+## 2026-11-09 14:20 EST: job 33 (cs_ci, 1716833) status
+- **(b) Elapsed: 42 min** (start 13:36:57 EST, d32cepyc191, 16 slots, FIT_JOBS=8 × OMP 2).
+- **(a) Stage: run 1 of 4 (ame biv), Hessian evaluations.** The job runs ame biv, then ame biv2, then west_sahel biv, then west_sahel biv2. Loading is done, and conditioning at
+  the saved θ is done ("hyperparameters in 328 s, total 860 s", which is fit_subsampled's line, printed before the Hessian). Since about 13:51 it has been in
+  `hessian_theta()` (central differences, 2p² Laplace evaluations on the 1,778,323-row subsample). No ci_*.json yet; `$WORK/bivariate/ci_ame/` is empty.
+  Last 5 log lines:
+  ```
+  host d32cepyc191.crc.nd.edu job 1716833.undefined start 2026-11-09T18:36:57Z
+  ame: excluded 724 cells (220,674 rows) in ['ALB', 'BGR', 'BIH', 'ESP', 'FRA', 'GRC', 'HRV', 'ITA', 'KOS', 'MKD', 'MNE', 'PRT', 'ROU', 'RUS', 'SRB']
+  ame: 4,703,980 rows per outcome, 12,995 cells, 78 countries, v on 3,408 cells x 14 steps
+  biv: subsample 1,778,323/6,705,000 rows, hyperparameters in 328 s, total 860 s
+  (the line before these is the module banner "Loading CRC_default/1.1")
+  ```
+- **(c) ame ci_biv2.json does not exist yet.** biv2 is the second run and starts after ame biv's Hessian finishes. The λ (shared_st.loading) interval will be posted here
+  as soon as it exists.
