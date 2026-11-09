@@ -1813,3 +1813,31 @@ Copies in `results_real/bivariate/holdout_refit_check/africa_me_conflict_fold0_z
 `results_real/bivariate/west_sahel/fields_{biv,biv2,biv3}_{static,st}.csv.gz` are committed (35-158 kB each).
 
 ame: 29_ame_fits (1714069) is running. Then 30 (1714071), 31.2 (1714255) and 32 (1714292) follow on holds.
+
+## 2026-11-09 02:30 EST: ame fits (29, 1714069), step A done; B (biv2) running since about 00:05; C (biv3) next
+qstat: 29 (1714069) r on d32cepyc243 since 22:17 EST. 30 (1714071, 10 tasks), 31.2 (1714255) and 32 (1714292) are hqw behind 29.
+31.1 (1714254, west_sahel fields) is done and was committed at 00:10.
+Log: `ame: excluded 724 cells (220,674 rows) in ['ALB', 'BGR', 'BIH', 'ESP', 'FRA', 'GRC', 'HRV', 'ITA', 'KOS', 'MKD', 'MNE', 'PRT', 'ROU', 'RUS', 'SRB']`;
+`ame: 4,703,980 rows per outcome, 12,995 cells, 78 countries, v on 3,408 cells x 14 steps`.
+Step A summaries are committed: `results_real/bivariate/ame/summary_{biv,jointpred}.json` (--zero-frac 0.25, warm starts).
+
+| model | fit (s) | log-ML | test conflict log / AUC-PR | test unrest log / AUC-PR | κ = conflict:lag_other | unrest:lag_other |
+|---|---|---|---|---|---|---|
+| uni_static | 178 | −170,227.4 | 0.06126 / 0.526 | | 0.141 (0.014) | |
+| uni_st | 1,286 | −167,806.1 | 0.06122 / 0.524 | | 0.124 (0.015) | |
+| uni_static_u | 186 | −149,860.7 | | 0.05199 / 0.531 | | 0.112 (0.014) |
+| uni_st_u | 1,538 | −148,268.8 | | 0.05299 / 0.512 | | 0.104 (0.014) |
+| biv | 2,798 | −316,649.6 | 0.06080 / 0.529 | 0.05245 / 0.525 | **0.049 (0.015)** | 0.023 (0.014) |
+
+biv hyperparameters:
+- country sd: conflict 0.534, unrest 0.955; cell sd: conflict 0.994, unrest 1.369;
+- field_conflict 636 km, sd 1.199; field_unrest 433 km, sd 0.361;
+- shared_st 521 km, sd 1.324, rho 0.951, **loading 0.683**.
+
+These are close to africa_me's biv (κ 0.057, loading 0.668).
+
+Joint prediction (1,351,480 test cell-weeks; share both 0.00378; P(conflict | unrest) 0.178 against P(conflict | no unrest) 0.022):
+- joint log score: biv 0.11321, uni_static product 0.11325, uni_st product 0.11422;
+- **biv − uni_static product −0.00004 (country SE 0.00061)**, biv − uni_st product −0.00101 (0.00038), joint − independent −0.00004 (0.00003).
+
+The same picture as africa_me: no joint gain over uni_static.
