@@ -61,23 +61,38 @@ with an exact offset \citep{prentice1979logistic}, and compute the latent poster
 all data; this reduces the cost of a fit several-fold without changing the estimates
 or the predictions materially.
 
-The paper makes three contributions. First, a simulation study shows that univariate
-models, including models with their own space-time field, report escalation that does
-not exist when the two outcomes share latent episodes, while the joint model recovers
-the escalation coefficient with close to nominal coverage, also when unrest has
-episodes of its own. Second, in ACLED data for West Africa and the Sahel and for
-Africa and the Middle East, 2018--2024, the coefficient of recent unrest on conflict
-falls from 0.13--0.15 in univariate models to about 0.10 once both shared and
-unrest-specific episodes are modelled, and to about 0.05 with a single shared field:
-shared episodes account for between a quarter and two thirds of the univariate
-association. Escalation at the short, local scale that the model can resolve is real
-but smaller than univariate models suggest. Third, we examine what the joint model
-adds to prediction. When both outcomes are observed, it cannot forecast either one
-better than univariate models that use both histories as covariates, and it does not.
-When one outcome is withheld in an area while the other is observed, as when one type
-of event goes unreported, the joint model predicts the withheld outcome better, in
-simulations and, for conflict, in the data; the gain comes mostly from the weeks in
-which the other outcome is observed and fades in forecasts.
+The contribution of the paper is a model that answers a question the existing
+approaches cannot: how much of the link between protest and armed conflict is
+escalation, and how much reflects episodes that drive both. On the substantive side,
+the model estimates escalation from unrest to conflict conditionally on shared latent
+episodes, at a weekly and local resolution and over a continental region, rather than
+the unconditional lagged association used in forecasting and diffusion studies. In ACLED data for West Africa and the Sahel
+and for Africa and the Middle East, 2018--2024, the coefficient of recent unrest on
+conflict falls from 0.13--0.15 in univariate models to about 0.10 once both shared
+and unrest-specific episodes are modelled, and to about 0.05 with a single shared
+field: between a quarter and two thirds of the association that univariate models
+attribute to escalation reflects shared episodes. Short-run, local escalation is real
+but smaller than univariate models suggest, and the shared field maps where and when
+the two kinds of events move together, and where unrest has dynamics of its own. The
+model also clarifies what joint modelling adds to prediction, a question that matters
+for early warning. When both outcomes are recorded, it cannot forecast either better
+than univariate models that use both histories, and it does not; where one type of
+event goes unrecorded while the other is observed, the shared field transfers
+information about the current episode, and the joint model predicts the missing
+outcome better.
+
+On the methodological side, we develop a multivariate latent Gaussian model for rare
+binary events on the sphere at continental scale: a coregionalised space-time field
+whose loading enters only the prior precision, so that the design and the sparsity
+pattern stay fixed; a finite-volume discretisation of the SPDE on the
+longitude--latitude grid with sea barriers; and an empirical Bayes Laplace
+approximation whose hyperparameters are estimated on a case-control subsample of
+non-events with an exact offset, which reduces the cost of a fit several-fold on
+millions of cell-weeks per outcome without changing the estimates or predictions
+materially. Simulations designed after the application show why the joint structure
+is needed: univariate models, even with their own space-time field, report escalation
+that does not exist when the outcomes share episodes, whereas the joint model has
+close to nominal coverage.
 
 Section~\ref{sec:data} describes the data and Section~\ref{sec:methods} the model and
 its inference. Section~\ref{sec:simulation} reports the simulation studies and
