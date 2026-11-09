@@ -41,8 +41,11 @@ conflict risk at $s$ and its neighbours one step later, and then decaying at rat
 $\phi_C$. $\psi_{C\to U}$ is the reverse direction.
 \item $\kappa_C$: \emph{short-run local escalation} from recorded events, as now.
 \end{itemize}
-Special cases: $\psi = 0$ gives a shared-innovation model close to the current
-extended model; $\psi = \lambda = 0$ gives two independent univariate space-time models.
+Special cases: with no escalation, $\psi_{U\to C} = \psi_{C\to U} = 0$, and with
+$\phi_C = \phi_U$ and no conflict-only shock ($\xi^C = 0$), $a$ is a single AR(1) field
+and $b = \lambda a + {}$an unrest-only AR(1) field: exactly the current extended model.
+With $\psi_{U\to C} = \psi_{C\to U} = \lambda = 0$, the two outcomes have independent
+univariate space-time fields.
 The main summary is the impulse response: the change in conflict risk over the next
 $1, 2, \dots$ steps after a one-SD unrest episode, split into its shared and its
 escalation parts.
@@ -72,6 +75,6 @@ $\kappa$.
 \textbf{Cost.} Implementation and tests: 1 day. Simulation: 1 day on the CRC. Real-data
 fits (two regions, warm-started, $r = 0.25$): 1--2 days. Rewriting methods and
 application: 1 day. Paper: Section 3 gains the latent escalation model as the main
-model; the current joint model becomes its $\psi = 0$ special case; the application
+model; the current extended model becomes its special case without escalation; the application
 reports $\psi$, $\lambda$, $\kappa$ and impulse responses.
 \end{document}
