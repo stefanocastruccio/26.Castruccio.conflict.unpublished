@@ -1,0 +1,50 @@
+\documentclass[11pt]{letter}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\signature{Stefano Castruccio\\Department of Applied and Computational Mathematics and Statistics\\University of Notre Dame}
+\address{Department of Applied and Computational Mathematics and Statistics\\University of Notre Dame\\Notre Dame, IN 46556, USA\\scastruc@nd.edu}
+\begin{document}
+\begin{letter}{The Editor\\The Annals of Applied Statistics}
+\opening{Dear Editor,}
+
+We submit the manuscript ``Escalation or shared episodes? A joint spatio-temporal model of
+armed conflict and social unrest'', by Stefano Castruccio and Richard Marcantonio, for
+consideration in \emph{The Annals of Applied Statistics}.
+
+Protests and riots are often followed by armed conflict in the same place, and this
+association is widely read as escalation and used to forecast conflict. It can also arise
+because both kinds of events respond to the same latent episodes, such as a local political
+crisis or a period of media attention, with no effect of one on the other. The distinction
+matters for the study of political violence and for early warning, and it is a statistical
+question: we show that models of conflict alone, including models with their own latent
+space-time field, cannot make it, and that a joint model of the two outcomes can.
+
+The paper proposes a joint latent Gaussian model for the weekly occurrence of conflict and
+unrest on a $0.5^\circ$ grid, in which the two outcomes share a space-time field with an
+estimated loading, alongside cross-lagged effects of their recent histories. The fields are
+discretised by finite volumes directly on the sphere, with sea barriers, and fitted by an
+empirical Bayes Laplace approximation; case-control subsampling of non-events makes the
+hyperparameter estimation feasible on millions of cell-weeks per outcome. Simulation studies
+show that univariate models report escalation that does not exist, while the joint model has
+close to nominal coverage. In ACLED data for West Africa and the Sahel and for Africa and the
+Middle East, 2018--2024, shared episodes account for between a quarter and two thirds of the
+association between recent unrest and conflict. We also examine what the joint model adds to
+prediction, and find that its value lies in filling in an outcome where it goes unrecorded
+while the other is observed, rather than in forecasting when both are observed.
+
+We believe the paper suits the journal because the substantive question drives the
+statistical development, and because the methods, a multivariate latent Gaussian model on
+the sphere with scalable inference for rare binary outcomes, apply to other multivariate
+event data in the social and environmental sciences. The Supplementary Material contains the
+construction of the data, computational details, simulation studies of the univariate
+building blocks, and further results. Code for all analyses will be made available; the
+ACLED data are available from ACLED under its terms of use.
+
+The manuscript is not under consideration elsewhere, and both authors have approved the
+submission. The use of a generative AI assistant in preparing the code and the text is
+described in the Acknowledgments. We have no competing interests to declare.
+
+\closing{Sincerely,}
+\end{letter}
+\end{document}

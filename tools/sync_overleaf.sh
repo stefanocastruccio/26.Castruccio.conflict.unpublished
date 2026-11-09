@@ -4,7 +4,7 @@ set -e
 S=/home/user/26.castruccio.conflict.unpublished/paper
 O=/home/user/26.castruccio.conflicts.unpublished
 cd "$O" && git pull -q --rebase
-cp "$S"/main.tex "$S"/supplement.tex "$S"/refs.bib "$S"/main-labels.tex "$S"/supp-labels.tex .
+cp "$S"/main.tex "$S"/supplement.tex "$S"/refs.bib "$S"/main-labels.tex "$S"/supp-labels.tex "$S"/cover_letter.tex .
 mkdir -p sections tables figures data
 cp "$S"/sections/*.tex sections/; cp "$S"/tables/*.tex tables/; cp "$S"/figures/*.png figures/
 cp "$S"/data/*.geojson data/ 2>/dev/null || true
