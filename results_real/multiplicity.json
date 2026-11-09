@@ -1,0 +1,296 @@
+{
+ "ame": {
+  "conflict": {
+   "cell_weeks": 4756170,
+   "event_cell_weeks": 112174,
+   "share_event": 0.02358494334727312,
+   "events": 362178,
+   "share_2plus_among_event": 0.4181985130244085,
+   "share_of_events_in_2plus_cellweeks": 0.8198040742397384,
+   "mean_events_per_event_cellweek": 3.2287161017704635,
+   "p99_events_per_event_cellweek": 33.0,
+   "max": 517,
+   "distribution_among_event": {
+    "1": 0.5818014869755915,
+    "2": 0.17167079715442082,
+    "3-5": 0.14285841638882452,
+    "6-10": 0.05445112058052668,
+    "11+": 0.04921817890063651
+   },
+   "top_countries_by_event_cellweeks": [
+    {
+     "iso": "NGA",
+     "event_cell_weeks": 12141,
+     "share_2plus": 0.3092002306235071
+    },
+    {
+     "iso": "SYR",
+     "event_cell_weeks": 10154,
+     "share_2plus": 0.6897774276147332
+    },
+    {
+     "iso": "YEM",
+     "event_cell_weeks": 9940,
+     "share_2plus": 0.6211267605633802
+    },
+    {
+     "iso": "IRQ",
+     "event_cell_weeks": 8221,
+     "share_2plus": 0.4625957912662693
+    },
+    {
+     "iso": "SOM",
+     "event_cell_weeks": 6670,
+     "share_2plus": 0.40824587706146925
+    },
+    {
+     "iso": "COD",
+     "event_cell_weeks": 5665,
+     "share_2plus": 0.45066195939982345
+    },
+    {
+     "iso": "MLI",
+     "event_cell_weeks": 5324,
+     "share_2plus": 0.24398948159278738
+    },
+    {
+     "iso": "SSD",
+     "event_cell_weeks": 4912,
+     "share_2plus": 0.28460912052117265
+    },
+    {
+     "iso": "BFA",
+     "event_cell_weeks": 4462,
+     "share_2plus": 0.3059166293142089
+    },
+    {
+     "iso": "ETH",
+     "event_cell_weeks": 4286,
+     "share_2plus": 0.34857676154923006
+    }
+   ]
+  },
+  "unrest": {
+   "cell_weeks": 4756170,
+   "event_cell_weeks": 87012,
+   "share_event": 0.01829455212912911,
+   "events": 193286,
+   "share_2plus_among_event": 0.33855100445915504,
+   "share_of_events_in_2plus_cellweeks": 0.7022339952195192,
+   "mean_events_per_event_cellweek": 2.2213717648140485,
+   "p99_events_per_event_cellweek": 18.0,
+   "max": 206,
+   "distribution_among_event": {
+    "1": 0.6614489955408449,
+    "2": 0.16285110099756356,
+    "3-5": 0.11753551234312509,
+    "6-10": 0.03752355996873995,
+    "11+": 0.020640831149726476
+   },
+   "top_countries_by_event_cellweeks": [
+    {
+     "iso": "IRN",
+     "event_cell_weeks": 10572,
+     "share_2plus": 0.37230419977298523
+    },
+    {
+     "iso": "TUR",
+     "event_cell_weeks": 8635,
+     "share_2plus": 0.3759119861030689
+    },
+    {
+     "iso": "ZAF",
+     "event_cell_weeks": 5231,
+     "share_2plus": 0.3423819537373351
+    },
+    {
+     "iso": "NGA",
+     "event_cell_weeks": 4901,
+     "share_2plus": 0.22342379106304835
+    },
+    {
+     "iso": "MAR",
+     "event_cell_weeks": 4663,
+     "share_2plus": 0.26892558438773323
+    },
+    {
+     "iso": "DZA",
+     "event_cell_weeks": 4120,
+     "share_2plus": 0.3099514563106796
+    },
+    {
+     "iso": "IRQ",
+     "event_cell_weeks": 3961,
+     "share_2plus": 0.4655390053016915
+    },
+    {
+     "iso": "YEM",
+     "event_cell_weeks": 3544,
+     "share_2plus": 0.5107223476297968
+    },
+    {
+     "iso": "TUN",
+     "event_cell_weeks": 3454,
+     "share_2plus": 0.39056166763173134
+    },
+    {
+     "iso": "KEN",
+     "event_cell_weeks": 3257,
+     "share_2plus": 0.30948725821307954
+    }
+   ]
+  },
+  "years": [
+   "2017-12-26",
+   "2024-12-24"
+  ],
+  "share_both": 0.003093455448396504
+ },
+ "west_sahel": {
+  "conflict": {
+   "cell_weeks": 916830,
+   "event_cell_weeks": 29781,
+   "share_event": 0.032482575831942674,
+   "events": 47321,
+   "share_2plus_among_event": 0.3069070884120748,
+   "share_of_events_in_2plus_cellweeks": 0.5638088797785339,
+   "mean_events_per_event_cellweek": 1.5889661193378328,
+   "p99_events_per_event_cellweek": 7.0,
+   "max": 21,
+   "distribution_among_event": {
+    "1": 0.6930929115879252,
+    "2": 0.17967831839092038,
+    "3-5": 0.1063093918941607,
+    "6-10": 0.018837513851113125,
+    "11+": 0.002081864275880595
+   },
+   "top_countries_by_event_cellweeks": [
+    {
+     "iso": "NGA",
+     "event_cell_weeks": 12141,
+     "share_2plus": 0.3092002306235071
+    },
+    {
+     "iso": "MLI",
+     "event_cell_weeks": 5324,
+     "share_2plus": 0.24398948159278738
+    },
+    {
+     "iso": "BFA",
+     "event_cell_weeks": 4462,
+     "share_2plus": 0.3059166293142089
+    },
+    {
+     "iso": "CMR",
+     "event_cell_weeks": 3364,
+     "share_2plus": 0.5517241379310345
+    },
+    {
+     "iso": "NER",
+     "event_cell_weeks": 2148,
+     "share_2plus": 0.24487895716945995
+    },
+    {
+     "iso": "BEN",
+     "event_cell_weeks": 473,
+     "share_2plus": 0.1839323467230444
+    },
+    {
+     "iso": "TCD",
+     "event_cell_weeks": 355,
+     "share_2plus": 0.15774647887323945
+    },
+    {
+     "iso": "CAF",
+     "event_cell_weeks": 350,
+     "share_2plus": 0.21714285714285714
+    },
+    {
+     "iso": "GHA",
+     "event_cell_weeks": 338,
+     "share_2plus": 0.09171597633136094
+    },
+    {
+     "iso": "CIV",
+     "event_cell_weeks": 312,
+     "share_2plus": 0.14743589743589744
+    }
+   ]
+  },
+  "unrest": {
+   "cell_weeks": 916830,
+   "event_cell_weeks": 12108,
+   "share_event": 0.013206374136971958,
+   "events": 16092,
+   "share_2plus_among_event": 0.19953749587049885,
+   "share_of_events_in_2plus_cellweeks": 0.3977131493910017,
+   "mean_events_per_event_cellweek": 1.3290386521308226,
+   "p99_events_per_event_cellweek": 5.0,
+   "max": 17,
+   "distribution_among_event": {
+    "1": 0.8004625041295012,
+    "2": 0.12941856623719855,
+    "3-5": 0.06318136769078295,
+    "6-10": 0.006524611826891311,
+    "11+": 0.0004129501156260324
+   },
+   "top_countries_by_event_cellweeks": [
+    {
+     "iso": "NGA",
+     "event_cell_weeks": 4901,
+     "share_2plus": 0.22342379106304835
+    },
+    {
+     "iso": "GHA",
+     "event_cell_weeks": 926,
+     "share_2plus": 0.17602591792656588
+    },
+    {
+     "iso": "GIN",
+     "event_cell_weeks": 884,
+     "share_2plus": 0.18891402714932126
+    },
+    {
+     "iso": "BFA",
+     "event_cell_weeks": 830,
+     "share_2plus": 0.13132530120481928
+    },
+    {
+     "iso": "CIV",
+     "event_cell_weeks": 745,
+     "share_2plus": 0.20268456375838925
+    },
+    {
+     "iso": "MLI",
+     "event_cell_weeks": 725,
+     "share_2plus": 0.12827586206896552
+    },
+    {
+     "iso": "CMR",
+     "event_cell_weeks": 608,
+     "share_2plus": 0.14144736842105263
+    },
+    {
+     "iso": "MRT",
+     "event_cell_weeks": 592,
+     "share_2plus": 0.38175675675675674
+    },
+    {
+     "iso": "SEN",
+     "event_cell_weeks": 583,
+     "share_2plus": 0.22984562607204118
+    },
+    {
+     "iso": "BEN",
+     "event_cell_weeks": 303,
+     "share_2plus": 0.09570957095709572
+    }
+   ]
+  },
+  "years": [
+   "2017-12-26",
+   "2024-12-24"
+  ],
+  "share_both": 0.002780231885954866
+ }
+}

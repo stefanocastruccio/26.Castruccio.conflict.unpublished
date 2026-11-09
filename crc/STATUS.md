@@ -1981,3 +1981,28 @@ Hessian on the 1,778,323-row subsample, 2,385 s. **hessian_eig_min = 3.43 (> 0).
 
 theta_se (internal scale, in block order): 0.163, 0.107, 0.023, 0.017, 0.138, 0.077, 0.529, 0.241, 0.043, 0.042, 0.046, 0.023.
 ame biv2 (λ for biv2) is running now: run 2 of 4.
+
+## 2026-11-09 16:10 EST: task 37, event multiplicity per cell-week → `results_real/multiplicity.json` (aggregate shares only)
+**Input note:** $CLEAN has no per-type weekly counts (only Conflict/Unrest binaries and the 4-week rollsums), so `count_multiplicity.py` fails on it (missing columns
+Battles, ...). I built its input from Luca's raw partitions instead, with the new `realdata/multiplicity_input.py` (job cs_mult 1717715):
+- columns week_start, grid_id, the 5 event types, lon, lat; **first copy per grid_id × week_start** (as in the repaired table); ISO_A3 joined from $CLEAN;
+- 21,718,074 rows → `$WORK/multiplicity_input.parquet` (row data, stays in $WORK);
+- weeks 2017-12-26 .. 2024-12-24. The ame exclusion log line: `excluded 724 cells (264,984 rows)` (here incl. 2017-12-26).
+count_multiplicity.py itself was run unchanged.
+
+| region | outcome | event cell-weeks | events | share 2+ among event cell-weeks | share of events in 2+ cell-weeks | 1 | 2 | 3-5 | 6-10 | 11+ | mean / p99 / max |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| ame | conflict | 112,174 (2.36%) | 362,178 | **0.418** | **0.820** | 0.582 | 0.172 | 0.143 | 0.054 | 0.049 | 3.23 / 33 / 517 |
+| ame | unrest | 87,012 (1.83%) | 193,286 | **0.339** | **0.702** | 0.661 | 0.163 | 0.118 | 0.038 | 0.021 | 2.22 / 18 / 206 |
+| west_sahel | conflict | 29,781 (3.25%) | 47,321 | **0.307** | **0.564** | 0.693 | 0.180 | 0.106 | 0.019 | 0.002 | 1.59 / 7 / 21 |
+| west_sahel | unrest | 12,108 (1.32%) | 16,092 | **0.200** | **0.398** | 0.800 | 0.129 | 0.063 | 0.007 | 0.000 | 1.33 / 5 / 17 |
+
+Top countries by event cell-weeks (share_2plus in brackets):
+- ame conflict: NGA 12,141 (0.31), SYR 10,154 (0.69), YEM 9,940 (0.62), IRQ 8,221 (0.46), SOM 6,670 (0.41), COD 5,665 (0.45), MLI 5,324 (0.24), SSD 4,912 (0.28).
+- ame unrest: IRN 10,572 (0.37), TUR 8,635 (0.38), ZAF 5,231 (0.34), NGA 4,901 (0.22), MAR 4,663 (0.27), DZA 4,120 (0.31), IRQ 3,961 (0.47), YEM 3,544 (0.51).
+- west_sahel conflict: NGA 12,141 (0.31), MLI 5,324 (0.24), BFA 4,462 (0.31), CMR 3,364 (0.55), NER 2,148 (0.24), BEN 473 (0.18), TCD 355 (0.16), CAF 350 (0.22).
+- west_sahel unrest: NGA 4,901 (0.22), GHA 926 (0.18), GIN 884 (0.19), BFA 830 (0.13), CIV 745 (0.20), MLI 725 (0.13), CMR 608 (0.14), MRT 592 (0.38).
+
+Share of both outcomes in a cell-week: ame 0.0031, west_sahel 0.0028.
+**Reading:** in ame, 42% of conflict cell-weeks have 2+ events and they hold 82% of all conflict events. The binary outcome discards most of the event mass, especially in
+Syria and Yemen (62-69% of their event cell-weeks have 2+). In West Africa this is milder (31% / 56%).
