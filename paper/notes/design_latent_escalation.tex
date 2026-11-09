@@ -57,23 +57,35 @@ joint log score by $0.00002$--$0.00004$, so we do not add it.
 \begin{align*}
 \eta^C_{st} &= \underbrace{\bm x_{st}^\top\bm\beta^C + \delta^C h^C_{st} + \kappa\, h^U_{st}
 + \delta^C_{nb}\bar h^C_{st} + \kappa_{nb}\bar h^U_{st}
-+ u^C_{c(s)} + e^C_s + w^C_s}_{m^C_{st}:\ \text{as in the current model}}
+}_{\text{fixed effects}}
++ \underbrace{u^C_{c(s)} + e^C_s + w^C_s}_{\text{static random effects}}
 \;+\; \underbrace{v^S_{g,k} + v^C_{g,k}}_{L^C_{g,k}},\\
 \eta^U_{st} &= \underbrace{\bm x_{st}^\top\bm\beta^U + \delta^U h^U_{st} + \kappa^U h^C_{st}
 + \delta^U_{nb}\bar h^U_{st} + \kappa^U_{nb}\bar h^C_{st}
-+ u^U_{c(s)} + e^U_s + w^U_s}_{m^U_{st}}
+}_{\text{fixed effects}}
++ \underbrace{u^U_{c(s)} + e^U_s + w^U_s}_{\text{static random effects}}
 \;+\; \underbrace{\lambda\, v^S_{g,k} + v^U_{g,k}}_{L^U_{g,k}},
 \end{align*}
-with $g = g(s)$, $k = k(t)$. $L^C$ and $L^U$ are the \emph{latent conflict and unrest
+with $g = g(s)$, $k = k(t)$. We write $m^C_{st}$ and $m^U_{st}$ for the fixed and static
+random effects together; they are exactly as in the current model. $L^C$ and $L^U$ are the \emph{latent conflict and unrest
 episodes}: the part of each log-odds that is smooth in space, evolves over time and is
 not explained by covariates or recorded histories.
 
 \section*{3. Latent level, given the hyperparameters}
-\textbf{Static terms} (one independent set per outcome $j \in \{C, U\}$, as now):
-$u^j_c \sim \N(0, \sigma^2_{u,j})$ country effects; $e^j_s \sim \N(0,\sigma^2_{e,j})$ cell
-effects; $\bm w^j \sim \N(\bm 0, \bm Q_s(\rho_{w,j}, \sigma_{w,j})^{-1})$ a Mat\'ern
-field with sea barriers ($\bm Q_s$ is the finite-volume SPDE precision of the paper).
-Fixed effects $\bm\beta^j, \delta, \kappa$ get $\N(0, 10^4)$ priors.
+\textbf{Fixed effects.} $\bm\beta^j$, $\delta^j$, $\kappa$ and the neighbour coefficients:
+one coefficient each, common to all cells and weeks, with vague $\N(0, 10^4)$ priors.
+
+\textbf{Static random effects} (constant over time; one independent set per outcome
+$j \in \{C, U\}$, as now). These are \emph{random} effects: one value per country or
+cell, drawn from a distribution whose variance is estimated.
+\begin{itemize}
+\item $u^j_c \sim \N(0, \sigma^2_{u,j})$, independent over countries: national level.
+\item $e^j_s \sim \N(0,\sigma^2_{e,j})$, independent over cells: single-cell level
+(a town, a border crossing), no spatial correlation.
+\item $\bm w^j \sim \N(\bm 0, \bm Q_s(\rho_{w,j}, \sigma_{w,j})^{-1})$: a smooth Mat\'ern
+field with sea barriers ($\bm Q_s$ is the finite-volume SPDE precision of the paper),
+correlated between nearby cells: regional hotspots that cross borders.
+\end{itemize}
 
 \textbf{Dynamic terms.} Three space-time fields on the coarse grid: $v^S$ (shared),
 $v^C$ (conflict only), $v^U$ (unrest only). Write $\bm D = (1-\omega)\bm I + \omega\bm N$,
