@@ -2029,3 +2029,19 @@ Syria and Yemen (62-69% of their event cell-weeks have 2+). In West Africa this 
 | both | 0.0038 / 0.0034 | 0.0367 / 0.0338 | 0.250 / 0.235 |
 
   Hotspot marginals are well calibrated, and P(both) is under-predicted by about 6-10%, less than in west_sahel (13-15%).
+
+## 2026-11-09 17:20 EST: task 35, population and SPI-3 done; temperature full array running (whole files)
+- **Population (GHSL GHS-POP R2023A, 30 arcsec): done** → `grid/pop/pop_1990_2025.parquet` (grid_id, year, value) and `pop_epochs.parquet`.
+  - The first run failed: the GHSL grid is offset from the 0.5-degree lattice (left edge −180.0079). `to_half_degree` now bins each pixel by its centre, which keeps totals exact.
+  - Epoch sums over the 56,354 cells: 2020 **7.265 bn**, 2025 **7.590 bn**; no NaN cells.
+  - Years between epochs are interpolated log-linearly (linear where an epoch is 0).
+- **SPI-3: done** → `grid/spi3_month/spi3_month.parquet` (cell × month 1990-2025) and weekly `grid/spi3/spi3_<y>.parquet` (the month containing week_start).
+  - Method: gamma per cell × calendar month on the 1991-2020 3-month totals (Thom's MLE approximation, mixed with the zero share), as in `realdata/covariates/spi3.py`.
+  - Check: **baseline mean 0.004, sd 0.995.** Missing share 0.356 (the cells north of 50N, plus a few desert cells with fewer than 20 non-zero baseline values).
+    Jan-Feb 1990 have no SPI-3.
+- **Temperature: CHIRTS-ERA5 daily, whole files** (owner's choice).
+  - Reading only the paper box over HTTP failed: **the CHC server rate-limits the many range requests (HTTP 429 Too Many Requests)**, and an earlier
+    attempt stalled for 2 h on a read without a timeout (cancelled).
+  - Now `crc/jobs/35_chirts.sh` **1717964** (37 tasks, 1990-2026, at most 4 at once, 2 cores each): curl the whole file (resumable, with retries), aggregate all cells
+    (global again), delete the raw file. The weekly step follows.
+- Disk: `$WORK/covariates`: raw 9.8 GB (CHIRPS 2.7 + GHSL 3.8 + CHIRTS in flight), grid about 0.8 GB.
