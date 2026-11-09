@@ -87,41 +87,38 @@ field with sea barriers ($\bm Q_s$ is the finite-volume SPDE precision of the pa
 correlated between nearby cells: regional hotspots that cross borders.
 \end{itemize}
 
-\textbf{Dynamic terms.} Three space-time fields on the coarse grid: $v^S$ (shared),
-$v^C$ (conflict only), $v^U$ (unrest only). They are the same quantities as in Step 2:
-$v^\ell_{g,k}$ is the value of field $\ell \in \{S, C, U\}$ in coarse cell $g$ at step $k$,
-and the bold $\bm v^\ell_k = (v^\ell_{1,k}, \dots, v^\ell_{G,k})^\top$ stacks these values
-over all $G$ coarse cells, so that the dynamics can be written for the whole map at once
-(likewise $\bm L^C_k$, $\bm L^U_k$). Write $\bm D = (1-\omega)\bm I + \omega\bm N$,
-where $\bm N$ averages over the neighbours of a coarse cell, so $\bm D\bm L$ is ``the
-episode here and next door''. For $k = 2, \dots, K$:
+\textbf{Dynamic terms.} The three space-time fields of Step 2, with the same notation:
+$v^S_{g,k}$ (shared), $v^C_{g,k}$ (conflict only) and $v^U_{g,k}$ (unrest only), the value
+in coarse cell $g$ at step $k$. For each coarse cell $g$ and $k = 2, \dots, K$:
 \begin{align*}
-\bm v^S_k &= \varphi_S\, \bm v^S_{k-1} + \bm\varepsilon^S_k,\\
-\bm v^C_k &= \varphi_C\, \bm v^C_{k-1} + \psi_{U\to C}\, \bm D\, \bm L^U_{k-1} + \bm\varepsilon^C_k,
-\qquad \bm L^U_{k-1} = \lambda\bm v^S_{k-1} + \bm v^U_{k-1},\\
-\bm v^U_k &= \varphi_U\, \bm v^U_{k-1} + \psi_{C\to U}\, \bm D\, \bm L^C_{k-1} + \bm\varepsilon^U_k,
-\qquad \bm L^C_{k-1} = \bm v^S_{k-1} + \bm v^C_{k-1}.
+v^S_{g,k} &= \varphi_S\, v^S_{g,k-1} + \varepsilon^S_{g,k},\\
+v^C_{g,k} &= \varphi_C\, v^C_{g,k-1} + \psi_{U\to C}\, \bar L^U_{g,k-1} + \varepsilon^C_{g,k},\\
+v^U_{g,k} &= \varphi_U\, v^U_{g,k-1} + \psi_{C\to U}\, \bar L^C_{g,k-1} + \varepsilon^U_{g,k}.
 \end{align*}
-The innovations are independent across fields and steps:
-$\bm\varepsilon^\ell_k \sim \N(\bm 0, \bm Q_s(\rho_\ell, \sigma_\ell)^{-1})$, $\ell \in
-\{S, C, U\}$, each a Mat\'ern field with its own range $\rho_\ell$ and innovation SD
-$\sigma_\ell$. In matrix form, $\bm z_k = (\bm v^S_k, \bm v^C_k, \bm v^U_k)$ is a vector
-autoregression $\bm z_k = \bm\Phi\,\bm z_{k-1} + \bm\varepsilon_k$ with
+Here $L^C_{g,k} = v^S_{g,k} + v^C_{g,k}$ and $L^U_{g,k} = \lambda v^S_{g,k} + v^U_{g,k}$ are
+the latent episodes of Step 2, and the bar denotes ``here and next door'':
 \[
-\bm\Phi = \begin{pmatrix}
-\varphi_S \bm I & \bm 0 & \bm 0\\
-\psi_{U\to C}\lambda\,\bm D & \varphi_C \bm I & \psi_{U\to C}\bm D\\
-\psi_{C\to U}\bm D & \psi_{C\to U}\bm D & \varphi_U \bm I
-\end{pmatrix}.
+\bar L^U_{g,k-1} = (1-\omega)\, L^U_{g,k-1} + \omega\, \frac{1}{|N(g)|}\sum_{g' \in N(g)} L^U_{g',k-1},
 \]
-The first step $\bm z_1$ has the stationary variance of the uncoupled fields,
-$\bm v^\ell_1 \sim \N(\bm 0, \bm Q_s(\rho_\ell,\sigma_\ell)^{-1}/(1-\varphi_\ell^2))$.
-\emph{Stationarity}: the spectral radius of $\bm\Phi$ must be below one; we check it at
-the estimate. \emph{Precision}: stacking $\bm z = (\bm z_1,\dots,\bm z_K)$,
-$\bm Q_z = \bm B^\top \bm\Sigma^{-1}\bm B$, where $\bm B$ has identity blocks on the
-diagonal and $-\bm\Phi$ below it, and $\bm\Sigma^{-1}$ is block diagonal in the
-$\bm Q_s$. $\bm Q_z$ is sparse, and since $\det\bm B = 1$, $\log\det \bm Q_z$ does not
-depend on $\lambda$, $\psi$ or $\omega$, as with the loading in the current model.
+with $N(g)$ the neighbouring coarse cells of $g$ and $\omega \in (0,1)$; likewise $\bar L^C$.
+So last step's unrest episode in $g$ and around it raises conflict in $g$ now (through
+$\psi_{U\to C}$), and vice versa (through $\psi_{C\to U}$).
+
+\emph{Innovations.} For each field $\ell \in \{S, C, U\}$ and step $k$, the innovations
+$(\varepsilon^\ell_{1,k}, \dots, \varepsilon^\ell_{G,k})$ over the $G$ coarse cells form a
+Mat\'ern field with sea barriers, with its own range $\rho_\ell$ and SD $\sigma_\ell$. They
+are independent across the three fields and across steps. At the first step, each field
+starts from its stationary distribution without coupling, with variance
+$\sigma_\ell^2/(1-\varphi_\ell^2)$ in each cell.
+
+\emph{Stationarity.} The coupled system must not explode: the largest eigenvalue (in modulus)
+of the one-step transition of $(v^S, v^C, v^U)$ over all cells must be below one. We check it
+at the estimate.
+
+\emph{Precision.} Given the hyperparameters, all values $v^\ell_{g,k}$ are jointly Gaussian.
+Each step depends only on the previous one, so the joint precision is sparse (block
+bidiagonal in time, finite-volume sparsity in space), and its log-determinant does not depend
+on $\lambda$, $\psi$ or $\omega$, as with the loading in the current model.
 
 \section*{4. Hyperparameters and priors}
 \begin{tabular}{@{}lll@{}}
@@ -147,8 +144,8 @@ effect then decays at rate $\varphi_C$. $\psi_{C\to U}$: the reverse direction.
 cell, as now.
 \item \emph{Impulse response}: the change in conflict log-odds $h = 0, 1, 2,\dots$ steps
 after a one-SD innovation in $v^S$ (shared part: immediate in both outcomes) or in $v^U$
-(escalation part: zero at $h=0$, then through $\psi_{U\to C}$). Computed from
-$\bm\Phi^h$.
+(escalation part: zero at $h=0$, then through $\psi_{U\to C}$). Computed by
+iterating the dynamics above.
 \end{itemize}
 Special cases. \emph{Current extended model}: $\psi_{U\to C} = \psi_{C\to U} = 0$ and
 $v^C \equiv 0$. \emph{Current joint model}: in addition $v^U \equiv 0$.
