@@ -1,0 +1,77 @@
+\documentclass[10pt]{article}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{mathtools,amssymb,bm}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=1.2em}
+\setlength{\parskip}{3pt}\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\begin{document}
+\begin{center}\textbf{Design note: latent escalation between conflict and unrest episodes}\end{center}
+
+\textbf{Problem.} In the current joint model, escalation is identified only at the
+shortest scale: $\kappa$ is the effect of unrest in the previous four weeks in the same
+cell. Escalation over months and hundreds of kilometres is absorbed by the shared
+field and cannot be told apart from a shared episode. The proposal makes it identifiable.
+
+\textbf{Model.} Time steps $k = 1,\dots,K$ of $\Delta$ weeks; cells $s$ of a coarse
+lattice. Each outcome has its own latent \emph{episode field}: $a_k(s)$ for conflict and
+$b_k(s)$ for unrest. They evolve jointly:
+\begin{align*}
+a_k(s) &= \underbrace{\phi_C\, a_{k-1}(s)}_{\text{persistence}}
+ + \underbrace{\gamma_{U\to C}\, \bar b_{k-1}(s)}_{\text{escalation}}
+ + \underbrace{\eta_k(s)}_{\text{shared shock}} + \xi^C_k(s),\\
+b_k(s) &= \phi_U\, b_{k-1}(s) + \gamma_{C\to U}\, \bar a_{k-1}(s)
+ + \lambda\, \eta_k(s) + \xi^U_k(s),
+\end{align*}
+where $\bar b_{k-1}(s) = (1-\omega)\, b_{k-1}(s) + \omega \cdot \text{mean of } b_{k-1}$
+over the neighbours of $s$ (so an unrest episode can spill into neighbouring cells), and
+likewise $\bar a$. The innovations $\eta_k$ (shared), $\xi^C_k$, $\xi^U_k$ (outcome-specific)
+are independent Mat\'ern fields with sea barriers, independent over $k$. The observation
+model is unchanged: $\operatorname{logit} P(Y^C_{st}=1) = \bm{x}^\top\bm{\beta}_C + \delta_C h_C +
+\kappa_C h_U + \dots + u_C + e_C + w_C + a_{k(t)}(s)$, and the same for unrest with $b$.
+
+\textbf{What each parameter answers.}
+\begin{itemize}
+\item $\lambda$ (with $\eta$): \emph{shared episodes}, shocks that hit both outcomes in
+the same step and place.
+\item $\gamma_{U\to C}$: \emph{latent escalation}, an unrest episode at $s$ raising
+conflict risk at $s$ and its neighbours one step later, and then decaying at rate
+$\phi_C$. $\gamma_{C\to U}$ is the reverse direction.
+\item $\kappa_C$: \emph{short-run local escalation} from recorded events, as now.
+\end{itemize}
+Special cases: $\gamma = 0$ gives a shared-innovation model close to the current
+extended model; $\gamma = \lambda = 0$ gives two independent univariate space-time models.
+The main summary is the impulse response: the change in conflict risk over the next
+$1, 2, \dots$ steps after a one-SD unrest episode, split into its shared and its
+escalation parts.
+
+\textbf{Why it fits our machinery.} Keeping $(a, b, \eta)$ as latent variables, each step
+is Gaussian given the previous one, so the joint precision is sparse (block
+bidiagonal in time, finite-volume sparsity in space). The Laplace engine, METIS ordering
+and case-control subsampling are unchanged. The process is stationary if the $2\times2$
+matrix $\begin{psmallmatrix}|\phi_C| & |\gamma_{U\to C}|\\ |\gamma_{C\to U}| & |\phi_U|\end{psmallmatrix}$
+has spectral radius below one. Hyperparameters: 11 (against 9 in the extended model).
+
+\textbf{Identification.} Shared episodes move both outcomes in the \emph{same} step;
+escalation moves conflict \emph{after} unrest. They are separated by timing, so the
+model needs enough steps: $\Delta = 4$ weeks on $1^\circ$ cells for West Africa (91
+steps, about $1.8\times10^5$ latent values) and $\Delta = 8$ on $2^\circ$ cells for Africa
+and the Middle East (46 steps, about $1.3\times10^5$). Longer memory than one AR(1) can
+be added as a sum of a fast and a slow component, which stays sparse.
+
+\textbf{Simulation check (before any real-data claim).} S2 design, 20 replicates per
+truth: (i) shared episodes only; (ii) latent escalation only ($\gamma_{U\to C}=0.3$);
+(iii) both; (iv) short-run $\kappa$ only. Fit the new model, the current extended model
+and the univariate model. Criteria: bias and coverage of $\gamma_{U\to C}$, $\lambda$
+and $\kappa$; no spurious $\gamma$ under (i) and (iv). \emph{Go/no-go:} if $\gamma$ and
+$\lambda$ are not separated in (i)--(iii), stop and fall back to regional $\lambda$ and
+$\kappa$.
+
+\textbf{Cost.} Implementation and tests: 1 day. Simulation: 1 day on the CRC. Real-data
+fits (two regions, warm-started, $r = 0.25$): 1--2 days. Rewriting methods and
+application: 1 day. Paper: Section 3 gains the latent escalation model as the main
+model; the current joint model becomes its $\gamma = 0$ special case; the application
+reports $\gamma$, $\lambda$, $\kappa$ and impulse responses.
+\end{document}
