@@ -88,7 +88,11 @@ correlated between nearby cells: regional hotspots that cross borders.
 \end{itemize}
 
 \textbf{Dynamic terms.} Three space-time fields on the coarse grid: $v^S$ (shared),
-$v^C$ (conflict only), $v^U$ (unrest only). Write $\bm D = (1-\omega)\bm I + \omega\bm N$,
+$v^C$ (conflict only), $v^U$ (unrest only). They are the same quantities as in Step 2:
+$v^\ell_{g,k}$ is the value of field $\ell \in \{S, C, U\}$ in coarse cell $g$ at step $k$,
+and the bold $\bm v^\ell_k = (v^\ell_{1,k}, \dots, v^\ell_{G,k})^\top$ stacks these values
+over all $G$ coarse cells, so that the dynamics can be written for the whole map at once
+(likewise $\bm L^C_k$, $\bm L^U_k$). Write $\bm D = (1-\omega)\bm I + \omega\bm N$,
 where $\bm N$ averages over the neighbours of a coarse cell, so $\bm D\bm L$ is ``the
 episode here and next door''. For $k = 2, \dots, K$:
 \begin{align*}
