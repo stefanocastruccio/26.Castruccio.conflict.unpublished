@@ -1936,3 +1936,27 @@ Outputs go to `$WORK/covariates/{raw,grid}`, never the repo.
   ```
 - **(c) ame ci_biv2.json does not exist yet.** biv2 is the second run and starts after ame biv's Hessian finishes. The λ (shared_st.loading) interval will be posted here
   as soon as it exists.
+
+## 2026-11-09 15:00 EST: task 35, static covariates classified; temperature (CHIRTS-ERA5 daily) started
+**Static covariates that vary within a cell ($CLEAN):**
+
+| variable | cells varying | varying within a year | constant within every year | verdict |
+|---|---|---|---|---|
+| river_length | 14,390 | 14,390 | 0 | **arbitrary (duplicate copies): keep the first copy's value** |
+| lake_area | 3,866 | 3,866 | 0 | **arbitrary (duplicate copies): keep the first copy's value** |
+| malaria | 13,836 | 0 | 13,836 | **by year: keep per cell-year** |
+
+- Every varying cell has n_copies ≥ 2. For river and lake, two values coexist within the same year (e.g. cell 724: 620,304 and 697,843 in every year from 2020), which is the
+  signature of duplicate copies. For malaria, each cell has one value per year that changes between years (e.g. cell 14255: 0 except 2.1e-5 in 2022).
+- Malaria in $CLEAN covers 2017-2024 only, so 1990-2016 malaria per cell-year needs a source (e.g. the Malaria Atlas Project). Not done; it was not in the task list.
+
+**Temperature: CHIRTS-ERA5 daily, as decided.**
+- Compute nodes have internet: a test job got HTTP 206 at about 2.8 MB/s against about 5.3 MB/s on the login node. 518 GB serially would take about 27 h, so the work runs as an
+  **array job** `crc/jobs/35_chirts.sh` (`realdata/covariates/chirts_weekly.py`).
+- One task per year (1990-2026; 2026 is fetched for the last week of 2025), **at most 4 at once × 2 cores = 8 cores**. Each task:
+  1. downloads Tmax and Tmin (7.2 GB each);
+  2. aggregates them in 16-day chunks to daily area-weighted 0.5-degree cell means;
+  3. saves a daily cache `$WORK/covariates/daily/{tmax,tmin}_<y>.npz` (about 80 MB per variable-year);
+  4. **deletes the raw files.**
+  Peak raw disk is about 58 GB. Weekly means then come from the daily caches in one cheap step, including weeks crossing into the next year.
+- Test year 1990: cs_chirts_t 1717119. The full array follows if it is clean.
