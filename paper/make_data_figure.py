@@ -30,6 +30,11 @@ BOX = (-20.0, 65.0, -36.0, 45.0)
 BORDERS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "ne_50m_countries.geojson")
 OUTCOMES = [("Conflict", "Violent conflict", "#B2182B"), ("Unrest", "Social unrest", "#2166AC")]
 RES = 0.5
+# European countries inside the box: in the analysis region, but not shown in (a, b), where their
+# dense, well-reported protests would dominate the unrest map (hatched grey instead).
+EUROPE = ["ALB", "AND", "BGR", "BIH", "ESP", "FRA", "GRC", "HRV", "ITA", "KOS", "MCO", "MKD", "MLT",
+          "MNE", "PRT", "ROU", "RUS", "SMR", "SRB", "VAT"]
+WEST_AFRICA = (-18.0, 16.0, 4.0, 25.0)
 
 
 def summarise(df, cells):
@@ -65,21 +70,31 @@ def main(path, out):
             str(k.date()): {"share": float(v), "cells_in_week": int(ncell[k])} for k, v in low.items()}
 
     world = gpd.read_file(BORDERS)
+    eur = world[world.ADM0_A3.isin(EUROPE)]
+    pts = gpd.GeoDataFrame(cells[[]], geometry=gpd.points_from_xy(cells.lon, cells.lat), crs=world.crs)
+    in_eur = gpd.sjoin(pts, eur[["geometry"]], how="left", predicate="within")
+    in_eur = in_eur[~in_eur.index.duplicated()]["index_right"].notna()
+    shown = cells[~in_eur.reindex(cells.index, fill_value=False).to_numpy()]
     nx, ny = int((x1 - x0) / RES), int((y1 - y0) / RES)
     fig = plt.figure(figsize=(11, 8.6))
     gs = fig.add_gridspec(2, 3, height_ratios=[1, 0.42], width_ratios=[1, 1, 0.035], hspace=0.22, wspace=0.06)
     for k, (o, lab, _) in enumerate(OUTCOMES):
         ax = fig.add_subplot(gs[0, k])
         g = np.full((ny, nx), np.nan)
-        i = np.floor((cells.lat - y0) / RES).astype(int).clip(0, ny - 1)
-        j = np.floor((cells.lon - x0) / RES).astype(int).clip(0, nx - 1)
-        g[i, j] = cells[o].to_numpy()
+        i = np.floor((shown.lat - y0) / RES).astype(int).clip(0, ny - 1)
+        j = np.floor((shown.lon - x0) / RES).astype(int).clip(0, nx - 1)
+        g[i, j] = shown[o].to_numpy()
         world.plot(ax=ax, color="#F2F1EE", edgecolor="none", zorder=0)
         ax.imshow(np.where(g == 0, 1.0, np.nan), origin="lower", extent=[x0, x1, y0, y1],
                   cmap=ListedColormap(["#D9D9D9"]), interpolation="nearest", zorder=1)
         im = ax.imshow(np.where(g > 0, g, np.nan), origin="lower", extent=[x0, x1, y0, y1], cmap="magma_r",
                        norm=LogNorm(vmin=1 / 400, vmax=1), interpolation="nearest", zorder=2)
+        eur.plot(ax=ax, facecolor="#EDEDED", edgecolor="#B5B5B5", hatch="////", linewidth=0, zorder=1.5)
         world.boundary.plot(ax=ax, color="#3D3D3D", linewidth=0.35, zorder=3)
+        wx0, wx1, wy0, wy1 = WEST_AFRICA
+        ax.plot([wx0, wx1, wx1, wx0, wx0], [wy0, wy0, wy1, wy1, wy0], color="#1F5FAE", lw=1.1, zorder=4)
+        if k == 0:
+            ax.text(wx0 + 0.5, wy1 + 0.6, "West Africa and the Sahel", color="#1F5FAE", fontsize=8, zorder=4)
         ax.set_xlim(x0, x1); ax.set_ylim(y0, y1); ax.set_aspect("equal")
         ax.set_xticks([]); ax.set_yticks([]); ax.set_xlabel(""); ax.set_ylabel("")
         for sp in ax.spines.values():
