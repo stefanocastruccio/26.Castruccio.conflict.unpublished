@@ -1841,3 +1841,18 @@ Joint prediction (1,351,480 test cell-weeks; share both 0.00378; P(conflict | un
 - **biv − uni_static product −0.00004 (country SE 0.00061)**, biv − uni_st product −0.00101 (0.00038), joint − independent −0.00004 (0.00003).
 
 The same picture as africa_me: no joint gain over uni_static.
+
+## 2026-11-09 04:40 EST: ame step B (biv2) done (1714069, no Traceback); step C (biv3) running
+`results_real/bivariate/ame/summary_biv2.json` is committed.
+- Fit 15,103 s (hyper 13,677 s, --zero-frac 0.25, warm start from A's biv). **log-ML −315,945.9 against biv −316,649.6 (+704).**
+- **κ = conflict:lag_other 0.094 (0.015)** against biv 0.049. unrest:lag_other is 0.069 (0.014) against 0.023.
+- Hyperparameters, biv → biv2:
+  - **shared_st loading 0.683 → 0.519**; sd 1.324 → 1.325; rho 0.951 → 0.954; range 521 → 500 km;
+  - new st_unrest: sd 0.447, 841 km, rho 0.645;
+  - field_unrest sd 0.361 → 0.423; field_conflict 636 → 603 km;
+  - country and cell sd within 0.03.
+- This is the same pattern as west_sahel and africa_me: with an unrest-only space-time field, the shared loading drops and the cross-lags double.
+- Test: conflict log 0.06083 / AUC-PR 0.529; unrest 0.05307 / 0.514. Joint log score 0.11387, against the uni_static product 0.11325 (step A), i.e. +0.0006.
+  Joint − independent −0.00002 (0.00003).
+- Calibration (observed / predicted): overall conflict 0.0253 / 0.0265; both 0.0038 / 0.0035.
+  Top 1%: conflict 0.544 / 0.542, unrest 0.483 / 0.464, both 0.249 / 0.237.
