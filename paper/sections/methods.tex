@@ -118,12 +118,12 @@ $Y_{jst}$ are independent Bernoulli variables with
 \begin{equation}\label{eq:joint}
 \begin{aligned}
 \logit \pi_{\mathrm{C}st} &= \bx_{st}^\top \bbeta_{\mathrm{C}}
-+ \delta_{\mathrm{C}}\, h_{\mathrm{C}st} + \kappa\, h_{\mathrm{U}st}
-+ \delta^{\mathrm{nb}}_{\mathrm{C}}\, \bar h_{\mathrm{C}st} + \kappa^{\mathrm{nb}}\, \bar h_{\mathrm{U}st}\\
++ \delta_{\mathrm{C}}\, h_{\mathrm{C}st} + \kUC \, h_{\mathrm{U}st}
++ \delta^{\mathrm{nb}}_{\mathrm{C}}\, \bar h_{\mathrm{C}st} + \kappa^{\mathrm{nb}}_{\mathrm{U}\to\mathrm{C}}\, \bar h_{\mathrm{U}st}\\
 &\quad + u_{\mathrm{C},c(s)} + e_{\mathrm{C}}(s) + w_{\mathrm{C}}(s) + v(s,t),\\
 \logit \pi_{\mathrm{U}st} &= \bx_{st}^\top \bbeta_{\mathrm{U}}
-+ \delta_{\mathrm{U}}\, h_{\mathrm{U}st} + \kappa_{\mathrm{U}}\, h_{\mathrm{C}st}
-+ \delta^{\mathrm{nb}}_{\mathrm{U}}\, \bar h_{\mathrm{U}st} + \kappa^{\mathrm{nb}}_{\mathrm{U}}\, \bar h_{\mathrm{C}st}\\
++ \delta_{\mathrm{U}}\, h_{\mathrm{U}st} + \kCU \, h_{\mathrm{C}st}
++ \delta^{\mathrm{nb}}_{\mathrm{U}}\, \bar h_{\mathrm{U}st} + \kappa^{\mathrm{nb}}_{\mathrm{C}\to\mathrm{U}}\, \bar h_{\mathrm{C}st}\\
 &\quad + u_{\mathrm{U},c(s)} + e_{\mathrm{U}}(s) + w_{\mathrm{U}}(s) + \lambda\, v(s,t).
 \end{aligned}
 \end{equation}
@@ -134,9 +134,10 @@ effects, $e_j$ independent cell effects and $w_j$ a static Mat\'ern field with s
 barriers (Remark~\ref{rem:boundary}). The two sets of these terms are independent of
 each other, with their own hyperparameters. The space-time field $v$ is the AR(1)
 $\otimes$ Mat\'ern field of Section~\ref{sec:methods-st}. It enters the conflict
-predictor with loading one and the unrest predictor with loading $\lambda$. The
-symbol $\kappa$ here denotes the escalation coefficient. It is unrelated to the SPDE
-parameter of Section~\ref{sec:methods-spde}.
+predictor with loading one and the unrest predictor with loading $\lambda$. The arrows
+give the direction of each cross effect: $\kUC$ is the escalation coefficient of recent
+unrest on conflict, and $\kCU$ the reverse. Both are unrelated to the SPDE parameter
+$\kappa$ of Section~\ref{sec:methods-spde}.
 
 A loading in the design would make $\bA$ depend on the hyperparameters; as in the copy
 construction of R-INLA we instead introduce $\bm{b} = \lambda\bm{a} + \bm{\varepsilon}$,
@@ -147,10 +148,10 @@ $(\bm{a}, \bm{b})$, whose log-determinant does not depend on $\lambda$
 loading of conflict is fixed at one, which identifies the sign of $\lambda$. With
 $\lambda = 0$ the conflict equation is the univariate model.
 
-\paragraph{The estimand.} The coefficient $\kappa$ is the association between recent
+\paragraph{The estimand.} The coefficient $\kUC$ is the association between recent
 unrest in a cell and conflict in the same cell, conditional on the shared episode
-$v(s,t)$ and on the other terms of~\eqref{eq:joint}; $\kappa^{\mathrm{nb}}$ is the same
-for unrest in the neighbouring cells. We call $\kappa$ escalation conditional on
+$v(s,t)$ and on the other terms of~\eqref{eq:joint}; $\kappa^{\mathrm{nb}}_{\mathrm{U}\to\mathrm{C}}$ is the same
+for unrest in the neighbouring cells. We call $\kUC$ escalation conditional on
 shared episodes. Like $\delta$ (Section~\ref{sec:methods-persistence}), it is a
 conditional association of recorded events, not a causal effect.
 Univariate models of conflict estimate a different quantity, even when they include
@@ -162,7 +163,7 @@ the field from conflict outcomes alone, and each latent value is informed by few
 Bernoulli observations, so the estimate is noisy and shrunk towards zero. The part of
 the episode that the field does not capture is still visible in $h_{\mathrm{U}st}$,
 which is an observed, if noisy, proxy of the episode. The coefficient of
-$h_{\mathrm{U}st}$ then absorbs it, and $\hat\kappa$ is biased upward. This is the
+$h_{\mathrm{U}st}$ then absorbs it, and $\hkUC$ is biased upward. This is the
 random-effects exogeneity problem of Section~\ref{sec:methods-persistence} of the
 Supplementary Material in another form. In the joint model the unrest
 outcomes enter the likelihood of $v$. The episode is estimated from both outcomes,
@@ -172,17 +173,17 @@ Section~\ref{sec:sim-joint} checks this argument by simulation.
 
 \paragraph{Identification and limits.} The shared field is identified from the joint
 movement of the two outcomes at its own resolution, beyond what the fixed effects
-and the outcome-specific static terms explain. The coefficient $\kappa$ is identified
+and the outcome-specific static terms explain. The coefficient $\kUC$ is identified
 from variation in four-week unrest histories within that resolution. Two consequences
 follow. First, escalation that unfolds over several months and over a region the size
 of the range of $v$ cannot be told apart from a shared episode, and is attributed to
-$v$. The estimate $\hat\kappa$ is therefore the short-run, local part of escalation,
+$v$. The estimate $\hkUC$ is therefore the short-run, local part of escalation,
 and it can understate escalation at longer time scales. Second, shared episodes that
-are shorter than $\Delta$ weeks or finer than the lattice of $v$ remain in $\kappa$.
+are shorter than $\Delta$ weeks or finer than the lattice of $v$ remain in $\kUC$.
 Third, episodes that affect unrest only are also forced into $v$, because the model has
 no unrest-specific space-time field. Since $v$ enters the conflict predictor with
 loading one, conditioning on $v$ then removes part of the variation in
-$h_{\mathrm{U}st}$ through which escalation would act. This biases $\hat\kappa$ towards
+$h_{\mathrm{U}st}$ through which escalation would act. This biases $\hkUC$ towards
 zero, even when escalation is real. The drop from the univariate to the joint estimate
 is therefore consistent both with the removal of confounding by shared episodes and
 with this attenuation. To separate the two, we fit an extended joint model with an
@@ -195,7 +196,7 @@ occur; the unrest-only episodes instead inflated the estimated loading
 The shared component mixes common shocks to occurrence with common shocks to
 reporting, such as a period of media attention to a place
 \citep{weidmann2016closer, hellmeier2018spotlight}. With a single source of event data
-the two cannot be separated \citep{cook2017twowrongs}, so we read $\kappa$ as
+the two cannot be separated \citep{cook2017twowrongs}, so we read $\kUC$ as
 conditional on shared episodes of either kind. Model~\eqref{eq:joint} is a linear model
 of coregionalisation \citep{gelfand2004nonstationary}; unlike multivariate Hawkes models
 of event data \citep{jun2024hawkes, browning2026hawkes}, which explain co-occurrence by
@@ -220,7 +221,7 @@ sampled by reusing the sparse Cholesky factorisation computed at the mode. This 
 empirical Bayes version of INLA \citep{rue2009inla}, similar in spirit to TMB
 \citep{kristensen2016tmb}. The intervals ignore the uncertainty in $\hat\btheta$, and
 in simulations with a space-time field the plug-in standard errors of lag
-coefficients are too small, by a factor of up to 1.2 for $\hat\kappa$
+coefficients are too small, by a factor of up to 1.2 for $\hkUC$
 (Section~\ref{sec:sim-joint}); intervals that only just exclude zero should be read
 with this in mind. Section~\ref{supp:methods-comp} of the Supplementary Material
 describes the computation.
@@ -240,7 +241,7 @@ the model it extends, and its new components from their defaults. For the extend
 model in West Africa this reached the same optimum as the cold start in 1.4 hours
 instead of 8.2. Second, \emph{looser outer tolerances} for L-BFGS-B (relative change
 of the objective $10^{-7}$, projected gradient $10^{-3}$). In a simulation replicate of
-S2 these moved the hyperparameters by at most 0.3\% and $\hat\kappa$ by $10^{-4}$, and
+S2 these moved the hyperparameters by at most 0.3\% and $\hkUC$ by $10^{-4}$, and
 the fit was 1.25 times faster. Third, \emph{case-control subsampling of
 non-events}. Events are rare, so most of the $10^6$--$10^7$ rows are zeros, and the
 cost of every evaluation grows with the number of rows. For the hyperparameters only,
@@ -255,13 +256,13 @@ subsample. The latent posterior, and therefore every coefficient and prediction,
 then computed on all rows at $\hat\btheta$, with one Newton solve. For the joint model
 in West Africa, $r = 0.25$ made the fit 5.6 times faster (49 minutes instead of 4.5
 hours). The Laplace log marginal likelihood of all rows at the subsample estimate was
-within 0.6 of its maximum, $\hat\kappa$ was 0.047 against 0.044 (0.1 standard errors),
+within 0.6 of its maximum, $\hkUC$ was 0.047 against 0.044 (0.1 standard errors),
 every other coefficient moved by less than 0.1 standard errors, and the test log score
 changed by 0.06\%. With $r = 0.10$ the fit was 6.0 times faster but the loading moved
-from 0.87 to 0.77 and $\hat\kappa$ by 0.3 standard errors, so we use $r = 0.25$ for Africa and the Middle East and
+from 0.87 to 0.77 and $\hkUC$ by 0.3 standard errors, so we use $r = 0.25$ for Africa and the Middle East and
 in the hold-out refits. Two further checks were run on an earlier version of the
 larger region that also included southern Europe. For the extended model with
-$r = 0.10$, $\hat\kappa$ was 0.104 (SE 0.015) against 0.105 (SE 0.015), every lag
+$r = 0.10$, $\hkUC$ was 0.104 (SE 0.015) against 0.105 (SE 0.015), every lag
 coefficient moved by less than 0.6 standard errors and the shared loading moved from
 0.44 to 0.50. Refitting one hold-out fold on all data instead of $r = 0.25$ shifted the
 held-out log score of every model by at most 0.0006, in the same direction, so the

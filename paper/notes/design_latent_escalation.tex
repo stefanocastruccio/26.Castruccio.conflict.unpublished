@@ -15,7 +15,7 @@
 \textbf{Question.} When unrest rises in a region, does conflict follow \emph{because of}
 the unrest (escalation), or do both rise together because of a common latent episode
 (shared episode)? The current joint model separates the two only within four weeks in the
-same cell ($\kappa$). The new model separates them over months and hundreds of kilometres.
+same cell ($\kappa_{U\to C}$). The new model separates them over months and hundreds of kilometres.
 
 \section*{0. Input and output}
 \textbf{Input (data).} Cells $s = 1,\dots,n$ ($0.5^\circ$), weeks $t = 1,\dots,T$.
@@ -33,7 +33,7 @@ field value.
 \end{itemize}
 \textbf{Output.} (a) Estimates of the parameters listed in Step 4, above all the
 escalation coefficients $\psi_{U\to C}$, $\psi_{C\to U}$, the shared loading $\lambda$
-and the short-run coefficient $\kappa$; (b) maps over time of the three latent fields;
+and the short-run coefficient $\kappa_{U\to C}$; (b) maps over time of the three latent fields;
 (c) predictive probabilities $\pi^C_{st}$, $\pi^U_{st}$ for held-out data; (d) the
 impulse response of conflict to an unrest episode (Step 5).
 
@@ -55,13 +55,13 @@ joint log score by $0.00002$--$0.00004$, so we do not add it.
 
 \section*{2. Linear predictors}
 \begin{align*}
-\eta^C_{st} &= \underbrace{\bm x_{st}^\top\bm\beta^C + \delta^C h^C_{st} + \kappa\, h^U_{st}
-+ \delta^C_{nb}\bar h^C_{st} + \kappa_{nb}\bar h^U_{st}
+\eta^C_{st} &= \underbrace{\bm x_{st}^\top\bm\beta^C + \delta^C h^C_{st} + \kappa_{U\to C}\, h^U_{st}
++ \delta^C_{nb}\bar h^C_{st} + \kappa^{nb}_{U\to C}\bar h^U_{st}
 }_{\text{fixed effects}}
 + \underbrace{u^C_{c(s)} + e^C_s + w^C_s}_{\text{static random effects}}
 \;+\; \underbrace{v^S_{g,k} + v^C_{g,k}}_{L^C_{g,k}},\\
-\eta^U_{st} &= \underbrace{\bm x_{st}^\top\bm\beta^U + \delta^U h^U_{st} + \kappa^U h^C_{st}
-+ \delta^U_{nb}\bar h^U_{st} + \kappa^U_{nb}\bar h^C_{st}
+\eta^U_{st} &= \underbrace{\bm x_{st}^\top\bm\beta^U + \delta^U h^U_{st} + \kappa_{C\to U}\, h^C_{st}
++ \delta^U_{nb}\bar h^U_{st} + \kappa^{nb}_{C\to U}\bar h^C_{st}
 }_{\text{fixed effects}}
 + \underbrace{u^U_{c(s)} + e^U_s + w^U_s}_{\text{static random effects}}
 \;+\; \underbrace{\lambda\, v^S_{g,k} + v^U_{g,k}}_{L^U_{g,k}},
@@ -72,7 +72,7 @@ episodes}: the part of each log-odds that is smooth in space, evolves over time 
 not explained by covariates or recorded histories.
 
 \section*{3. Latent level, given the hyperparameters}
-\textbf{Fixed effects.} $\bm\beta^j$, $\delta^j$, $\kappa$ and the neighbour coefficients:
+\textbf{Fixed effects.} $\bm\beta^j$, $\delta^j$, $\kappa_{U\to C}$, $\kappa_{C\to U}$ and the neighbour coefficients:
 one coefficient each, common to all cells and weeks, with vague $\N(0, 10^4)$ priors.
 
 \textbf{Static random effects} (constant over time; one independent set per outcome
@@ -140,7 +140,7 @@ step and place. $\varphi_S$: how long shared episodes last.
 \item $\psi_{U\to C}$: latent escalation. A one-unit rise in the unrest episode in step $k$,
 here and next door, raises the conflict log-odds by $\psi_{U\to C}$ in step $k+1$, and the
 effect then decays at rate $\varphi_C$. $\psi_{C\to U}$: the reverse direction.
-\item $\kappa$: short-run escalation from \emph{recorded} unrest in the last four weeks, same
+\item $\kappa_{U\to C}$: short-run escalation from \emph{recorded} unrest in the last four weeks, same
 cell, as now.
 \item \emph{Impulse response}: the change in conflict log-odds $h = 0, 1, 2,\dots$ steps
 after a one-SD innovation in $v^S$ (shared part: immediate in both outcomes) or in $v^U$
@@ -154,7 +154,7 @@ $v^C \equiv 0$. \emph{Current joint model}: in addition $v^U \equiv 0$.
 \section*{6. Inference}
 Empirical Bayes with a Laplace approximation, as now. Given the hyperparameters
 $\bm\theta$, all latent quantities
-$\bm\xi = (\bm\beta, \delta, \kappa, \bm u, \bm e, \bm w, \bm z)$ are jointly Gaussian
+$\bm\xi = (\bm\beta, \delta, \kappa_{U\to C}, \kappa_{C\to U}, \bm u, \bm e, \bm w, \bm z)$ are jointly Gaussian
 with sparse precision; the Laplace approximation of $p(\bm y \mid \bm\theta)$ is
 maximised over $\bm\theta$, and the latent fields are summarised by their conditional
 posterior at $\hat{\bm\theta}$. The design matrix does not depend on $\bm\theta$
@@ -169,7 +169,7 @@ $1.3$--$1.8\times10^5$ latent values each.
 
 \textbf{Simulation check before any real-data fit.} 20 replicates for each truth:
 (i) shared episodes only; (ii) escalation only ($\psi_{U\to C} = 0.3$); (iii) both;
-(iv) short-run $\kappa$ only. Criteria: bias and coverage of $\psi_{U\to C}$, $\lambda$,
-$\kappa$; no spurious $\psi$ under (i) and (iv). If $\psi$ and $\lambda$ are not
-separated, we stop and report regional $\lambda$ and $\kappa$ instead.
+(iv) short-run $\kappa_{U\to C}$ only. Criteria: bias and coverage of $\psi_{U\to C}$, $\lambda$,
+$\kappa_{U\to C}$; no spurious $\psi$ under (i) and (iv). If $\psi$ and $\lambda$ are not
+separated, we stop and report regional $\lambda$ and $\kappa_{U\to C}$ instead.
 \end{document}

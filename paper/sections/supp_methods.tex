@@ -96,7 +96,7 @@ range $\rho$. Near these edges the prior variance of $v$ is inflated, roughly do
 at an edge. West Africa and the Sahel is a box of $34^\circ \times 21^\circ$, about
 $3700 \times 2300$\,km, and the fitted ranges of the space-time fields there are
 420--790\,km, so a substantial part of the box lies within one range of an edge.
-Estimates of $\delta$ and $\kappa$ conditional on $v$ should be read with this caveat.
+Estimates of $\delta$ and $\kUC$ conditional on $v$ should be read with this caveat.
 In the joint models, the static field $w$ uses the same lattice
 as elsewhere: the observed cells, a buffer of six rings and sea barriers with
 $f = 0.5$ (Remark~\ref{rem:boundary}). The prior on
@@ -155,7 +155,7 @@ protest clusters in space and time through sequential attention
 counts of both event types, and the joint model treats it as a shared episode. The
 two sources of co-movement could be separated with several independent sources of
 event data \citep{cook2017twowrongs}. With a single source they cannot. We therefore
-read $\kappa$ as conditional on shared episodes of either kind, and we do not
+read $\kUC$ as conditional on shared episodes of either kind, and we do not
 interpret $v$ as occurrence or as reporting. The loading $\lambda$ also mixes the two.
 It reflects how strongly unrest follows the shared episodes and how differently the
 two event types are reported.
@@ -166,7 +166,7 @@ space-time component and fixed loading one for conflict
 through $u_j$, $e_j$ and $w_j$, but there is no outcome-specific space-time field.
 Space-time variation of conflict that is not shared with unrest therefore also loads
 on $v$, and $\lambda$ is estimated against it. Space-time variation of unrest that is
-not shared with conflict loads on $v$ as well, with the attenuation of $\hat\kappa$
+not shared with conflict loads on $v$ as well, with the attenuation of $\hkUC$
 described above. A second space-time component, as in the extended model, relaxes
 this at the cost of a second latent block of the size of $v$. Multivariate Hawkes
 models of event data \citep{jun2024hawkes} and discrete-time Hawkes models of ACLED
@@ -207,7 +207,7 @@ space-time field is fitted and the data contain one, the plug-in standard errors
 too small. In S1 the ratio of the empirical standard deviation of $\hat\delta$ to its
 mean standard error is between 1.19 and 1.66, and the coverage of nominal 95\%
 intervals is between 0.80 and 0.95. In S2 without escalation the ratio for
-$\hat\kappa$ is 1.20 (Section~\ref{sec:sim-joint}). Intervals from the space-time and
+$\hkUC$ is 1.20 (Section~\ref{sec:sim-joint}). Intervals from the space-time and
 joint models in the application are therefore likely too narrow, and an estimate whose
 nominal interval only just excludes zero should not be read as clearly different from
 zero.

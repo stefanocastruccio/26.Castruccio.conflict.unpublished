@@ -12,7 +12,7 @@ Recent unrest predicts conflict: in every univariate model of conflict fitted he
 the coefficient of the unrest history is positive and more than two standard errors
 from zero. S2 (Section~\ref{sec:sim-joint}) showed that this is weak evidence of
 escalation, because univariate models report escalation that does not exist when the
-two outcomes share latent episodes, and that the joint model recovers $\kappa$. The
+two outcomes share latent episodes, and that the joint model recovers $\kUC$. The
 application differs from S2 in using steps of 13 weeks on a $1^\circ$ lattice,
 cross-lags in both directions and the neighbour histories of both outcomes.
 
@@ -41,7 +41,7 @@ Supplementary Material gives all hyperparameters and coefficients.
 \caption{Conflict and unrest in West Africa and the Sahel: lag coefficients (standard
 errors) of the conflict equation, hyperparameters of the space-time field, and test
 scores for 2023--2024. Own: conflict in the previous four weeks; other: unrest in the
-previous four weeks ($\kappa$); neighbour terms: the same histories averaged over the
+previous four weeks ($\kUC$); neighbour terms: the same histories averaged over the
 rook neighbours of the cell. In the joint model the space-time field is shared by the
 two outcomes and enters unrest with loading $\lambda$; its AR(1) coefficient is per
 step of 13 weeks. Full results in Table~\ref{tab:app-joint-full} of the Supplementary
@@ -51,7 +51,7 @@ Material. Test scores here use the probit approximation to $E\{\operatorname{exp
 \end{table}
 
 \paragraph{Results.} In the univariate static model the coefficient of recent unrest on
-conflict is $\hat\kappa = 0.138$ (SE 0.031). Adding a space-time field for conflict
+conflict is $\hkUC  = 0.138$ (SE 0.031). Adding a space-time field for conflict
 hardly changes it (0.131, SE 0.032), although the field is clearly present (range
 423\,km, standard deviation 0.69, AR(1) coefficient 0.90 per 13 weeks) and it reduces
 the own-lag coefficient from 0.575 (SE 0.016) to 0.444 (SE 0.017). This is the
@@ -59,7 +59,7 @@ pattern of S2: a field estimated from conflict alone absorbs part of the persist
 of conflict, but not the information about the current episode that is carried by
 recent unrest. In the joint model the coefficient falls to 0.044 (SE 0.032). The
 plug-in interval of $\pm 1.96$ SE runs from $-0.018$ to $0.106$, but it is likely too
-short. In S2 without escalation, the empirical SD of $\hat\kappa$ from the joint model
+short. In S2 without escalation, the empirical SD of $\hkUC$ from the joint model
 was 1.20 times its mean SE, and in S1 the corresponding ratio for $\hat\delta$ was
 1.19 to 1.66 whenever a space-time field was fitted
 (Sections~\ref{sec:sim-joint} and~\ref{sec:sim-persistence}).
@@ -86,30 +86,30 @@ by shared episodes. The fall from 0.131 to 0.044 has two readings, however. The 
 field has a larger standard deviation and range than the conflict-only field (1.01
 against 0.69, and 499 against 423\,km), which is what removing confounding by shared
 episodes would produce, but also what a field that absorbs unrest-only episodes would
-produce, with $\hat\kappa$ attenuated towards zero. The extended model separates them.
+produce, with $\hkUC$ attenuated towards zero. The extended model separates them.
 It raises the log marginal likelihood by 131, its unrest-specific field is substantial
 (range 787\,km, SD 0.49, AR(1) coefficient 0.69 per 13 weeks), the loading of the
-shared field falls from 0.87 to 0.58, and $\hat\kappa$ rises to 0.095 (SE 0.032). In
+shared field falls from 0.87 to 0.58, and $\hkUC$ rises to 0.095 (SE 0.032). In
 S2 the extended model gave slightly larger estimates than the model with one shared
 field, so part of this rise may reflect the model rather than the data.
 
 Over Africa and the Middle East (12{,}995 cells in 78 countries, 4.7 million
 cell-weeks per outcome, $v$ on 3{,}408 cells of $1^\circ$ at 26-week steps) the
-pattern repeats with more precision: $\hat\kappa = 0.141$ (SE 0.014) in the univariate
+pattern repeats with more precision: $\hkUC  = 0.141$ (SE 0.014) in the univariate
 static model, 0.124 (0.015) in the univariate space-time model and 0.049 (0.015) in the
 joint model, whose shared field has loading $\hat\lambda = 0.68$, range 521\,km,
 standard deviation 1.32 and AR(1) coefficient 0.95 per 26 weeks.
 The extended model raises the log marginal likelihood by 704, its unrest-specific
 field has range 841\,km, SD 0.45 and AR(1) coefficient 0.65 per 26 weeks, the shared
-loading falls to 0.52, and $\hat\kappa$ rises to 0.094 (SE 0.015). Once both
+loading falls to 0.52, and $\hkUC$ rises to 0.094 (SE 0.015). Once both
 shared and unrest-specific episodes are modelled, the short-run effect of recent unrest
 on conflict is about 0.10 in both regions, against 0.12--0.14 in the univariate
 models: shared episodes account for about a quarter to a third of the univariate
 association. \todo{Model with a shared static field (biv3): West Africa
-$\hat\kappa = 0.061$ (SE 0.032), log marginal likelihood $+156$ over the extended
+$\hkUC  = 0.061$ (SE 0.032), log marginal likelihood $+156$ over the extended
 model; add AME when job 29, step C, finishes, and decide which model to report.}
 
-Three limits apply. First, $\kappa$ is the short-run, local part of escalation:
+Three limits apply. First, $\kUC$ is the short-run, local part of escalation:
 escalation that unfolds over several months and hundreds of kilometres cannot be told
 apart from a shared episode and is attributed to $v$
 (Section~\ref{sec:methods-joint}). The finding is thus compatible with accounts in
