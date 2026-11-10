@@ -27,7 +27,8 @@ Y1, Y0 = 2024, 2014
 
 
 DV = os.path.join(C.RAW, "epi", "dataverse")
-OLDER = [  # (label, workbook, sheet, current col, change col or None, current year, baseline year)
+OLDER = [  # (label, workbook, sheet, current col, change col or None, current year, baseline year); most recent first
+    ("2022", "d/2022-epi-xlsx/2022-epi.xlsx", "3_EPI_Results", "EPI.new", "EPI.change", 2020, 2010),
     ("2020", "a/2020-epi-xlsx/2020-epi.xlsx", "3_EPI_Results", "EPI.new", "EPI.change", 2018, 2008),
     ("2018", "b/2018-epi-xlsx/2018-epi.xlsx", "2018EPI_ScoresCurrent", "EPI.current", None, 2016, None),
 ]
@@ -75,6 +76,19 @@ def main():
         if add:
             out = pd.concat([out, pd.DataFrame(add, columns=["iso3", "year", "epi", "epi_extrapolated", "epi_edition"])])
             print(f"edition {lab}: shift {shift:+.2f} on {len(common)} common countries; added {sorted({a[0] for a in add})}")
+    # Countries scored by no edition (2018, 2020, 2022, 2026): SOM, SSD, SYR, YEM, PSE. Imputed as the yearly mean of their
+    # EPI region (regions from the 2022 edition's 4_EPI_Results_Regions), flagged epi_edition = 'imputed_region_mean'.
+    rg = os.path.join(DV, "d/2022-epi-xlsx/2022-epi.xlsx")
+    if os.path.exists(rg):
+        reg = pd.read_excel(rg, sheet_name="4_EPI_Results_Regions")[["iso", "region"]].set_index("iso").region
+        unscored = {"SOM": "Sub-Saharan Africa", "SSD": "Sub-Saharan Africa", "SYR": "Greater Middle East",
+                    "YEM": "Greater Middle East", "PSE": "Greater Middle East"}
+        base = out[out.epi_edition == "2026"].assign(region=lambda x: x.iso3.map(reg))
+        rmean = base.groupby(["region", "year"]).epi.mean()
+        imp = [(c, y, float(rmean.loc[(r, y)]), True, "imputed_region_mean") for c, r in unscored.items()
+               if c not in set(out.iso3) for y in C.YEARS]
+        out = pd.concat([out, pd.DataFrame(imp, columns=["iso3", "year", "epi", "epi_extrapolated", "epi_edition"])])
+        print("imputed (region mean):", sorted({i[0] for i in imp}))
     terr = {"SOL": "SOM", "CYN": "CYP", "BRT": "EGY", "ESH": "MAR", "KAS": "IND", "KAB": "KAZ", "ALA": "FIN", "KOS": "SRB"}
     codes = {str(c) for c in C.cells().ISO_A3.dropna()}
     extra = []

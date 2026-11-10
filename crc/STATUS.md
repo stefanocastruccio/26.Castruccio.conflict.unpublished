@@ -2374,3 +2374,13 @@ Event types: {'Protests': 1144821, 'Explosions/Remote violence': 508964, 'Battle
 - **Still without EPI: SOM, SSD, SYR, YEM, PSE** (in no edition we have: 2026, 2020, 2018) + small territories (ATF, COK, CYM, FLK, GRL, NCL, PRI, PRK, PYF, SGS, VIR).
   $CLEAN has values for them (SOM 25.6, SSD 27.4, SYR 23.1, YEM 32.5, PSE 37.5 in 2022), so Luca used an edition we lack (2022 or 2024) or imputed them.
   The 2022 edition on Dataverse (https://doi.org/10.7910/DVN/TLUI00) is the next one to check.
+
+## 2026-11-10 10:30 EST: EPI with the 2022 edition; the five unscored countries imputed (flagged)
+- The owner uploaded the **2022 edition** (`raw/epi/dataverse/d`; a second upload was a duplicate of 2020 and was removed). It now fills CUB, ERI, VEN (+FSM, MHL) ahead of
+  2020 (current 2020, baseline 2010; shift −2.05 on 175 common countries). LBY still comes from 2018 (shift −16.97).
+- **SOM, SSD, SYR, YEM and PSE are scored by no EPI edition** (2018, 2020, 2022, 2026). They are imputed as the **yearly mean of their EPI region**:
+  Sub-Saharan Africa for SOM and SSD, Greater Middle East for SYR, YEM and PSE (regions from the 2022 edition). Flagged `epi_edition = 'imputed_region_mean'`
+  (SOL inherits SOM: `imputed_region_mean:parent`).
+  This is crude: in 2022 it gives SOM/SSD 34.1 and SYR 38.7, where $CLEAN has 25.6 / 27.4 / 23.1, so the regional mean overstates conflict states.
+  **Use the flag to drop them or let the missingness indicator handle them.**
+- 196 codes; only small territories remain without EPI (ATF, COK, CYM, FLK, GRL, NCL, PRI, PRK, PYF, SGS, VIR). Against $CLEAN: corr 0.864.
