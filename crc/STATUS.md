@@ -2322,3 +2322,12 @@ Event types: {'Protests': 1144821, 'Explosions/Remote violence': 508964, 'Battle
   the Netherlands, Finland, Ireland, Hungary, Kazakhstan, Ecuador, ... are absent. **70 cell codes are without a value** (incl. territories). $CLEAN has 168 countries,
   so Luca probably used the full Public Data Package. **To complete it:** the owner downloads the free Public Data Package (footprintnetwork.org form) and puts it in
   `$WORK/covariates/raw/gfn/`.
+
+## 2026-11-10 00:15 EST: Tmax/Tmin for the 540 cells 60S-40S, 1990-2020: monthly fill (owner's choice)
+- `chirts_weekly.py monthly_fill` (job `crc/jobs/35_monthly_fill.sh` **1718692**, held on the reprocessing job 1718646):
+  1. downloads the CHIRTS-ERA5 *monthly* Tmax and Tmin files (one per variable, about 7.2 GB each);
+  2. keeps the monthly 0.5-degree means of the cells that are not in cells_40S, 1990-2026 → `grid/chirts_monthly_fill.parquet`;
+  3. deletes the downloads.
+- `weekly()`: a cell with no daily value in a year (only those 540 cells, in the years cached before the extension) gets **the mean of the month containing week_start**.
+  Filled cell-years are listed in `grid/{tmax,tmin}/{v}_monthly_filled_cells.csv`. All other cells and years keep exact daily-based weekly means.
+- The weekly job 1718221 now waits for 1717964 (Tmax/Tmin), 1718220 (HI/WBGT) and 1718692 (monthly fill).

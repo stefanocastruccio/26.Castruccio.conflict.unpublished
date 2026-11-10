@@ -114,6 +114,42 @@ def daily_tif(y, which=("hi", "wbgt")):
               f"cells with data {np.isfinite(vals).any(0).mean():.3f}, {time.time() - t:.0f} s", flush=True)
 
 
+MONURL = "https://data.chc.ucsb.edu/experimental/CHIRTS-ERA5/{v}/netcdf/monthly/CHIRTS-ERA5.monthly_{V}.monthly.nc"
+FILL = os.path.join(C.GRID, "chirts_monthly_fill.parquet")
+
+
+def monthly_fill():
+    """Monthly Tmax/Tmin means for the cells added on 2026-11-09 (60S-40S; not in cells_40S), whose daily caches for the
+    years processed before that date lack them. One monthly file per variable (about 7.2 GB each), downloaded, used, deleted.
+    Output: grid/chirts_monthly_fill.parquet (var, grid_id, month, value). weekly() uses it where a cell has no daily data."""
+    cl = C.cells(); old = set(pd.read_parquet(os.path.join(C.COV, "cells_40S.parquet")).grid_id)
+    new = cl[~cl.grid_id.isin(old)]; r, c = new.row.to_numpy(), new.col.to_numpy()
+    os.makedirs(RAWD, exist_ok=True); rows = []
+    for v, V in VARS.items():
+        f = os.path.join(RAWD, f"CHIRTS-ERA5.monthly_{V}.monthly.nc"); t = time.time()
+        if not os.path.exists(f):
+            subprocess.run(["curl", "-sfL", "--retry", "10", "--retry-delay", "60", "--retry-all-errors", "-C", "-",
+                            "-o", f + ".part", MONURL.format(v=v, V=V)], check=True)
+            os.replace(f + ".part", f)
+        with xr.open_dataset(f) as ds:
+            name = [k for k, q in ds.data_vars.items() if q.ndim == 3][0]
+            x = ds[name]; tdim, ydim, xdim = x.dims
+            months = pd.DatetimeIndex(ds[tdim].values).to_period("M").to_timestamp()
+            sel = np.where((months.year >= C.YEARS[0]) & (months.year <= C.YEARS[-1] + 1))[0]
+            la, lo = ds[ydim].values, ds[xdim].values
+            for i in range(0, len(sel), 12):
+                idx = sel[i:i + 12]
+                a = x.isel({tdim: idx}).values.astype("float32"); a[(a < -100) | (a > 100)] = np.nan
+                vals = C.to_half_degree(a, la, lo, "mean")[:, r, c]
+                for j, k in enumerate(idx):
+                    rows.append(pd.DataFrame({"var": v, "grid_id": new.grid_id.to_numpy(), "month": months[k], "value": vals[j]}))
+        os.remove(f)
+        print(f"monthly fill {v}: {len(new)} cells, {len(sel)} months, {time.time() - t:.0f} s; raw deleted", flush=True)
+    out = pd.concat(rows); out["value"] = out.value.astype("float32")
+    out.to_parquet(FILL, index=False)
+    print("cells with data:", round(out.groupby("grid_id").value.apply(lambda s: s.notna().any()).mean(), 3))
+
+
 def weekly(which=None):
     global OLD_IDS
     cl = C.cells(); wd = C.weekday()
@@ -121,6 +157,9 @@ def weekly(which=None):
     for v in (which or list(VARS) + list(TIFVARS)):
         if not any(os.path.exists(cache(v, y)) for y in C.YEARS):
             continue
+        fl = os.path.join(C.GRID, v, f"{v}_monthly_filled_cells.csv")
+        if os.path.exists(fl):
+            os.remove(fl)
         for y in C.YEARS:
             parts = [np.load(cache(v, yy)) for yy in (y, y + 1) if os.path.exists(cache(v, yy))]
             if not parts or not os.path.exists(cache(v, y)):
@@ -140,6 +179,15 @@ def weekly(which=None):
                 rows.append(vals[idx[days].to_numpy()].mean(0) if days.isin(dates).all()
                             else np.full(len(cl), np.nan, "float32"))
             m = np.stack(rows)
+            if v in VARS and os.path.exists(FILL):   # cells with no daily data this year: the month's mean (flagged)
+                fill = pd.read_parquet(FILL); fill = fill[fill["var"] == v]
+                nod = np.isnan(m).all(0) & cl.grid_id.isin(fill.grid_id.unique()).to_numpy()
+                if nod.any():
+                    F = fill.pivot(index="month", columns="grid_id", values="value")
+                    ids = cl.grid_id.to_numpy()[nod]
+                    m[:, nod] = F.reindex(W.to_period("M").to_timestamp())[ids].to_numpy()
+                    fl = os.path.join(C.GRID, v, f"{v}_monthly_filled_cells.csv")
+                    pd.DataFrame({"grid_id": ids, "year": y}).to_csv(fl, mode="a", header=not os.path.exists(fl), index=False)
             C.write(v, y, np.tile(cl.grid_id, len(W)), np.repeat(W, len(cl)), m.ravel())
             print(f"{y} {v}: {len(W)} weeks, missing {np.isnan(m).mean():.3f}", flush=True)
 
@@ -147,6 +195,8 @@ def weekly(which=None):
 if __name__ == "__main__":
     if sys.argv[1] == "daily":
         daily(int(sys.argv[2]))
+    elif sys.argv[1] == "monthly_fill":
+        monthly_fill()
     elif sys.argv[1] == "daily_tif":
         daily_tif(int(sys.argv[2]))
     else:
