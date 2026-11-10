@@ -2362,3 +2362,15 @@ Event types: {'Protests': 1144821, 'Explosions/Remote violence': 508964, 'Battle
 - Against $CLEAN: consumption corr 0.93 (n=776 country-years). The 43 countries where only production is published (AUS, IRN, DZA, SAU, ...) correlate only 0.63 with $CLEAN,
   so **Luca had consumption values for them from an earlier edition**; our production fallback is a weaker proxy there (flagged).
 - The GFN API version (126 countries) is kept as `gfn.py api`.
+
+## 2026-11-10 10:00 EST: EPI extended with the 2020 and 2018 editions (owner uploaded them from Dataverse)
+`$WORK/covariates/raw/epi/dataverse/{a: 2020 edition, b: 2018 edition}`; `realdata/covariates/epi.py` → `grid/national/epi_1990_2025.parquet` (iso3, year, epi, epi_extrapolated, epi_edition).
+- 2026 edition first (177 countries: 2024 current, 2014 baseline, linear in between).
+- Countries absent there come from older editions, **shifted onto the 2026 scale** by the mean difference on the countries both editions score at the older edition's current year:
+  - 2020 edition (current 2018, baseline 2008; shift −6.35 on 175 countries): **CUB, ERI, VEN** (+ FSM, MHL);
+  - 2018 edition (current 2016; shift −17.07 on 179 countries): **LBY**.
+- Territories take their parent's score (`epi_edition = '<ed>:parent'`): SOL, CYN, BRT, ESH, KAS, KAB, ALA, KOS→SRB.
+- **190 codes now.** Against $CLEAN's EPI_index: corr 0.876 overall; 0.585 for the 70 country-years not from the 2026 edition (older editions and territories).
+- **Still without EPI: SOM, SSD, SYR, YEM, PSE** (in no edition we have: 2026, 2020, 2018) + small territories (ATF, COK, CYM, FLK, GRL, NCL, PRI, PRK, PYF, SGS, VIR).
+  $CLEAN has values for them (SOM 25.6, SSD 27.4, SYR 23.1, YEM 32.5, PSE 37.5 in 2022), so Luca used an edition we lack (2022 or 2024) or imputed them.
+  The 2022 edition on Dataverse (https://doi.org/10.7910/DVN/TLUI00) is the next one to check.

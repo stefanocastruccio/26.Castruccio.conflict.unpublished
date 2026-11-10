@@ -26,6 +26,23 @@ URL = "https://epi.yale.edu/sites/default/files/2026-09/epi2026results2026-07-07
 Y1, Y0 = 2024, 2014
 
 
+DV = os.path.join(C.RAW, "epi", "dataverse")
+OLDER = [  # (label, workbook, sheet, current col, change col or None, current year, baseline year)
+    ("2020", "a/2020-epi-xlsx/2020-epi.xlsx", "3_EPI_Results", "EPI.new", "EPI.change", 2018, 2008),
+    ("2018", "b/2018-epi-xlsx/2018-epi.xlsx", "2018EPI_ScoresCurrent", "EPI.current", None, 2016, None),
+]
+
+
+def series(e1, e0, y1, y0):
+    out = {}
+    for y in C.YEARS:
+        if y0 is None or e0 is None or not np.isfinite(e0):
+            out[y] = (e1, y != y1)
+        else:
+            f = min(max((y - y0) / (y1 - y0), 0.0), 1.0); out[y] = (e0 + f * (e1 - e0), not (y0 <= y <= y1))
+    return out
+
+
 def main():
     raw = os.path.join(C.RAW, "epi", "epi2026results.xlsx")
     if not os.path.exists(raw):
@@ -38,11 +55,37 @@ def main():
         for y in C.YEARS:
             f = min(max((y - Y0) / (Y1 - Y0), 0.0), 1.0)
             rows.append((r["iso"], y, e0 + f * (e1 - e0), not (Y0 <= y <= Y1)))
-    out = pd.DataFrame(rows, columns=["iso3", "year", "epi", "epi_extrapolated"])
+    out = pd.DataFrame(rows, columns=["iso3", "year", "epi", "epi_extrapolated"]); out["epi_edition"] = "2026"
+    # Countries absent from the 2026 edition: older editions (owner downloaded them from Dataverse, 2026-11-10), shifted onto
+    # the 2026 scale by the mean difference over the countries both editions score, at the older edition's current year.
+    for lab, wb, sh, cur, chg, y1, y0 in OLDER:
+        f = os.path.join(DV, wb)
+        if not os.path.exists(f):
+            continue
+        o = pd.read_excel(f, sheet_name=sh)
+        o = o[["iso", cur] + ([chg] if chg else [])].dropna(subset=[cur])
+        ref = out[out.year == y1].set_index("iso3").epi
+        common = o[o.iso.isin(ref.index)]
+        shift = float((ref.reindex(common.iso).to_numpy() - common[cur].to_numpy()).mean())
+        add = []
+        for _, r in o[~o.iso.isin(out.iso3)].iterrows():
+            e1 = float(r[cur]) + shift; e0 = (e1 - float(r[chg])) if chg and pd.notna(r[chg]) else None
+            for y, (v, ex) in series(e1, e0, y1, y0).items():
+                add.append((r["iso"], y, v, ex, lab))
+        if add:
+            out = pd.concat([out, pd.DataFrame(add, columns=["iso3", "year", "epi", "epi_extrapolated", "epi_edition"])])
+            print(f"edition {lab}: shift {shift:+.2f} on {len(common)} common countries; added {sorted({a[0] for a in add})}")
+    terr = {"SOL": "SOM", "CYN": "CYP", "BRT": "EGY", "ESH": "MAR", "KAS": "IND", "KAB": "KAZ", "ALA": "FIN", "KOS": "SRB"}
+    codes = {str(c) for c in C.cells().ISO_A3.dropna()}
+    extra = []
+    for t, par in terr.items():   # territories take their parent country's score (flag epi_edition = '<ed>:parent')
+        if t in codes and t not in set(out.iso3) and par in set(out.iso3):
+            x = out[out.iso3 == par].copy(); x["iso3"] = t; x["epi_edition"] = x.epi_edition + ":parent"; extra.append(x)
+    if extra:
+        out = pd.concat([out] + extra)
     od = os.path.join(C.GRID, "national"); os.makedirs(od, exist_ok=True)
     out.to_parquet(os.path.join(od, "epi_1990_2025.parquet"), index=False)
-    codes = set(C.cells().ISO_A3.dropna())
-    print(f"EPI: {d.iso.nunique()} countries; cell codes without EPI: {sorted(codes - set(d.iso))}")
+    print(f"EPI: {out.iso3.nunique()} codes ({d.iso.nunique()} from the 2026 edition); cell codes without EPI: {sorted(codes - set(out.iso3))}")
 
 
 if __name__ == "__main__":
