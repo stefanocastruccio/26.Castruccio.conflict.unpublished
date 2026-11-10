@@ -2331,3 +2331,34 @@ Event types: {'Protests': 1144821, 'Explosions/Remote violence': 508964, 'Battle
 - `weekly()`: a cell with no daily value in a year (only those 540 cells, in the years cached before the extension) gets **the mean of the month containing week_start**.
   Filled cell-years are listed in `grid/{tmax,tmin}/{v}_monthly_filled_cells.csv`. All other cells and years keep exact daily-based weekly means.
 - The weekly job 1718221 now waits for 1717964 (Tmax/Tmin), 1718220 (HI/WBGT) and 1718692 (monthly fill).
+
+## 2026-11-10 09:15 EST: task 35, weekly Tmax/Tmin done; checks against $CLEAN; ecological footprint from the York University workbook (all countries)
+### Weekly Tmax/Tmin (1719479, after fixing a missing-folder bug in the fill flag)
+`grid/{tmax,tmin}/{v}_<1990..2025>.parquet`, 56,894 cells, 1,879 weeks; missing 1.95% (cells north of 70N). Monthly-filled cell-years are listed in `{v}_monthly_filled_cells.csv`
+(16,750 = 540 cells × 31 years).
+
+### Checks (`realdata/covariates/check.py`; `grid/check_summary.json`)
+
+| var | missing (all / 2000-2025) | missing by region (africa, europe, latam, middle_east, south_asia, other) | vs $CLEAN 2018-2022: Pearson / Spearman; mean ours / CLEAN |
+|---|---|---|---|
+| tmax | 0.020 / 0.020 | 0.000, 0.010, 0.000, 0.000, 0.000, 0.035 | **0.993 / 0.992; 19.31 / 19.31 °C** |
+| tmin | 0.020 / 0.020 | 0.000, 0.010, 0.000, 0.000, 0.000, 0.035 | **0.992 / 0.995; 9.18 / 9.18 °C** |
+| ppt | 0.338 / 0.338 | 0.001, **0.548**, 0.014, 0.000, 0.000, 0.561 | 0.807 / 0.810; **17.1 (mm/week) / 2.58** |
+| spi3 | 0.358 / 0.355 | 0.065, **0.551**, 0.019, 0.107, 0.020, 0.566 | vs CLEAN `drought`: −0.12 / −0.12 |
+| pm25 | 0.292 / 0.095 | 0.278-0.303 (years outside 1998-2023) | −0.04 / 0.11; 17.8 µg/m³ / 0.00 |
+
+- **Tmax/Tmin reproduce $CLEAN** (same CHIRTS-ERA5 source).
+- **$CLEAN's ppt is in mm/day** (our weekly total / 7 = 2.45 against 2.58), probably from another product (corr 0.81). Use ours, divided by 7 if daily units are wanted.
+- $CLEAN's `drought` is the GDO indicator, not SPI-3, so the two are not comparable (as intended: SPI-3 replaces it).
+- **$CLEAN's pm25 has mean 0.00 at 3 decimals** (other units, probably CAMS kg/m³, weekly), so it is not comparable with ACAG's monthly µg/m³.
+- Europe north of 50N has no precipitation or SPI-3 (outside CHIRPS); the "other" region is mainly North America, Russia and East Asia north of 50N.
+
+### Ecological footprint: complete from the York workbook (no form needed)
+- York University's Ecological Footprint Initiative / FoDaFo publish the **full National Ecological Footprint and Biocapacity Accounts, 2026 Edition (1961-2025, 234 countries)**
+  as a free Excel workbook (https://footprint.info.yorku.ca/data/). GFN's form-based "Public Data Package" is only a reduced subset (2023/2025).
+- `gfn.py` (default) → `grid/national/gfn_eco_1990_2025.parquet`: eco_pc_gha = **consumption footprint per person** where published (flags +++, ++, E); else the
+  **production footprint per person** (flag '+') with `eco_pc_source = 'production'`. Territories map to their parent country; years carried forward are flagged.
+- 2020: consumption 134, production fallback 63, none 47 (flag '-', not published). Cell codes with no value at all: ATF, BLZ, COM, CYM, FLK, GRL, KOS, NCL, PRI, PYF, SGS, TWN, VIR.
+- Against $CLEAN: consumption corr 0.93 (n=776 country-years). The 43 countries where only production is published (AUS, IRN, DZA, SAU, ...) correlate only 0.63 with $CLEAN,
+  so **Luca had consumption values for them from an earlier edition**; our production fallback is a weaker proxy there (flagged).
+- The GFN API version (126 countries) is kept as `gfn.py api`.

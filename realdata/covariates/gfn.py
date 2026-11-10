@@ -1,6 +1,7 @@
 """Ecological footprint of consumption per person (global hectares), Global Footprint Network API (Luca's ECO_pc_gha).
 
-  python realdata/covariates/gfn.py      # network (login node); needs ~/.gfn_key (GFN_USER=..., GFN_KEY=...; chmod 600)
+  python realdata/covariates/gfn.py        # York University workbook (preferred; free, no form, 234 countries)
+  python realdata/covariates/gfn.py api    # GFN API (needs ~/.gfn_key; serves only ~126 high-quality countries)
 
 API: https://api.footprintnetwork.org/v1/data/all/<year>/EFCpc (HTTP basic auth: user, API key). Credentials are read
 from ~/.gfn_key and never printed or written anywhere. Countries come as ISO alpha-2 (isoa2) and are mapped to ISO3 with
@@ -16,6 +17,7 @@ import stat
 import sys
 import urllib.request
 
+import numpy as np
 import pandas as pd
 import requests
 
@@ -72,5 +74,41 @@ def main():
           f"{last.value_counts().sort_index().to_dict()}; unmapped isoa2: {unm}")
 
 
+YORK = os.path.join(C.RAW, "gfn", "NEFBA_2026.xlsx")
+YORK_URL = ("https://footprint.info.yorku.ca/files/2026/04/"
+            "NEFBA_Data_global_national_ecological_footprint_biocapacity.xlsx")
+TERR = {"SOL": "SOM", "CYN": "CYP", "BRT": "EGY", "ESH": "MAR", "KAS": "IND", "KAB": "KAZ", "ALA": "FIN"}
+
+
+def from_york():
+    """Preferred source (2026-11-10): the free York University / FoDaFo workbook of the National Ecological Footprint and
+    Biocapacity Accounts, 2026 Edition (1961-2025, 234 countries; no form). eco_pc_gha = efc_total_percapita (consumption
+    footprint per person) where published (flags +++, ++, E); else efp_total_percapita (production footprint per person,
+    flag '+') with eco_pc_source = 'production'. Not published (flag '-', 'X') -> NaN. Territories take their parent
+    country (TERR). Years after a country's last published year carry the last value forward (eco_pc_carried)."""
+    if not os.path.exists(YORK):
+        os.makedirs(os.path.dirname(YORK), exist_ok=True)
+        open(YORK, "wb").write(urllib.request.urlopen(YORK_URL, timeout=300).read())
+    d = pd.read_excel(YORK, "national_data", usecols=["country_ISO3", "year", "flag", "efc_total_percapita", "efp_total_percapita"])
+    d = d[(d.year >= C.YEARS[0]) & (d.year <= C.YEARS[-1])]
+    d["eco_pc_gha"] = d.efc_total_percapita.where(d.efc_total_percapita.notna(), d.efp_total_percapita)
+    d["eco_pc_source"] = np.where(d.efc_total_percapita.notna(), "consumption",
+                                  np.where(d.efp_total_percapita.notna(), "production", None))
+    codes = sorted({str(x) for x in set(C.cells().ISO_A3.dropna()) | set(d.country_ISO3.dropna())})
+    full = pd.MultiIndex.from_product([codes, list(C.YEARS)], names=["iso3", "year"]).to_frame(index=False)
+    full["src"] = full.iso3.map(lambda c: TERR.get(c, c))
+    full = full.merge(d.rename(columns={"country_ISO3": "src"})[["src", "year", "flag", "eco_pc_gha", "eco_pc_source"]], how="left")
+    full["eco_pc_carried"] = full.eco_pc_gha.isna()
+    full[["eco_pc_gha", "eco_pc_source"]] = full.groupby("iso3")[["eco_pc_gha", "eco_pc_source"]].ffill()
+    full["eco_pc_carried"] &= full.eco_pc_gha.notna()
+    od = os.path.join(C.GRID, "national"); os.makedirs(od, exist_ok=True)
+    full.rename(columns={"src": "source_iso3"}).to_parquet(os.path.join(od, "gfn_eco_1990_2025.parquet"), index=False)
+    y = full[full.year == 2020]
+    print(f"York NEFBA 2026: {d.country_ISO3.nunique()} countries; 2020: consumption {int((y.eco_pc_source == 'consumption').sum())}, "
+          f"production fallback {int((y.eco_pc_source == 'production').sum())}, none {int(y.eco_pc_gha.isna().sum())} "
+          f"(of {len(y)} codes); cell codes without any value: "
+          f"{sorted(set(C.cells().ISO_A3.dropna()) - set(full.dropna(subset=['eco_pc_gha']).iso3))}")
+
+
 if __name__ == "__main__":
-    main()
+    from_york() if (len(sys.argv) < 2 or sys.argv[1] != "api") else main()
