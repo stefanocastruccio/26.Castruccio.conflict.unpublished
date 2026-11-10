@@ -1,6 +1,7 @@
 """Shared grid and week definitions for the 1990-2025 covariates (task 35).
 
-Grid: the 0.5-degree cells of the clean ACLED table ($CLEAN: grid_id, lon, lat, ISO_A3), restricted to 40S-72N.
+Grid: the 0.5-degree cells of the clean ACLED table ($CLEAN: grid_id, lon, lat, ISO_A3), restricted to 60S-72N
+(was 40S-72N until 2026-11-09 23:15; cells_40S.parquet keeps that list for the daily caches written before).
 Cell centres sit at .25/.75 degrees; row/column indices on the global 0.5-degree lattice are
     col = floor((lon + 180) / 0.5),  row = floor((lat + 90) / 0.5)   (row 0 = 90S..89.5S).
 Weeks: start on the weekday of week_start in $CLEAN (Tuesday), from the first such day in 1990 to the last in 2025;
@@ -18,13 +19,13 @@ WORK = os.environ.get("WORK", "/groups/scastruc/conflict_spatial_work")
 CLEAN = os.environ.get("CLEAN", os.path.join(WORK, "clean_r3.parquet"))
 COV = os.path.join(WORK, "covariates")
 RAW, GRID = os.path.join(COV, "raw"), os.path.join(COV, "grid")
-LAT_MIN, LAT_MAX = -40.0, 72.0
+LAT_MIN, LAT_MAX = -60.0, 72.0   # ACLED-relevant land: excludes Antarctica and the high Arctic (owner, 2026-11-09)
 YEARS = range(1990, 2026)
 
 
 def cells(path=CLEAN):
     """One row per cell: grid_id (int32), lon, lat (cell centre), ISO_A3, row, col."""
-    cache = os.path.join(COV, "cells.parquet")
+    cache = os.path.join(COV, f"cells_{int(-LAT_MIN)}S.parquet")
     if os.path.exists(cache):
         return pd.read_parquet(cache)
     c = pd.read_parquet(path, columns=["grid_id", "lon", "lat", "ISO_A3"]).drop_duplicates("grid_id")

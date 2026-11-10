@@ -2271,3 +2271,14 @@ Temperature: Tmax 19/37 and Tmin 17/37 years cached, no failures. HI/WBGT and th
   - **`crc/jobs/35_reprocess_global.sh` 1718646** (held on the Tmax/Tmin array 1717964) redoes CHIRPS weekly and monthly, SPI-3, GHSL population, malaria and PM2.5
     from the raw files on disk. The HI/WBGT array 1718220 is at -tc 3 while it runs (8 cores in total); set it back to 4 afterwards.
 - Expected final size of the global outputs: about 2.2 GB, plus about 6 GB of daily temperature/HI/WBGT caches if kept.
+
+## 2026-11-09 23:20 EST: covariate cells extended to 60S-72N (all ACLED-relevant land; owner)
+- $CLEAN cells outside 40S-72N: **40S-60S 540 cells** (ARG 300, CHL 124, NZL 80, AUS 29, FLK 3, SGS 2, ATF 2), **124 of them with events (32 conflict and 2,629 unrest
+  cell-weeks)**; south of 60S 109 cells (all ATA, no events); north of 72N 2,336 cells (CAN, RUS, GRL, NOR; 6 unrest weeks). In total 0.4% of event cell-weeks are outside 40S-72N.
+- **New cell set: 60S-72N, 56,894 cells** (`common.LAT_MIN = -60`; cache `cells_60S.parquet`; the old list is kept in `cells_40S.parquet`).
+- Coverage by source for the 540 new cells:
+  - HI/WBGT (not started yet), PM2.5, GHSL, malaria and national data: covered (the reprocessing job 1718646 and the HI/WBGT array use the new cells).
+  - Precipitation: CHIRPS reaches 50S, so 40S-50S is covered and **50S-56S (southern Patagonia, Tierra del Fuego) is not**.
+  - **Tmax/Tmin: the years already cached (1990 to about 2020) hold only the 40S-72N cells**, and their raw files are deleted.
+    `chirts_weekly.py` now stores grid_id in each daily cache and aligns old caches by the 40S list, so those years are NaN for the 540 cells.
+    **To do:** patch them from CHIRTS-ERA5 *pentads* (1.4 GB per variable-year, whole files), or accept the gap. 2021-2026 (still queued) include the new cells.

@@ -71,7 +71,7 @@ def daily(y):
         os.remove(f)
         td = time.time() - t
         vals = np.concatenate(out)
-        np.savez(cache(v, y) + ".tmp.npz", dates=dates.values, values=vals)
+        np.savez(cache(v, y) + ".tmp.npz", dates=dates.values, values=vals, grid_id=cl.grid_id.to_numpy())
         os.replace(cache(v, y) + ".tmp.npz", cache(v, y))
         inbox = np.isfinite(vals).any(0).mean()
         print(f"{y} {v}: {size:.1f} GB downloaded in {tdl:.0f} s, processed in {td - tdl:.0f} s, {len(dates)} days; "
@@ -108,14 +108,16 @@ def daily_tif(y, which=("hi", "wbgt")):
             a[(a < -100) | (a > 150)] = np.nan
             lat = tr.f + tr.e * (np.arange(a.shape[0]) + 0.5); lon = tr.c + tr.a * (np.arange(a.shape[1]) + 0.5)
             vals[i] = C.to_half_degree(a[None], lat, lon, "mean")[0][r, c]
-        np.savez(cache(v, y) + ".tmp.npz", dates=days.values, values=vals)
+        np.savez(cache(v, y) + ".tmp.npz", dates=days.values, values=vals, grid_id=cl.grid_id.to_numpy())
         os.replace(cache(v, y) + ".tmp.npz", cache(v, y))
         print(f"{y} {v}: {len(days)} days, {nbytes / 1e9:.1f} GB downloaded and deleted, {miss} days missing, "
               f"cells with data {np.isfinite(vals).any(0).mean():.3f}, {time.time() - t:.0f} s", flush=True)
 
 
 def weekly(which=None):
+    global OLD_IDS
     cl = C.cells(); wd = C.weekday()
+    OLD_IDS = pd.read_parquet(os.path.join(C.COV, "cells_40S.parquet")).grid_id.to_numpy()
     for v in (which or list(VARS) + list(TIFVARS)):
         if not any(os.path.exists(cache(v, y)) for y in C.YEARS):
             continue
@@ -123,8 +125,14 @@ def weekly(which=None):
             parts = [np.load(cache(v, yy)) for yy in (y, y + 1) if os.path.exists(cache(v, yy))]
             if not parts or not os.path.exists(cache(v, y)):
                 print(y, v, "no daily cache"); continue
+            def aligned(p):  # caches written before 2026-11-09 23:15 hold the 40S-72N cells and no grid_id
+                g = p["grid_id"] if "grid_id" in p.files else OLD_IDS
+                pos = pd.Series(np.arange(len(g)), index=g).reindex(cl.grid_id).to_numpy()
+                out = np.full((len(p["dates"]), len(cl)), np.nan, "float32"); ok = ~np.isnan(pos)
+                out[:, ok] = p["values"][:, pos[ok].astype(int)]
+                return out
             dates = pd.DatetimeIndex(np.concatenate([p["dates"] for p in parts]))
-            vals = np.concatenate([p["values"] for p in parts])
+            vals = np.concatenate([aligned(p) for p in parts])
             idx = pd.Series(np.arange(len(dates)), index=dates)
             W = C.weeks(y, wd); rows = []
             for w in W:
