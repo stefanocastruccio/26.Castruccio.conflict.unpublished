@@ -2167,3 +2167,19 @@ Hessian on 1,292,580 rows (all rows), 863 s. **hessian_eig_min = 0.93** (> 0).
 
 theta_se: 0.318, 0.292, 0.067, 0.036, 0.161, 0.111, 0.953, 0.836, 0.079, 0.092, 0.099, 0.054
 west_sahel biv2 is next (run 4 of 4).
+
+## 2026-11-09 20:30 EST: task 35, Luca's other covariates: EPI built, PM2.5 downloading, HI/WBGT queued
+- **What $CLEAN's versions look like** (country-year or weekly, 2018-2024): EPI_index, MF_pc_t and ECO_pc_gha vary smoothly by country-year (e.g. NGA EPI 34.7 → 37.3);
+  pm25 varies weekly.
+- **EPI: built** (`realdata/covariates/epi.py` → `grid/national/epi_1990_2025.parquet`) from the open **2026 edition** (177 countries).
+  - EPI.new is placed at 2024 and EPI.new − EPI.chg (the 10-year change) at 2014; linear in between, flat outside (`epi_extrapolated`).
+  - Against $CLEAN's EPI_index, 2019-2024: **corr 0.89-0.90**; $CLEAN is about 3-4 points higher (an older edition, probably 2022/2024).
+  - **The 2026 edition omits key conflict countries: SOM, SSD, SYR, YEM, LBY, ERI, VEN, CUB, PSE, KOS** (also small territories).
+  - The older editions (2006-2022, with time series) are on Harvard/Yale Dataverse but **behind a guestbook form (name, email)**. The API answers
+    "You may not download this file without the required Guestbook response". **The owner can fill it** (https://doi.org/10.7910/DVN/TLUI00 and the other DOIs);
+    the files then give a proper series that includes those countries.
+- **PM2.5: downloading**, ACAG V6.GL.02.04 monthly 0.1 deg, 1998-2023, from the public WashU Box share (CC BY 4.0; about 1.7 GB, cookie session, about 1 file/s).
+  `realdata/covariates/pm25.py process` follows: monthly area mean per cell, weekly = month of week_start. 1990-1997 and 2024-2025 are missing.
+  $CLEAN's pm25 is weekly (probably CAMS); monthly is the finest open global product.
+- **MF_pc_t: blocked for now.** The UN SDG API has regional aggregates only; country values (UNEP-IRP Global Material Flows Database) still to check.
+- **ECO_pc_gha: needs a GFN account. IPC phases: need an IPC API key.** The owner will provide both.
