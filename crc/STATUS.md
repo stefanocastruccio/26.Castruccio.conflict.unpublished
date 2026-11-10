@@ -2260,3 +2260,14 @@ Temperature: Tmax 19/37 and Tmin 17/37 years cached, no failures. HI/WBGT and th
   ~7 weeks and 2026 is unavailable**. No restrictions on countries, regions, event types or history.
 - Full run 1997-2025 (cursor pagination, 5,000 rows per page) on the login node with nohup → `$WORK/acled/raw/acled_<year>.parquet` + `manifest.json` (raw data stays in $WORK).
   1997: 3,141 events (1 page). Rows per year, disk, first event_date per region and the geo/time precision shares follow when done.
+
+## 2026-11-09 23:00 EST: task 35 outputs switched to GLOBAL (owner: a global model first, regions later)
+- **Covariate outputs now cover all 56,354 cells of $CLEAN between 40S and 72N**, not only the five regions. `cell_region.parquet` is kept for later regional
+  subsets; `COV_REGIONS_ONLY=1` restores the regional writing in `common.write` and pm25.py. The cells outside 40S-72N (2,985 of $CLEAN's 59,339: Antarctica,
+  the high Arctic, southern Patagonia) are not covered; the climate sources do not reach them.
+- Nothing needs downloading again: the processing was always global (the restriction only applied when writing), and **no raw file had been deleted yet.**
+  - Tmax/Tmin and the coming HI/WBGT daily caches already hold all cells; the weekly job (1718221, not yet started) now writes them globally.
+  - National data: re-downloaded globally (187 cell codes × 1990-2025, same missing shares as before). EPI was already global (177 countries).
+  - **`crc/jobs/35_reprocess_global.sh` 1718646** (held on the Tmax/Tmin array 1717964) redoes CHIRPS weekly and monthly, SPI-3, GHSL population, malaria and PM2.5
+    from the raw files on disk. The HI/WBGT array 1718220 is at -tc 3 while it runs (8 cores in total); set it back to 4 afterwards.
+- Expected final size of the global outputs: about 2.2 GB, plus about 6 GB of daily temperature/HI/WBGT caches if kept.

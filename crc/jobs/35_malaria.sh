@@ -12,5 +12,5 @@
 source /users/scastruc/projects/26.Castruccio.conflict.unpublished/crc/jobs/env.sh
 cd "$REPO"
 export OMP_NUM_THREADS=2
-python realdata/covariates/malaria.py && python realdata/covariates/restrict_outputs.py
+python realdata/covariates/malaria.py
 echo "rc=$?"

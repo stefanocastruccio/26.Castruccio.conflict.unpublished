@@ -62,11 +62,12 @@ def region_cells():
 
 
 def write(var, year, grid_id, week_start, value):
-    """Write one variable-year; only cells in the study regions are kept (task 35 scope)."""
+    """Write one variable-year for all cells (40S-72N). Set COV_REGIONS_ONLY=1 to keep only the five study regions
+    (cell_region.parquet); the default is global (owner's decision 2026-11-09: global model first, regions later)."""
     out = os.path.join(GRID, var); os.makedirs(out, exist_ok=True)
     df = pd.DataFrame({"grid_id": np.asarray(grid_id, "int32"), "week_start": pd.to_datetime(week_start),
                        "value": np.asarray(value, "float32")})
-    keep = region_cells()
+    keep = region_cells() if os.environ.get("COV_REGIONS_ONLY") == "1" else None
     if keep is not None:
         df = df[df.grid_id.isin(keep)]
     f = os.path.join(out, f"{var}_{year}.parquet")

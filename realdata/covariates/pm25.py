@@ -90,7 +90,7 @@ def process():
             vals.append(C.to_half_degree(a, ds[ydim].values, ds[xdim].values, "mean")[0][r, c])
         months.append(pd.Timestamp(f"{ym[:4]}-{ym[4:]}-01"))
     M = pd.DataFrame(np.stack(vals), index=pd.DatetimeIndex(months), columns=cl.grid_id).sort_index()
-    keep = C.region_cells()
+    keep = C.region_cells() if os.environ.get("COV_REGIONS_ONLY") == "1" else cl.grid_id.to_numpy()
     od = os.path.join(C.GRID, "pm25_month"); os.makedirs(od, exist_ok=True)
     long = M.stack(future_stack=True).rename("value").reset_index().rename(columns={"level_0": "month", "index": "month"})
     long.columns = ["month", "grid_id", "value"]
