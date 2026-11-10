@@ -2282,3 +2282,43 @@ Temperature: Tmax 19/37 and Tmin 17/37 years cached, no failures. HI/WBGT and th
   - **Tmax/Tmin: the years already cached (1990 to about 2020) hold only the 40S-72N cells**, and their raw files are deleted.
     `chirts_weekly.py` now stores grid_id in each daily cache and aligns old caches by the 40S list, so those years are NaN for the 540 cells.
     **To do:** patch them from CHIRTS-ERA5 *pentads* (1.4 GB per variable-year, whole files), or accept the gap. 2021-2026 (still queued) include the new cells.
+
+## 2026-11-10 00:00 EST: task 36, ACLED download complete; task 35, ecological footprint (GFN API)
+### ACLED (`$WORK/acled/raw`, 344 MB; manifest.json)
+Rows per year: 1997 3,141; 1998 4,421; 1999 4,758; 2000 4,116; 2001 3,557; 2002 4,209; 2003 3,655; 2004 3,098; 2005 2,869; 2006 2,710; 2007 3,838; 2008 5,026; 2009 3,828; 2010 15,035; 2011 16,507; 2012 21,464; 2013 26,187; 2014 24,846; 2015 36,195; 2016 74,711; 2017 113,360; 2018 215,010; 2019 233,260; 2020 270,455; 2021 295,178; 2022 324,841; 2023 355,708; 2024 397,850; 2025 363,862 (to 2025-11-10, the account's 12-month recency limit). The API answered HTTP 429 a few times; the retries succeeded.
+
+First event_date and precision shares (geo_precision 1 = exact location, 2 = near, 3 = region; time_precision 1 = exact day) by ACLED region:
+
+Total 2,833,695 events; last event_date 2025-11-10.
+
+| region                    |   events | first      |   geo_=1 |   geo_=2 |   geo_=3 |   time=1 |   time=2 |   time=3 |
+|:--------------------------|---------:|:-----------|---------:|---------:|---------:|---------:|---------:|---------:|
+| Middle Africa             |    80524 | 1997-01-01 |    0.708 |    0.272 |    0.02  |    0.877 |    0.104 |    0.02  |
+| Northern Africa           |   102484 | 1997-01-01 |    0.832 |    0.143 |    0.025 |    0.901 |    0.09  |    0.009 |
+| Eastern Africa            |   143384 | 1997-01-01 |    0.72  |    0.253 |    0.027 |    0.894 |    0.089 |    0.018 |
+| Western Africa            |   104877 | 1997-01-01 |    0.656 |    0.329 |    0.015 |    0.884 |    0.083 |    0.033 |
+| Southern Africa           |    34843 | 1997-01-05 |    0.925 |    0.07  |    0.005 |    0.917 |    0.069 |    0.014 |
+| South Asia                |   373672 | 2010-01-01 |    0.808 |    0.178 |    0.015 |    0.957 |    0.041 |    0.001 |
+| Southeast Asia            |   161439 | 2010-01-01 |    0.639 |    0.349 |    0.012 |    0.951 |    0.045 |    0.004 |
+| Middle East               |   563585 | 2015-01-01 |    0.641 |    0.329 |    0.029 |    0.968 |    0.03  |    0.003 |
+| International Waters      |     1627 | 2015-09-08 |    0.163 |    0.194 |    0.644 |    0.901 |    0.084 |    0.015 |
+| Caucasus and Central Asia |   109571 | 2017-01-01 |    0.351 |    0.581 |    0.068 |    0.86  |    0.138 |    0.002 |
+| East Asia                 |    83029 | 2018-01-01 |    0.906 |    0.077 |    0.017 |    0.9   |    0.09  |    0.01  |
+| Europe                    |   539526 | 2018-01-01 |    0.64  |    0.338 |    0.022 |    0.982 |    0.016 |    0.002 |
+| North America             |   214288 | 2018-01-01 |    0.936 |    0.058 |    0.006 |    0.871 |    0.123 |    0.006 |
+| Caribbean                 |    25812 | 2018-01-01 |    0.923 |    0.057 |    0.019 |    0.901 |    0.087 |    0.012 |
+| South America             |   251982 | 2018-01-01 |    0.888 |    0.094 |    0.018 |    0.901 |    0.096 |    0.004 |
+| Central America           |    35507 | 2018-01-01 |    0.859 |    0.124 |    0.017 |    0.921 |    0.076 |    0.003 |
+| Oceania                   |     7537 | 2021-01-01 |    0.938 |    0.047 |    0.015 |    0.94  |    0.049 |    0.011 |
+| Antarctica                |        8 | 2021-03-19 |    1     |    0     |    0     |    1     |    0     |    0     |
+
+Event types: {'Protests': 1144821, 'Explosions/Remote violence': 508964, 'Battles': 463977, 'Violence against civilians': 326366, 'Strategic developments': 206864, 'Riots': 182703}
+
+### Ecological footprint (Luca's ECO_pc_gha): GFN API, partial
+`realdata/covariates/gfn.py` → `grid/national/gfn_eco_1990_2025.parquet` (EFConsPerCap, gha per person; ~/.gfn_key, never printed). The API rate-limits (HTTP 429), so the script pauses 5 s per year and backs off on 429.
+- **126 countries**, 1990-2025 (107 in 1990; GFN gives values up to 2025, so the recent years are GFN's nowcasts, not final accounts).
+- Against $CLEAN's ECO_pc_gha: **corr 0.92-0.97 per year (2018-2024)**, median |difference| 0.08-0.13 gha. The same measure, with a different edition.
+- **The API only serves countries with data-quality score 3A or 2B.** The /countries endpoint lists 158 entries; Australia, Iran, Algeria, Saudi Arabia, Morocco, Libya,
+  the Netherlands, Finland, Ireland, Hungary, Kazakhstan, Ecuador, ... are absent. **70 cell codes are without a value** (incl. territories). $CLEAN has 168 countries,
+  so Luca probably used the full Public Data Package. **To complete it:** the owner downloads the free Public Data Package (footprintnetwork.org form) and puts it in
+  `$WORK/covariates/raw/gfn/`.
