@@ -2183,3 +2183,72 @@ west_sahel biv2 is next (run 4 of 4).
   $CLEAN's pm25 is weekly (probably CAMS); monthly is the finest open global product.
 - **MF_pc_t: blocked for now.** The UN SDG API has regional aggregates only; country values (UNEP-IRP Global Material Flows Database) still to check.
 - **ECO_pc_gha: needs a GFN account. IPC phases: need an IPC API key.** The owner will provide both.
+
+## 2026-11-09 21:20 EST: job 33 complete (west_sahel biv2 → `results_real/bivariate/west_sahel/ci_biv2.json`); 30 (ame hold-out refit, 1714071) done and merged
+### west_sahel biv2 intervals
+**λ = shared_st.loading 0.580, 95% CI [0.449, 0.711]**. Hessian on 1,292,580 rows (all rows), 5708 s; **hessian_eig_min = 0.81**.
+
+| hyperparameter | estimate | 95% CI |
+|---|---|---|
+| shared_st.loading | 0.580 | [0.449, 0.711] |
+| country_conflict.sd | 0.673 | [0.353, 1.282] |
+| country_unrest.sd | 0.514 | [0.287, 0.921] |
+| cell_conflict.sd | 0.654 | [0.572, 0.748] |
+| cell_unrest.sd | 1.358 | [1.265, 1.458] |
+| field_conflict.range_km | 466.751 | [330.511, 659.150] |
+| field_conflict.sd | 1.443 | [1.120, 1.859] |
+| field_unrest.range_km | 497.304 | [67.790, 3648.184] |
+| field_unrest.sd | 0.344 | [0.096, 1.234] |
+| shared_st.range_km | 444.706 | [367.467, 538.180] |
+| shared_st.sd | 0.993 | [0.801, 1.231] |
+| shared_st.rho | 0.957 | [0.932, 0.973] |
+| st_unrest.range_km | 787.153 | [606.645, 1021.371] |
+| st_unrest.sd | 0.494 | [0.406, 0.602] |
+| st_unrest.rho | 0.687 | [0.496, 0.815] |
+
+theta_se: 0.329, 0.298, 0.068, 0.036, 0.176, 0.129, 1.017, 0.651, 0.097, 0.110, 0.123, 0.067, 0.133, 0.101, 0.152
+
+λ across the four runs: ame biv 0.683 [0.638, 0.728], ame biv2 0.519 [0.463, 0.575], west_sahel biv 0.868 [0.763, 0.973], west_sahel biv2 0.580 [0.449, 0.711]. All Hessians are positive definite (min eig 3.43, 6.21, 0.93, 0.81).
+
+### ame hold-out with per-fold refits (30, 1714071; all 10 tasks rc 0, no Traceback)
+`results_real/bivariate/holdout_refit/ame_{conflict,unrest}.json` (merged with `holdout_check.py --merge`). Log-score differences on held-out countries,
+negative = better, country SEs in parentheses.
+
+**Target conflict** (past 3,130,830 rows / 76,985 events; test 1,262,040 / 34,134)
+
+| | past | test |
+|---|---|---|
+| biv vs uni_static | −0.00181 (0.00139) | −0.00194 (0.00171) |
+| biv vs uni_st | −0.00100 (0.00129) | −0.00102 (0.00163) |
+| biv2 vs uni_static | −0.00217 (0.00152) | −0.00202 (0.00146) |
+| biv2 vs uni_st | −0.00136 (0.00137) | −0.00111 (0.00105) |
+
+Per country, biv against uni_static (events in brackets):
+- past, best: YEM (7,579) −0.057, AFG (3,713) −0.049, LBN (263) −0.033, SWZ (82) −0.030; worst: SOM (4,648) +0.031, IRQ (6,183) +0.035, ISR (930) +0.114, **PSE (455) +0.620**.
+- test, best: SYR (3,037) −0.080, LBN (215) −0.048, BFA (1,830) −0.045, CMR (1,325) −0.029; worst: SOM (1,958) +0.056, BDI (283) +0.078, ISR (554) +0.184, **PSE (185) +0.582**.
+
+**Target unrest** (past 3,144,810 / 57,681; test 1,267,760 / 28,737)
+
+| | past | test |
+|---|---|---|
+| biv vs uni_static | **−0.00149 (0.00047)** | −0.00065 (0.00087) |
+| biv vs uni_st | **−0.00166 (0.00050)** | −0.00085 (0.00076) |
+| biv2 vs uni_static | **−0.00121 (0.00054)** | −0.00064 (0.00080) |
+| biv2 vs uni_st | **−0.00138 (0.00048)** | −0.00085 (0.00067) |
+
+Per country, biv against uni_static:
+- past, best: CYN (281) −0.185, LBN (823) −0.180, CYP (120) −0.119, ISR (1,283) −0.100; worst: MUS (58) +0.016, ARM (576) +0.027, COM (28) +0.033, **PSE (425) +0.408**.
+- test, best: CYN (118) −0.365, LBN (261) −0.245, CYP (56) −0.181, ISR (639) −0.046; worst: TUN (674) +0.032, YEM (2,302) +0.033, ARM (180) +0.067, **PSE (141) +0.353**.
+
+What the numbers show:
+- **Target conflict:** the joint models gain about −0.002 against uni_static in both periods, with the same sign as the fixed-θ africa_me hold-out but only about 1.3 SE.
+- **Target unrest:** the past-period gain is clear (about 3 SE). The test-period gain is smaller and not significant.
+- **Palestine (PSE) is an outlier with a very large loss in every comparison (+0.35 to +0.62).** Israel is also bad for conflict (+0.11 to +0.18). A held-out country next to a much more
+  violent neighbour seems to borrow the neighbour's intensity. Worth a look before the paper uses these numbers.
+- Wall time per task: 165-274 min; biv2 is 6,621-11,295 s of each.
+- Task-level log line, task 1: uni_static 127 s, uni_st 1,111 s, biv 3,584 s, biv2 11,295 s.
+
+### Task 35: PM2.5 done (1718462, rc 0)
+`grid/pm25/pm25_<y>.parquet` (weekly = the month's value) and `grid/pm25_month/pm25_month.parquet`. 312 months, 1998-01 .. 2023-12; in-region missing 0.001; mean 22.8 µg/m³.
+1990-1997 and 2024-2025 are missing (outside ACAG V6.GL.02.04).
+Temperature: Tmax 19/37 and Tmin 17/37 years cached, no failures. HI/WBGT and the weekly step follow.
