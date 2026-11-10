@@ -12,115 +12,128 @@
 \newcommand{\C}{\mathrm{C}}
 \newcommand{\U}{\mathrm{U}}
 \begin{document}
-\begin{center}\textbf{Design note: escalation in the mean, latent dependence only where the
-data support it}\end{center}
+\begin{center}\textbf{Design note: a global model of where unrest leads to conflict}\end{center}
 
-\textbf{Question.} Does recorded unrest lead to later conflict (escalation), and over which
-time lags and distances, once episodes that drive both outcomes are accounted for?
+\textbf{Question.} \emph{Where} does recorded unrest lead to later conflict (escalation), and
+where do the two only share episodes? The model answers it with escalation coefficients and a
+shared-episode loading that vary in space, estimated in one model over five regions.
 
-\textbf{Principles.} (1) Effects of \emph{observed} events go in the mean, as fixed effects:
-they are estimated directly, cheaply and with intervals. (2) The latent part only absorbs
-unobserved structure (confounding episodes, reporting). (3) A component enters the model only
-with evidence; every parameter is reported with a 95\% interval. (4) Cross-dependence between
-the outcomes appears in the mean only; there is no coupling between latent fields.
+\textbf{Principles.} (1) Effects of observed events go in the mean. (2) The latent part absorbs
+unobserved structure only. (3) Every parameter has a 95\% interval; a component, including any
+spatial variation, stays only if its interval supports it. (4) No latent coupling between fields.
 
-\section*{0. Input and output}
-\textbf{Input.} Cells $s$ ($0.5^\circ$), weeks $t$. Outcomes $Y_{\C st}, Y_{\U st} \in \{0,1\}$:
-at least one recorded conflict or unrest event. Covariates $\bm x_{st}$, the country $c(s)$,
-and histories built from the outcomes (Step 2). Coarse cells $g = g(s)$ and time steps
-$k = k(t)$ of $\Delta$ weeks for the space-time fields.\\
-\textbf{Output.} The escalation kernels $\kappa_{\U\to\C}(b,r)$ and $\kappa_{\C\to\U}(b,r)$ with
-intervals; the loading $\lambda$ with its interval; maps of the latent fields; predictive
-probabilities for held-out data.
+\section*{0. Data, regions and output}
+\textbf{Data.} Cells $s$ ($0.5^\circ$), weeks $t$; $Y_{\C st}, Y_{\U st} \in \{0,1\}$: at least one
+recorded conflict or unrest event. Covariates $\bm x_{st}$ (climate anomalies, population,
+national indicators, missingness indicators), the country $c(s)$, histories from the outcomes.\\
+\textbf{Regions} $r(s)$, by country, each from the start of ACLED coverage to 2025:
+Africa (1997), Middle East (about 2016), South and Southeast Asia (about 2010), Latin America and
+the Caribbean (2018); Europe (2018--2020) in the Supplementary Material only. Cell-weeks before
+coverage are not observed and do not enter the likelihood.\\
+\textbf{Output.} Maps of escalation $\kappa_{\U\to\C}(s)$ and $\kappa_{\C\to\U}(s)$ and of the loading
+$\lambda(s)$, with intervals; the escalation kernel over lags and distances; maps of the latent
+fields; held-out predictions by region.
 
 \section*{1. Data level}
 Given the linear predictors, $Y_{\C st}$ and $Y_{\U st}$ are independent Bernoulli variables,
-$\logit P(Y_{jst}=1) = \eta_{jst}$ for $j \in \{\C,\U\}$, independent over cells and weeks. All
-dependence between the outcomes comes from the histories (Step 2) and from the loading
-$\lambda$ (Step 3).
+$\logit P(Y_{jst} = 1) = \eta_{jst}$, independent over cells and weeks.
 
 \section*{2. Linear predictors}
 \begin{align*}
-\eta_{\C st} &= \bm x_{st}^\top\bm\beta_{\C}
+\eta_{\C st} &= \bm x_{st}^\top\bm\beta_{\C} + \alpha_{\C,r(s),y(t)}
 + \delta_{\C}\, h_{\C st} + \delta^{nb}_{\C}\, \bar h_{\C st}
-+ \textstyle\sum_{b,r} \kappa_{\U\to\C}(b,r)\, H_{\U st}(b,r)
-+ u_{\C,c(s)} + e_{\C s} + w_{\C s} + v_{\C gk},\\
-\eta_{\U st} &= \bm x_{st}^\top\bm\beta_{\U}
++ \textstyle\sum_{b,\ell} \kappa_{\U\to\C}(b,\ell)\, H_{\U st}(b,\ell) + \gamma_{\U\to\C}(s)\, H_{\U st}(1,0)\\
+&\quad + u_{\C,c(s)} + e_{\C s} + w_{\C s} + v_{\C gk},\\
+\eta_{\U st} &= \bm x_{st}^\top\bm\beta_{\U} + \alpha_{\U,r(s),y(t)}
 + \delta_{\U}\, h_{\U st} + \delta^{nb}_{\U}\, \bar h_{\U st}
-+ \textstyle\sum_{b,r} \kappa_{\C\to\U}(b,r)\, H_{\C st}(b,r)
-+ u_{\U,c(s)} + e_{\U s} + w_{\U s} + \lambda\, v_{\C gk} + v_{\U gk}.
++ \textstyle\sum_{b,\ell} \kappa_{\C\to\U}(b,\ell)\, H_{\C st}(b,\ell) + \gamma_{\C\to\U}(s)\, H_{\C st}(1,0)\\
+&\quad + u_{\U,c(s)} + e_{\U s} + w_{\U s} + \lambda(s)\, v_{\C gk} + v_{\U gk},
 \end{align*}
-\textbf{Own histories (as now).} $h_{jst} = \log(1+{}$events of type $j$ in cell $s$ in weeks
-$t-4,\dots,t-1)$, and $\bar h_{jst}$ is its mean over the rook neighbours of $s$.
-
-\textbf{Escalation kernel (new).} The history of the other outcome is split by lag band $b$
-and distance ring $r$. For unrest,
-\[
-H_{\U st}(b,r) = \text{mean over cells } s' \in R_r(s) \text{ of }
-\log\bigl(1 + \text{unrest events in } s' \text{ in the weeks } t-B_b\bigr),
-\]
-with lag bands $B_1 = \{1,\dots,4\}$, $B_2 = \{5,\dots,13\}$ and $B_3 = \{14,\dots,26\}$ weeks
-before $t$, and rings $R_0(s) = \{s\}$, $R_1(s)$ = rook neighbours and $R_2(s)$ = cells
-50--300\,km away. $H_{\C st}(b,r)$ is the same for conflict. All are standardised on the
-training rows. This gives 9 coefficients per direction. The current model is the special case
-$b = 1$, $r \le 1$: $\kappa_{\U\to\C} = \kappa_{\U\to\C}(1,0)$ and
-$\kappa^{nb}_{\U\to\C} = \kappa_{\U\to\C}(1,1)$. All fixed effects have $\N(0, 10^4)$ priors.
+with coarse cell $g = g(s)$ and time step $k = k(t)$.
+\begin{itemize}
+\item \textbf{Year effects by region}, $\alpha_{j,r,y}$: absorb changes in ACLED's reporting,
+which differ between regions.
+\item \textbf{Own histories} (as now): $h_{jst} = \log(1+{}$events of type $j$ in cell $s$ in weeks
+$t-4,\dots,t-1)$ and $\bar h_{jst}$, its mean over the rook neighbours.
+\item \textbf{Escalation kernel}: $H_{\U st}(b,\ell)$ is the mean over the cells of distance ring
+$\ell$ ($R_0$: the cell; $R_1$: rook neighbours; $R_2$: 50--300\,km) of
+$\log(1+{}$unrest events in lag band $b$), with $B_1 = 1$--4, $B_2 = 5$--13 and $B_3 = 14$--26
+weeks. Its 9 coefficients per direction are common to all regions (the shape of escalation).
+\item \textbf{Spatially varying escalation}: the short-run, same-cell effect is
+$\kappa_{\U\to\C}(s) = \kappa_{\U\to\C}(1,0) + \gamma_{\U\to\C}(s)$, and likewise
+$\kappa_{\C\to\U}(s)$. Only this term varies, because it carries most of the data.
+\end{itemize}
 
 \section*{3. Latent level}
-\textbf{Static random effects}, one independent set per outcome $j$:
-$u_{j,c} \sim \N(0,\sigma^2_{u,j})$ (country), $e_{js} \sim \N(0,\sigma^2_{e,j})$ (cell, no
-spatial correlation) and $w_j$, a Mat\'ern field with sea barriers (regional, constant in time).
+\textbf{Static random effects}, one independent set per outcome $j$: country effects
+$u_{j,c} \sim \N(0,\sigma^2_{u,j})$; cell effects $e_{js} \sim \N(0,\sigma^2_{e,j})$; a Mat\'ern
+field $w_j$ with sea barriers.
 
-\textbf{Space-time fields.} Two fields, independent of each other: $v_{\C}$ (the conflict
-field) and $v_{\U}$ (unrest only). Each is an AR(1) in time with Mat\'ern innovations with sea
-barriers. For coarse cell $g$ and step $k$,
+\textbf{Space-time fields}, independent: $v_{\C}$ (conflict) and $v_{\U}$ (unrest only), each
 \[
 v_{jgk} = \varphi_j\, v_{jg,k-1} + \sqrt{1-\varphi_j^2}\;\varepsilon_{jgk},
-\qquad (\varepsilon_{j1k},\dots,\varepsilon_{jGk}) \sim \text{Mat\'ern}(\rho_j, \sigma_j),
+\qquad (\varepsilon_{j1k},\dots,\varepsilon_{jGk}) \sim \text{Mat\'ern}(\rho_j,\sigma_j)
+\text{ with sea barriers},
 \]
-independent over $k$. The only latent link between the outcomes is the loading $\lambda$: the
-conflict field also enters unrest. With $\lambda = 0$ the model is two separate univariate
-models. This is the current extended model, renamed: $v_{\C}$ is its ``shared'' field.
+independent over steps $k$. On a sphere-wide lattice the fields of different continents are
+independent through the sea barriers, but a field runs across land borders (Africa--Middle
+East--Asia).
 
-\section*{4. Parameters}
-Fixed effects: $\bm\beta_j$, $\delta_j$, $\delta^{nb}_j$, and $2 \times 9$ kernel coefficients.
-Hyperparameters (15, as now): per outcome $\sigma_{u,j}, \sigma_{e,j}, \rho_{w,j},
-\sigma_{w,j}$; per field $\rho_j, \sigma_j, \varphi_j$; and $\lambda \sim \N(0, 2^2)$. PC priors
-as in the paper, and $\operatorname{atanh}\varphi_j \sim \N(0, 1.5^2)$. Inference: Laplace
-empirical Bayes as now, with intervals for every hyperparameter from the Hessian.
-
-\section*{5. Evidence so far (Africa and the Middle East)}
-{\small
+\textbf{Spatial variation, two versions.} Each is a modelling choice to be settled by the
+prototype and the simulation (Section 6).
+\begin{center}
+\small
 \begin{tabular}{@{}lll@{}}
 \toprule
-component & evidence & status \\
+ & piecewise by region & smooth \\
 \midrule
-space-time field, conflict & log-ML $+2{,}421$ over static terms only & supported \\
-space-time field, unrest & log-ML $+1{,}592$ over static terms only & supported \\
-latent link $\lambda$ & $\hat\lambda = 0.52$; log-ML $+129$ over two independent fields & interval pending \\
- & held-out joint log score 0.11387, against 0.11422 & mixed \\
- & \quad (independent fields) and 0.11325 (static only) & \\
-one shared field only & log-ML $-575$ against two independent fields & rejected \\
-$\kappa_{\U\to\C}$ (4 weeks, same cell) & 0.094 [0.065, 0.123] & supported \\
-$\kappa_{\C\to\U}$ (4 weeks, same cell) & 0.069 [0.042, 0.096] & supported \\
+escalation $\gamma(s)$ & $\gamma_r$: fixed effects, one per region & Mat\'ern field (spatially varying coefficient) \\
+loading $\lambda(s)$ & $\lambda_r$: one hyperparameter per region & $\sum_{m=1}^{M} \theta_m b_m(s)$, $M \approx 5$--10 smooth basis functions \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
+\end{center}
+Both keep the model latent Gaussian. $\gamma(s)$ enters the mean linearly. For $\lambda(s)$, the
+loading sits in the prior precision of the pair $(v_{\C}, \lambda v_{\C})$, as in the current
+model, and the log-determinant does not depend on it, whether $\lambda$ is a region value or a
+basis expansion. A full Gaussian field \emph{in} the loading would break this, so we do not use one.
 
-The evidence for latent dependence between the outcomes rests on one parameter, $\lambda$.
-\emph{Decision rule:} if the interval for $\lambda$ excludes zero, keep it; if not, drop it and
-fit the two outcomes separately, with escalation in the mean only.
+\section*{4. Parameters and priors}
+\textbf{Fixed effects} ($\N(0,10^4)$): $\bm\beta_j$; $\alpha_{j,r,y}$; $\delta_j$, $\delta^{nb}_j$;
+$2\times 9$ kernel coefficients; $\gamma_r$ in the piecewise version.\\
+\textbf{Hyperparameters}: static, 8 (as now); space-time fields, 6 ($\rho_j,\sigma_j,\varphi_j$);
+loadings, 4 regions ($\lambda_r$) or $M$ basis coefficients, $\N(0,2^2)$; in the smooth version, the
+SD and range of each $\gamma$ field, 4, with PC prior $P(\sigma_\gamma > 0.2) = 0.05$, which
+shrinks towards no variation. In total 18 (piecewise) to about 28 (smooth).
 
-\section*{6. What is not in the model, and what would bring it in}
-No conflict-only third field and no latent coupling between fields. They enter only if the
-fitted model leaves lagged cross-dependence unexplained. \emph{Check} (cheap, no refit): lagged
-cross-correlations between conflict and unrest Pearson residuals, aggregated to coarse cells
-and steps, at lags of $0, 1, 2, \dots$ steps. If they lie within the band expected under the
-fitted model (from posterior predictive draws), the simple model is enough.
+\section*{5. What each component answers, and the evidence it needs}
+\begin{itemize}
+\item $\kappa_{\U\to\C}(b,\ell)$: how escalation decays with lag and distance. Each coefficient with
+its interval.
+\item $\gamma_{\U\to\C}$: where escalation is stronger or weaker. Evidence of variation: the
+interval for $\sigma_\gamma$ well away from zero (smooth), or intervals for regional
+differences excluding zero (piecewise). Otherwise a constant $\kappa$.
+\item $\lambda(s)$: where conflict and unrest share episodes. Same rule. If every $\lambda_r$
+interval covers zero, the two outcomes are fitted separately.
+\item $v_{\U}$, $w_j$, $u_j$, $e_j$: as now, each with its interval (all supported in Africa and
+the Middle East).
+\end{itemize}
 
-\section*{7. Identification and checks}
-The lag bands $B_2$ and $B_3$ overlap the time scale of the fields ($\Delta = 13$ or 26 weeks),
-so long-lag escalation competes with the persistence $\varphi_{\C}$. Simulation (the S2
-design, 20 replicates each): (i) shared episodes only, where all long-lag coefficients should
-be near zero; (ii) escalation at band $B_2$ and ring $R_2$ only, which should be recovered with
-correct coverage. Cost: kernel features and simulation, about 2 days; refits as now.
+\section*{6. Validation before the global fit}
+\begin{enumerate}
+\item \textbf{Prototype on Africa and the Middle East} (existing data, three regions: Africa,
+Middle East, Afghanistan and Pakistan), warm-started from the current extended model:
+region loadings; region loadings with a smooth $\gamma(s)$; region loadings with regional
+$\gamma_r$. Intervals for every hyperparameter. With one region, it reproduces the current
+model exactly.
+\item \textbf{Simulation} (S2 design, two regions, 20 replicates): (i) constant $\kappa$ and $\lambda$,
+where no spurious variation should be found; (ii) $\kappa(s)$ varying (SD 0.3) and $\lambda_r =
+0.3$ and 1.2, which should be recovered with correct coverage.
+\end{enumerate}
+
+\section*{7. Computation}
+About 60 million cell-weeks per outcome. Approximations, each checked against a full fit on a
+region where one is affordable and kept only if the conclusions are unchanged: case-control
+subsampling of empty cell-weeks; space-time fields on $2^\circ$ cells and 13--26 week steps;
+intervals from the Hessian at the estimate. Engineering: CHOLMOD on the CRC, and analytic
+gradients for the outer optimisation (the number of hyperparameters doubles).
 \end{document}
