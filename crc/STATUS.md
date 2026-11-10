@@ -2131,7 +2131,7 @@ Over all 56,354 cells, 21.9% have PfPR in 2024/2025, mean 0.11 where defined. Re
   The likely reasons are an older MAP release and/or an area mean rather than a population-weighted one. In 2017 $CLEAN has only week 2017-12-26, and its malaria is all 0 there.
 - $CLEAN: malaria > 0 in 21% of cell-years, max 0.946. MAP's `value_fill0` matches it (0 outside the modelled area).
 
-## 2026-11-09 19:30 EST: task 35 extended to all of Luca's covariates (owner's request)
+## 2026-11-09 18:45 EST: task 35 extended to all of Luca's covariates (owner's request)
 Luca's table has 7 covariates beyond the task list. The owner wants all of them. Status:
 - **hi (heat index) and wbgt: submitted.** CHIRTS-ERA5 has them only as daily GeoTIFFs (about 27 MB per day, about 10 GB per variable-year, about 720 GB in total).
   - `chirts_weekly.py daily_tif <year>` downloads one day at a time, aggregates it to the cells and deletes it.
@@ -2168,7 +2168,7 @@ Hessian on 1,292,580 rows (all rows), 863 s. **hessian_eig_min = 0.93** (> 0).
 theta_se: 0.318, 0.292, 0.067, 0.036, 0.161, 0.111, 0.953, 0.836, 0.079, 0.092, 0.099, 0.054
 west_sahel biv2 is next (run 4 of 4).
 
-## 2026-11-09 20:30 EST: task 35, Luca's other covariates: EPI built, PM2.5 downloading, HI/WBGT queued
+## 2026-11-09 19:00 EST: task 35, Luca's other covariates: EPI built, PM2.5 downloading, HI/WBGT queued
 - **What $CLEAN's versions look like** (country-year or weekly, 2018-2024): EPI_index, MF_pc_t and ECO_pc_gha vary smoothly by country-year (e.g. NGA EPI 34.7 → 37.3);
   pm25 varies weekly.
 - **EPI: built** (`realdata/covariates/epi.py` → `grid/national/epi_1990_2025.parquet`) from the open **2026 edition** (177 countries).
