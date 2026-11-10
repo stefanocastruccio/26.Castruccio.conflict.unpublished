@@ -31,6 +31,7 @@ URL = "https://data.chc.ucsb.edu/experimental/CHIRTS-ERA5/{v}/netcdf/daily/CHIRT
 VARS = {"tmax": "Tmax", "tmin": "Tmin"}
 TIFVARS = {"hi": "HI", "wbgt": "WBGT"}   # heat index and WBGT: only daily GeoTIFFs (about 27 MB per day)
 TIFURL = "https://data.chc.ucsb.edu/experimental/CHIRTS-ERA5/{v}/tifs/daily/{y}/{V}.{y}.{m:02d}.{d:02d}.tif"
+TIFURL_T = "https://data.chc.ucsb.edu/experimental/CHIRTS-ERA5/{v}/tifs/daily/{y}/CHIRTS-ERA5.daily_{V}.{y}.{m:02d}.{d:02d}.tif"
 RAWD, DAILY = os.path.join(C.RAW, "chirts"), os.path.join(C.COV, "daily")
 CHUNK = 19   # days per read = the file's time chunk
 
@@ -40,6 +41,8 @@ def cache(v, y):
 
 
 def daily(y):
+    if y > C.YEARS[-1]:   # only 1-7 January are needed (last week of the final year): 7 daily GeoTIFFs per variable
+        return daily_tif(y, which=tuple(VARS))
     cl = C.cells(); r, c = cl.row.to_numpy(), cl.col.to_numpy()
     os.makedirs(RAWD, exist_ok=True); os.makedirs(DAILY, exist_ok=True)
     for v, V in VARS.items():
@@ -56,6 +59,8 @@ def daily(y):
                 print(f"  {y} {v}: curl rc {rc}; retry {k + 1}", flush=True); time.sleep(120)
             else:
                 raise RuntimeError(f"{y} {v}: download failed")
+            if os.path.getsize(f + ".part") < 1e8:   # an empty or truncated answer (e.g. a rate-limit page) is not a year of data
+                os.remove(f + ".part"); raise RuntimeError(f"{y} {v}: download too small")
             os.replace(f + ".part", f)
         tdl = time.time() - t; size = os.path.getsize(f) / 1e9
         with xr.open_dataset(f) as ds:
@@ -86,7 +91,8 @@ def daily_tif(y, which=("hi", "wbgt")):
     last = f"{y}-12-31" if y <= C.YEARS[-1] else f"{y}-01-07"   # the year after the last only feeds the final week
     days = pd.date_range(f"{y}-01-01", last, freq="D")
     for v in which:
-        V = TIFVARS[v]
+        V = TIFVARS.get(v) or VARS[v]
+        url = TIFURL if v in TIFVARS else TIFURL_T
         if os.path.exists(cache(v, y)):
             print(y, v, "cached"); continue
         t = time.time(); vals = np.full((len(days), len(cl)), np.nan, "float32"); nbytes = 0; miss = 0
@@ -95,7 +101,7 @@ def daily_tif(y, which=("hi", "wbgt")):
             ok = False
             for k in range(6):
                 rc = subprocess.run(["curl", "-sfL", "--retry", "5", "--retry-delay", "30", "--retry-all-errors", "-o", f,
-                                     TIFURL.format(v=v, V=V, y=y, m=d.month, d=d.day)]).returncode
+                                     url.format(v=v, V=V, y=y, m=d.month, d=d.day)]).returncode
                 if rc == 0:
                     ok = True; break
                 time.sleep(60 * (k + 1))
@@ -157,6 +163,7 @@ def weekly(which=None):
     for v in (which or list(VARS) + list(TIFVARS)):
         if not any(os.path.exists(cache(v, y)) for y in C.YEARS):
             continue
+        os.makedirs(os.path.join(C.GRID, v), exist_ok=True)
         fl = os.path.join(C.GRID, v, f"{v}_monthly_filled_cells.csv")
         if os.path.exists(fl):
             os.remove(fl)
