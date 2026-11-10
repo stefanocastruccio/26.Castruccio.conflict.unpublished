@@ -2252,3 +2252,11 @@ What the numbers show:
 `grid/pm25/pm25_<y>.parquet` (weekly = the month's value) and `grid/pm25_month/pm25_month.parquet`. 312 months, 1998-01 .. 2023-12; in-region missing 0.001; mean 22.8 µg/m³.
 1990-1997 and 2024-2025 are missing (outside ACAG V6.GL.02.04).
 Temperature: Tmax 19/37 and Tmin 17/37 years cached, no failures. HI/WBGT and the weekly step follow.
+
+## 2026-11-09 22:40 EST: task 36, ACLED download started (credentials fixed by the owner)
+- Test: **token obtained; test ok.** All required fields are present: geo_precision, time_precision, event_type, sub_event_type, latitude, longitude, event_date, fatalities
+  (plus actor1/2, admin1-3, iso, region, disorder_type, civilian_targeting, interaction, source, notes, tags, timestamp).
+- **Account restriction (`data_query_restrictions`): `date_recency` = 12 months**, i.e. only events at least 12 months old (up to 2025-11-10). So **2025 lacks its last
+  ~7 weeks and 2026 is unavailable**. No restrictions on countries, regions, event types or history.
+- Full run 1997-2025 (cursor pagination, 5,000 rows per page) on the login node with nohup → `$WORK/acled/raw/acled_<year>.parquet` + `manifest.json` (raw data stays in $WORK).
+  1997: 3,141 events (1 page). Rows per year, disk, first event_date per region and the geo/time precision shares follow when done.
