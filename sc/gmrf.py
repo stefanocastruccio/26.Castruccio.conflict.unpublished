@@ -354,3 +354,62 @@ class CopyBlock(Block):
         d = {k.replace(self.base.name, self.name, 1): v for k, v in self.base.describe(th[:-1]).items()}
         d[f"{self.name}.loading"] = float(th[-1])
         return d
+
+
+class RegionCopyBlock(Block):
+    """CopyBlock with a loading per region: b = diag(lam[group]) a + e, e ~ N(0, I / tau).
+
+    `groups` gives the region index (0..G-1) of every element of the base latent vector (for a
+    SpaceTimeAR1Block, the region of the spatial cell repeated over time). As for CopyBlock,
+
+        R = [[R_a, 0], [-sqrt(tau) diag(lam[group]), sqrt(tau) I]],  log|Q| = log|Q_a| + m log tau,
+
+    so the loadings do not enter the determinant. theta = [theta_base..., lam_1, ..., lam_G];
+    each loading has a N(0, 2^2) prior and is bounded to [-5, 5]. With G = 1 it is CopyBlock."""
+
+    def __init__(self, base: Block, groups, group_names, name="shared", tau=1e4, lam_init=1.0):
+        groups = np.asarray(groups, int)
+        if len(groups) != base.size:
+            raise ValueError("groups must have one entry per element of the base block")
+        self.base, self.name, self.tau = base, name, float(tau)
+        self.m, self.size = base.size, 2 * base.size
+        self.groups, self.group_names = groups, [str(g) for g in group_names]
+        self.G = len(self.group_names)
+        if groups.min() < 0 or groups.max() >= self.G:
+            raise ValueError("group index out of range")
+        self.n_theta = base.n_theta + self.G
+        self._lam0 = np.broadcast_to(np.asarray(lam_init, float), (self.G,)).copy()
+        self._ar = np.arange(self.m)
+
+    def theta0(self):
+        return np.r_[self.base.theta0(), self._lam0]
+
+    def _split(self, th):
+        nb = self.base.n_theta
+        return th[:nb], np.asarray(th[nb:], float)
+
+    def R(self, th):
+        tb, lam = self._split(th)
+        st = np.sqrt(self.tau)
+        # explicit csc construction keeps the sparsity pattern even where a loading is 0
+        L = sp.csc_matrix((-st * lam[self.groups], (self._ar, self._ar)), shape=(self.m, self.m))
+        I = sp.csc_matrix((np.full(self.m, st), (self._ar, self._ar)), shape=(self.m, self.m))
+        return sp.bmat([[self.base.R(tb), None], [L, I]], format="csc")
+
+    def logdet(self, th):
+        tb, _ = self._split(th)
+        return self.base.logdet(tb) + self.m * np.log(self.tau)
+
+    def log_prior(self, th):
+        tb, lam = self._split(th)
+        return self.base.log_prior(tb) - 0.5 * float(np.sum((lam / 2.0) ** 2))
+
+    def bounds(self):
+        return list(self.base.bounds()) + [(-5.0, 5.0)] * self.G
+
+    def describe(self, th):
+        tb, lam = self._split(th)
+        d = {k.replace(self.base.name, self.name, 1): v for k, v in self.base.describe(tb).items()}
+        for g, l in zip(self.group_names, lam):
+            d[f"{self.name}.loading[{g}]"] = float(l)
+        return d

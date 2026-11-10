@@ -40,7 +40,7 @@ import pandas as pd
 import scipy.sparse as sp
 
 from sc import design as de, diagnostics as dg
-from sc.gmrf import CopyBlock, FixedBlock, IIDBlock, MaternBlock, SpaceTimeAR1Block
+from sc.gmrf import CopyBlock, FixedBlock, IIDBlock, MaternBlock, RegionCopyBlock, SpaceTimeAR1Block
 from sc.laplace import LatentGaussianModel, prob_from_eta
 from fit_acled import REGIONS, build_lattice, sea_cells
 from fit_glmm import prepare
@@ -80,6 +80,13 @@ def region_rows(raw, region, box, shp):
           f"{sorted(set(near[code][near[code].isin(EXCLUDE[region])]))}", flush=True)
     return out
 OUTS = ("conflict", "unrest")
+# Regions for spatially varying escalation and loadings (prototype on "ame"; the global model
+# uses the same assignment by country). Every other country is Africa.
+MIDDLE_EAST = ["TUR", "SYR", "LBN", "ISR", "PSE", "JOR", "IRQ", "IRN", "SAU", "YEM", "OMN", "ARE",
+               "QAT", "BHR", "KWT", "CYP", "CYN"]
+SOUTH_ASIA = ["AFG", "PAK", "IND", "NPL", "BTN", "BGD", "LKA", "MDV", "KAS", "KAB"]
+GROUPS = ("africa", "middle_east", "south_asia")
+JOINT = ("biv", "biv2", "biv3", "biv2_rl", "biv2_rlk", "biv2_rlf")
 
 
 def neighbour_mean(df, L, col):
@@ -110,10 +117,10 @@ def stack(Dc, Du, nc=None, nu=None):
 
 def theta_from_hyper(blocks, hyper):
     """Internal hyperparameter vector from a saved hyper() dictionary (inverse of describe)."""
-    from sc.gmrf import CopyBlock, IIDBlock, MaternBlock, SpaceTimeAR1Block
+    from sc.gmrf import CopyBlock, IIDBlock, MaternBlock, RegionCopyBlock, SpaceTimeAR1Block
     th = []
     for b in blocks:
-        if isinstance(b, CopyBlock):
+        if isinstance(b, (CopyBlock, RegionCopyBlock)):
             base, nm = b.base, b.name
         else:
             base, nm = b, b.name
@@ -125,6 +132,10 @@ def theta_from_hyper(blocks, hyper):
             th += [np.log(hyper[f"{nm}.range_km"]), np.log(hyper[f"{nm}.sd"])]
         if isinstance(b, CopyBlock):
             th += [hyper[f"{nm}.loading"]]
+        elif isinstance(b, RegionCopyBlock):   # region loadings; fall back to a single saved loading
+            th += [hyper.get(f"{nm}.loading[{g}]", hyper.get(f"{nm}.loading")) for g in b.group_names]
+            if any(v is None for v in th[-b.G:]):
+                raise KeyError(f"{nm}.loading")
     return np.array(th, float)
 
 
@@ -267,7 +278,8 @@ def export_fields(m, model, L, observed, Lv, T, a, week0):
     Model output only (no event data)."""
     k = {b.name: i for i, b in enumerate(m.blocks)}
     st = pd.DataFrame({"lon": L.lon[observed], "lat": L.lat[observed]})
-    for nm in ("field_conflict", "field_unrest", "cell_conflict", "cell_unrest"):
+    for nm in ("field_conflict", "field_unrest", "cell_conflict", "cell_unrest",
+               "kappa_field_conflict", "kappa_field_unrest"):
         if nm in k:
             st[nm] = m.block_mean(k[nm])[observed]
     if "shared_field" in k:
@@ -379,6 +391,22 @@ def main():
     wk = ((base["week_start"] - base["week_start"].min()).dt.days // 7).to_numpy()
     tstep = wk // a.st_step
     T = int(tstep.max() + 1)
+    iso_rows = base["ISO_A3"].astype(str).to_numpy()
+    grp_row = np.select([np.isin(iso_rows, MIDDLE_EAST), np.isin(iso_rows, SOUTH_ASIA)], [1, 2], 0)
+    present = sorted(set(grp_row.tolist()))
+    remap = {g: i for i, g in enumerate(present)}
+    grp_row = np.array([remap[g] for g in grp_row])
+    grp_names = [GROUPS[g] for g in present]
+    gv = pd.DataFrame({"c": cell_v, "g": grp_row}).groupby("c")["g"].agg(lambda x: np.bincount(x).argmax())
+    grp_v = np.zeros(Lv.n, int); grp_v[gv.index.to_numpy()] = gv.to_numpy()
+    print(f"regions {grp_names}: rows {np.bincount(grp_row).tolist()}, st cells {np.bincount(grp_v, minlength=len(present)).tolist()}",
+          flush=True)
+    if "biv2_rlk" in a.models:   # region-specific short-run cross effects (fixed): baseline + deviations
+        for o in OUTS:
+            for gi in range(1, len(grp_names)):
+                c = f"lag_other_x_{grp_names[gi]}"
+                dfs[o][c] = dfs[o]["lag_other"].to_numpy() * (grp_row == gi)
+                covs[o] = covs[o] + [c]
     print(f"{a.region}: {len(base):,} rows per outcome, {observed.sum():,} cells, {nC} countries, "
           f"v on {Lv.n:,} cells x {T} steps", flush=True)
 
@@ -387,7 +415,8 @@ def main():
         X, names = de.fixed_design(dd, covs[o])
         return dict(X=X, names=[f"{o}:{n}" for n in names], C=de.index_design(dd["country_id"], nC),
                     E=de.index_design(dd["cell"], L.n), W=de.index_design(dd["cell"], L.n),
-                    V=de.spacetime_design(cell_v[rows], tstep[rows], Lv.n, T), y=dd["y"].to_numpy())
+                    V=de.spacetime_design(cell_v[rows], tstep[rows], Lv.n, T), y=dd["y"].to_numpy(),
+                    K=de.index_design(dd["cell"], L.n, values=dd["lag_other"].to_numpy(float)))
 
     def uni_blocks(o, st):
         b = [FixedBlock(len(parts_tr[o]["names"]), parts_tr[o]["names"]), IIDBlock(nC, name=f"country_{o}"),
@@ -416,6 +445,20 @@ def main():
     def biv3_blocks():   # biv2 + a shared STATIC field (persistent shared hotspots do not decay in forecasts)
         return biv2_blocks() + [CopyBlock(MaternBlock(L, name="sfield", range_init=300.0, barrier=barrier),
                                           name="shared_field", lam_init=0.5)]
+
+    def biv2_rl_blocks():   # biv2 with one loading of the shared field per region
+        b = biv_blocks()[:-1]
+        b.append(RegionCopyBlock(SpaceTimeAR1Block(Lv, T, name="st", sd_init=0.5, rho_init=0.8),
+                                 np.tile(grp_v, T), grp_names, name="shared_st", lam_init=0.5))
+        return b + [SpaceTimeAR1Block(Lv, T, name="st_unrest", sd_init=0.3, rho_init=0.8)]
+
+    def biv2_rlf_blocks():  # + spatially varying short-run cross effects: kappa(s) = kappa_0 + gamma(s)
+        return biv2_rl_blocks() + [
+            MaternBlock(L, name="kappa_field_conflict", range_init=800.0, sd_init=0.05, pc_sd=(0.2, 0.05), barrier=barrier),
+            MaternBlock(L, name="kappa_field_unrest", range_init=800.0, sd_init=0.05, pc_sd=(0.2, 0.05), barrier=barrier)]
+
+    def biv2_rlf_designs(Pc, Pu):
+        return biv2_designs(Pc, Pu) + [stack(Pc["K"], None, nu=len(Pu["y"])), stack(None, Pu["K"], nc=len(Pc["y"]))]
 
     def biv3_designs(Pc, Pu):
         return biv2_designs(Pc, Pu) + [sp.bmat([[Pc["W"], None], [None, Pu["W"]]], format="csr")]
@@ -466,7 +509,8 @@ def main():
             preds[f"p_{o}_{model.replace('_u', '')}"] = mc_prob(m, Dt).astype("float32")
         else:   # biv: shared v only; biv2: shared v + unrest-specific space-time field
             bl, dz = {"biv": (biv_blocks, biv_designs), "biv2": (biv2_blocks, biv2_designs),
-                      "biv3": (biv3_blocks, biv3_designs)}[model]
+                      "biv3": (biv3_blocks, biv3_designs), "biv2_rl": (biv2_rl_blocks, biv2_designs),
+                      "biv2_rlk": (biv2_rl_blocks, biv2_designs), "biv2_rlf": (biv2_rlf_blocks, biv2_rlf_designs)}[model]
             y = np.r_[parts_tr["conflict"]["y"], parts_tr["unrest"]["y"]]
             if a.zero_frac:
                 Sc, Su = parts_sub["conflict"], parts_sub["unrest"]
@@ -506,7 +550,7 @@ def main():
                                 if saved is not None and model in saved.get("models", {}) else "fitted",
                                 "lag_coefficients": {k: list(map(float, fs[k])) for k in keys if k in fs},
                                 "fixed": {k: list(map(float, v)) for k, v in fs.items()}}
-        if a.hessian and model in ("biv", "biv2", "biv3"):
+        if a.hessian and model in JOINT:
             import time
             t0 = time.time()
             mh = getattr(m, "sub_model", m)
@@ -526,12 +570,12 @@ def main():
         mu_name = model.replace("_u", "")
         if model.endswith("_u") and f"p_unrest_{mu_name}" in preds:
             sc["unrest"] = dg.scores(parts_te["unrest"]["y"], preds[f"p_unrest_{mu_name}"])
-        if model in ("biv", "biv2", "biv3"):
+        if model in JOINT:
             sc["unrest"] = dg.scores(parts_te["unrest"]["y"], preds[f"p_unrest_{model}"])
         res["models"][model]["test_scores"] = sc
         if hasattr(m, "sub_info"):
             res["models"][model]["subsample"] = dict(m.sub_info, zero_frac=a.zero_frac)
-        if model in ("biv", "biv2", "biv3"):
+        if model in JOINT:
             export_fields(m, model, L, observed, Lv, T, a, base["week_start"].min())
             export_fitted(m, model, base, tr, tstep, a)
         print(model, json.dumps({k: res["models"][model][k] for k in ("hyper", "lag_coefficients", "test_scores")},
@@ -556,11 +600,11 @@ def main():
         if f"p_conflict_{bm}" in preds and f"p_unrest_{bm}" in preds:
             pc, pu = preds[f"p_conflict_{bm}"].astype(float), preds[f"p_unrest_{bm}"].astype(float)
             J[f"{bm}_calibration"] = calibration(yc, yu, pc, pu, pc * pu)
-    for bm in ("biv", "biv2", "biv3"):
+    for bm in JOINT:
         if f"logj_{bm}" in preds:
             J[f"{bm}_calibration"] = calibration(yc, yu, preds[f"p_conflict_{bm}"].astype(float),
                                                  preds[f"p_unrest_{bm}"].astype(float), preds[f"pboth_{bm}"].astype(float))
-    for bm in ("biv", "biv2", "biv3"):
+    for bm in JOINT:
         if f"logj_{bm}" not in preds:
             continue
         lj, li = preds[f"logj_{bm}"].astype(float), preds[f"logi_{bm}"].astype(float)
