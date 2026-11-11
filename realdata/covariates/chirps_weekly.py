@@ -85,12 +85,29 @@ def process(years):
         print(f"{y}: {len(W)} weeks x {len(cl)} cells, missing {np.isnan(v).mean():.3f}, {time.time() - t0:.0f} s", flush=True)
 
 
+def daily_cache(years):
+    """Daily precipitation (mm/day, area-weighted cell mean) per 0.5-degree cell, kept before the raw CHIRPS files are
+    deleted (owner, 2026-11-10): $WORK/covariates/daily/ppt_<year>.npz (dates, values (T, ncell) float32, grid_id)."""
+    cl = C.cells(); r, c = cl.row.to_numpy(), cl.col.to_numpy()
+    out = os.path.join(C.COV, "daily"); os.makedirs(out, exist_ok=True)
+    for y in years:
+        f = os.path.join(out, f"ppt_{y}.npz")
+        if os.path.exists(f):
+            continue
+        d, a = daily_half_degree(y)
+        np.savez(f + ".tmp.npz", dates=d.values, values=a[:, r, c], grid_id=cl.grid_id.to_numpy())
+        os.replace(f + ".tmp.npz", f)
+        print(y, "daily ppt cached", flush=True)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("step", choices=["download", "process"])
+    ap.add_argument("step", choices=["download", "process", "daily"])
     ap.add_argument("--years", type=int, nargs=2, default=None)
     a = ap.parse_args()
     if a.step == "download":
         download(range(1990, 2027) if a.years is None else range(a.years[0], a.years[1] + 1))
+    elif a.step == "daily":
+        daily_cache(range(a.years[0], a.years[1] + 1) if a.years else range(C.YEARS[0], C.YEARS[-1] + 2))
     else:
         process(range(a.years[0], a.years[1] + 1) if a.years else C.YEARS)

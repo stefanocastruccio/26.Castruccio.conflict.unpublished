@@ -2397,3 +2397,5 @@ Event types: {'Protests': 1144821, 'Explosions/Remote violence': 508964, 'Battle
   Ours sum to IPC's national counts, so Luca's apportionment differed (probably area-based, or scaled). Phase shares are unaffected.
 - **Step 2 (to do):** area-level values. IPC's GeoJSON exists only for each country's latest analysis, with mixed points and polygons and area names that change between
   analyses, so this needs name matching. Planned next.
+- 21:00 EST: **daily precipitation per cell kept** (owner): `chirps_weekly.py daily` (job `crc/jobs/35_ppt_daily.sh` 1724713, rc 0) → `$WORK/covariates/daily/ppt_<1990..2026>.npz`
+  (mm/day, area-weighted cell mean, all 56,894 cells, with grid_id), 37 years, 2.9 GB. The raw CHIRPS files can now be deleted with the rest.
