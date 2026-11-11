@@ -2384,3 +2384,16 @@ Event types: {'Protests': 1144821, 'Explosions/Remote violence': 508964, 'Battle
   This is crude: in 2022 it gives SOM/SSD 34.1 and SYR 38.7, where $CLEAN has 25.6 / 27.4 / 23.1, so the regional mean overstates conflict states.
   **Use the flag to drop them or let the missingness indicator handle them.**
 - 196 codes; only small territories remain without EPI (ATF, COK, CYM, FLK, GRL, NCL, PRI, PRK, PYF, SGS, VIR). Against $CLEAN: corr 0.864.
+
+## 2026-11-10 21:00 EST: task 35, IPC food insecurity (Luca's phase_1..phase_5) from IPC's open data on HDX
+- **Source: HDX "Global: Acute Food Insecurity Country Data"**, published by IPC, CC0, **no key needed** (raw in `$WORK/covariates/raw/ipc/`).
+  - Area-level and national analyses for **50 countries, current periods Oct 2020 - Sep 2026**.
+  - The IPC API (which has history back to about 2017) needs a key. **The owner has requested one**; when it arrives the series can be extended back.
+- `realdata/covariates/ipc.py` → `grid/ipc/ipc_<year>.parquet` (grid_id, week_start, phase1..phase5 people, phase1..5 and 3+ shares, ipc_carried, ipc_analysis).
+  - **Step 1 (done):** each analysis's current-period national counts are spread over the country's cells by GHSL population; shares are national.
+    Weeks between analyses carry the latest one forward for up to 26 weeks (flagged; 51% of rows).
+  - Result: 7,925 cells, 2020-10-06 .. 2025-12-30, 1.62 M cell-weeks.
+- **Against $CLEAN's phase_3 (1.1 M overlapping cell-weeks): Spearman 0.79, Pearson 0.49; $CLEAN's totals are about 10× smaller** (CLEAN/ours sum ratio 0.098).
+  Ours sum to IPC's national counts, so Luca's apportionment differed (probably area-based, or scaled). Phase shares are unaffected.
+- **Step 2 (to do):** area-level values. IPC's GeoJSON exists only for each country's latest analysis, with mixed points and polygons and area names that change between
+  analyses, so this needs name matching. Planned next.
