@@ -37,33 +37,34 @@ event of type $j$ is recorded in cell $s$ in week $t$.
 \begin{align*}
 \eta_{\C st} ={}& \underbrace{\bm x_{st}^\top \bm\beta_{\C} + \alpha_{\C,r(s),y(t)}}_{\text{covariates, region-year}}
 + \underbrace{\delta_{\C}\, h_{\C st} + \delta^{nb}_{\C}\, \bar h_{\C st}}_{\text{own history}}
-+ \underbrace{\textstyle\sum_{b=1}^{3}\sum_{\ell=0}^{2} \kappa_{\U\to\C}(b,\ell)\, H_{\U st}(b,\ell)
-+ \gamma_{\U\to\C}(s)\, H_{\U st}(1,0)}_{\text{escalation from unrest}}\\
++ \underbrace{\kappa_{\U\to\C}(s)\, h_{\U st}}_{\text{escalation}}\\
 &+ \underbrace{u_{\C,c(s)} + e_{\C s} + a_s + w_{\C s}}_{\text{static}}
 + \underbrace{v_{\C,g(s),k(t)}}_{\text{space-time}},\\[4pt]
 \eta_{\U st} ={}& \bm x_{st}^\top \bm\beta_{\U} + \alpha_{\U,r(s),y(t)}
 + \delta_{\U}\, h_{\U st} + \delta^{nb}_{\U}\, \bar h_{\U st}
-+ \textstyle\sum_{b=1}^{3}\sum_{\ell=0}^{2} \kappa_{\C\to\U}(b,\ell)\, H_{\C st}(b,\ell)
-+ \gamma_{\C\to\U}(s)\, H_{\C st}(1,0)\\
++ \kappa_{\C\to\U}(s)\, h_{\C st}\\
 &+ u_{\U,c(s)} + e_{\U s} + \lambda_a\, a_s + w_{\U s}
 + \lambda(s)\, v_{\C,g(s),k(t)} + v_{\U,g(s),k(t)}.
 \end{align*}
 
-\textbf{Histories} (observed, computed from the outcomes):
-\begin{align*}
-h_{jst} &= \log\Bigl(1 + \textstyle\sum_{t'=t-4}^{t-1} N_{jst'}\Bigr), \qquad
-\bar h_{jst} = \frac{1}{|R_1(s)|}\sum_{s' \in R_1(s)} h_{js't},\\
-H_{jst}(b,\ell) &= \frac{1}{|R_\ell(s)|}\sum_{s' \in R_\ell(s)}
-\log\Bigl(1 + \textstyle\sum_{t' \in t - B_b} N_{js't'}\Bigr),
-\end{align*}
-where $N_{jst}$ is the number of recorded events, the lag bands are $B_1 = \{1,\dots,4\}$,
-$B_2 = \{5,\dots,13\}$, $B_3 = \{14,\dots,26\}$ weeks, and the distance rings are
-$R_0(s) = \{s\}$, $R_1(s)$ = rook neighbours, $R_2(s)$ = cells 50--300\,km from $s$. All $H$ are
-standardised on the training rows. The short-run, same-cell escalation is
+\textbf{Histories} (observed, computed from the outcomes; $N_{jst}$ is the number of recorded events):
 \[
-\kappa_{\U\to\C}(s) = \kappa_{\U\to\C}(1,0) + \gamma_{\U\to\C}(s), \qquad
-\kappa_{\C\to\U}(s) = \kappa_{\C\to\U}(1,0) + \gamma_{\C\to\U}(s).
+h_{jst} = \log\Bigl(1 + \textstyle\sum_{t'=t-4}^{t-1} N_{jst'}\Bigr), \qquad
+\bar h_{jst} = \frac{1}{|R_1(s)|}\sum_{s' \in R_1(s)} h_{js't},
 \]
+with $R_1(s)$ the rook neighbours of $s$ (up to four cells sharing an edge). $h_{jst}$ is the history
+of the \emph{same} cell over the four weeks before $t$.
+
+\textbf{Escalation} acts only through the other outcome's history in the same cell over the previous
+four weeks, with a coefficient that varies in space:
+\[
+\kappa_{\U\to\C}(s) = \kappa_{\U\to\C} + \gamma_{\U\to\C}(s), \qquad
+\kappa_{\C\to\U}(s) = \kappa_{\C\to\U} + \gamma_{\C\to\U}(s).
+\]
+Terms for the neighbours' unrest, for longer lags (5--26 weeks) and for cells 50--300\,km away are
+left out. The neighbour term is about zero in both fitted regions, and a diagnostic on the
+fitted latent fields shows no unexplained lagged association between unrest and conflict at 13-
+and 26-week lags (Supplementary Material).
 
 \section*{Level 3: latent effects, given the hyperparameters $\bm\theta$}
 All terms below are mutually independent.
@@ -100,7 +101,7 @@ log-determinant does not depend on them, so the model stays latent Gaussian.
 \toprule
 parameter & role & prior \\
 \midrule
-$\bm\beta_j$, $\alpha_{j,r,y}$, $\delta_j$, $\delta^{nb}_j$, $\kappa(b,\ell)$, $\gamma_r$ & fixed effects & $\N(0, 10^4)$ \\
+$\bm\beta_j$, $\alpha_{j,r,y}$, $\delta_j$, $\delta^{nb}_j$, $\kappa_{\U\to\C}$, $\kappa_{\C\to\U}$, $\gamma_r$ & fixed effects & $\N(0, 10^4)$ \\
 $\sigma_{u,j}$, $\sigma_{e,j}$, $\sigma_a$ & SDs of iid effects & PC: $P(\sigma > 1) = 0.01$ \\
 $(\rho_{w,j}, \sigma_{w,j})$, $(\rho_j, \sigma_j)$ & Mat\'ern fields & PC: $P(\rho < 100\,\mathrm{km}) = 0.05$, $P(\sigma > 1) = 0.01$ \\
 $(\rho_\gamma, \sigma_\gamma)$ & varying escalation & PC: $P(\sigma_\gamma > 0.2) = 0.05$ \\
@@ -114,25 +115,26 @@ $p(\bm y \mid \bm\theta)\, p(\bm\theta)$; the latent effects and fixed effects a
 Gaussian approximation at $\hat{\bm\theta}$; 95\% intervals for $\bm\theta$ from the Hessian at
 $\hat{\bm\theta}$.
 
-\textbf{Special cases.} $\lambda_a = 0$, $\sigma_a = 0$, $\lambda(s) \equiv \lambda$, $\gamma \equiv 0$,
-$\kappa(b,\ell) = 0$ for $(b,\ell) \notin \{(1,0),(1,1)\}$: the current extended model.
+\textbf{Special cases.} $\lambda_a = 0$, $\sigma_a = 0$, $\lambda(s) \equiv \lambda$, $\gamma \equiv 0$, plus the
+neighbour cross terms: the current extended model.
 With $\lambda = \lambda_a = 0$: two separate univariate models.
 
 \section*{Evidence so far (Africa and the Middle East; West Africa in brackets)}
-\begin{tabular}{@{}lll@{}}
+{\small\begin{tabular}{@{}lll@{}}
 \toprule
 component & estimate, 95\% interval & reading \\
 \midrule
 $\delta_{\C}$ & 0.61 [0.59, 0.63] \; (0.45 [0.41, 0.48]) & supported \\
-$\kappa_{\U\to\C}(1,0)$, no shared cell effect & 0.094 [0.065, 0.123] \; (0.095 [0.032, 0.158]) & supported \\
-$\kappa_{\U\to\C}(1,0)$, with shared static effect & 0.057 [0.028, 0.086] \; (0.061 [$-$0.002, 0.124]) & modest \\
-$\kappa_{\U\to\C}(1,1)$ (neighbours) & $-$0.011 [$-$0.021, $-$0.001] \; ($-$0.005 [$-$0.021, 0.011]) & about zero \\
+$\kappa_{\U\to\C}$, no shared cell effect & 0.094 [0.065, 0.123] \; (0.095 [0.032, 0.158]) & supported \\
+$\kappa_{\U\to\C}$, with shared static effect & 0.057 [0.028, 0.086] \; (0.061 [$-$0.002, 0.124]) & modest \\
+neighbours' unrest (dropped) & $-$0.011 [$-$0.021, $-$0.001] \; ($-$0.005 [$-$0.021, 0.011]) & about zero \\
+lagged unrest, 13--26 weeks (dropped) & field diagnostic: corr. $-$0.04 \; ($-$0.08), placebo $\approx 0$ & no signal \\
 shared static effect & log-ML $+778$ \; ($+156$); range 44\,km (one cell) & supported; interval to do \\
 $\lambda$ & 0.52 [0.46, 0.58] \; (0.58 [0.45, 0.71]); 0.35 with shared static & supported \\
 $\varphi_{\C}$, $\rho_{\C}$ & 0.95 [0.945, 0.963], 453--551\,km & supported \\
 $\sigma_{\U}$, $\varphi_{\U}$ (unrest only) & [0.40, 0.50], [0.54, 0.73] & supported \\
 $\sigma_{w,\U}$ (static unrest field) & [0.29, 0.62] \; ([0.10, 1.23]) & weak \\
-$\gamma$, $\lambda(s)$, $\kappa(b,\ell)$ for $b \ge 2$ & --- & not yet tested \\
+$\gamma(s)$, $\lambda(s)$ & --- & not yet tested \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{document}
