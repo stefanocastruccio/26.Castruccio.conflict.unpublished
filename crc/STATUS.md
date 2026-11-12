@@ -2562,3 +2562,27 @@ Fixes in realdata/fit_bivariate.py (this code had not run before):
 
 Replicates 2-20: job 1735748 (-tc 4, 4 cores each, EPYC queues). JSONs are pushed by ~/conflict_check/push42.sh as they appear.
 The per-scenario tables come here when all 20 are in, about 5 h.
+
+## 2026-11-12 19:00 EST: Task 41, west_sahel step 1 (ci_biv3.json): Hessian not positive definite, no intervals
+
+- **Result:** results_real/bivariate/west_sahel/ci_biv3.json (pushed 18:33). Hessian of the Laplace log posterior at the saved
+  biv3 theta: smallest eigenvalue **-0.153** (1,292,580 rows, 2.5 h). The saved theta is not a local maximum in at least one
+  direction, so **every hyper_ci95 is NaN** (theta_se NaN).
+- Saved biv3 hyperparameters for reference:
+
+  | Component | Estimate |
+  |---|---|
+  | shared_field | loading 1.652, sd 1.021, range 45 km (shorter than one 0.5-degree cell) |
+  | shared_st | loading (lambda) 0.500, sd 0.742, range 437 km, rho 0.914 |
+  | field_conflict | sd 1.447, range 507 km |
+  | field_unrest | sd 0.274, range 605 km |
+  | cell | conflict 0.136, unrest 0.715 |
+  | country | conflict 0.606, unrest 0.446 |
+  | st_unrest | sd 0.505, range 788 km, rho 0.697 |
+
+- **Lag coefficients** (estimate, SE; at the saved theta, not affected): conflict:lag_other (kappa) 0.0607 (0.0316);
+  unrest:lag_other 0.0759 (0.0312); conflict:lag_own 0.446 (0.017); unrest:lag_own 0.269 (0.029).
+- **Reading, not verified:** the 45 km shared static field looks nearly degenerate, i.e. near-IID at the cell scale and
+  confounded with the cell effects (cell_conflict.sd 0.136 is small). Its direction is a likely source of the negative eigenvalue.
+  The eigenvector is not saved, so this is not confirmed.
+- Step 2 (biv3_nolam, warm-started from this theta) continues; ame step 1 is still running. Nothing else started.
