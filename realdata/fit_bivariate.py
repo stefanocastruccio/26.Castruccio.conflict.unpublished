@@ -86,7 +86,7 @@ MIDDLE_EAST = ["TUR", "SYR", "LBN", "ISR", "PSE", "JOR", "IRQ", "IRN", "SAU", "Y
                "QAT", "BHR", "KWT", "CYP", "CYN"]
 SOUTH_ASIA = ["AFG", "PAK", "IND", "NPL", "BTN", "BGD", "LKA", "MDV", "KAS", "KAB"]
 GROUPS = ("africa", "middle_east", "south_asia")
-JOINT = ("biv", "biv2", "biv3", "biv2_rl", "biv2_rlk", "biv2_rlf")
+JOINT = ("biv", "biv2", "biv3", "biv3_nolam", "biv2_rl", "biv2_rlk", "biv2_rlf")
 
 
 def neighbour_mean(df, L, col):
@@ -159,7 +159,7 @@ def fit_or_condition(m, saved, model, init=None):
     With `init` (a saved summary, --init-theta), the fit is warm-started from the
     hyperparameters of the joint model `biv` in that summary."""
     if saved is None or model not in saved.get("models", {}):
-        src = next((k for k in (model, "biv2", "biv") if init is not None and k in init.get("models", {})), None)
+        src = next((k for k in (model, "biv3", "biv2", "biv") if init is not None and k in init.get("models", {})), None)
         if src is not None:
             th0 = theta0_from_init(m.blocks, init["models"][src]["hyper"])
             print(f"warm start for {model} from saved {src}: {np.round(th0, 3)}", flush=True)
@@ -460,6 +460,19 @@ def main():
     def biv2_rlf_designs(Pc, Pu):
         return biv2_designs(Pc, Pu) + [stack(Pc["K"], None, nu=len(Pu["y"])), stack(None, Pu["K"], nc=len(Pc["y"]))]
 
+    def biv3_nolam_blocks():   # channels 1 + 2 only: biv3 with lambda = 0 (no shared space-time field)
+        b = biv_blocks()[:-1]
+        return b + [SpaceTimeAR1Block(Lv, T, name="st_conflict", sd_init=0.5, rho_init=0.8),
+                    SpaceTimeAR1Block(Lv, T, name="st_unrest", sd_init=0.3, rho_init=0.8),
+                    CopyBlock(MaternBlock(L, name="sfield", range_init=300.0, barrier=barrier),
+                              name="shared_field", lam_init=0.5)]
+
+    def biv3_nolam_designs(Pc, Pu):
+        D = biv_designs(Pc, Pu)[:-1]
+        nc, nu = len(Pc["y"]), len(Pu["y"])
+        return D + [stack(Pc["V"], None, nu=nu), stack(None, Pu["V"], nc=nc),
+                    sp.bmat([[Pc["W"], None], [None, Pu["W"]]], format="csr")]
+
     def biv3_designs(Pc, Pu):
         return biv2_designs(Pc, Pu) + [sp.bmat([[Pc["W"], None], [None, Pu["W"]]], format="csr")]
 
@@ -509,7 +522,8 @@ def main():
             preds[f"p_{o}_{model.replace('_u', '')}"] = mc_prob(m, Dt).astype("float32")
         else:   # biv: shared v only; biv2: shared v + unrest-specific space-time field
             bl, dz = {"biv": (biv_blocks, biv_designs), "biv2": (biv2_blocks, biv2_designs),
-                      "biv3": (biv3_blocks, biv3_designs), "biv2_rl": (biv2_rl_blocks, biv2_designs),
+                      "biv3": (biv3_blocks, biv3_designs), "biv3_nolam": (biv3_nolam_blocks, biv3_nolam_designs),
+                      "biv2_rl": (biv2_rl_blocks, biv2_designs),
                       "biv2_rlk": (biv2_rl_blocks, biv2_designs), "biv2_rlf": (biv2_rlf_blocks, biv2_rlf_designs)}[model]
             y = np.r_[parts_tr["conflict"]["y"], parts_tr["unrest"]["y"]]
             if a.zero_frac:
