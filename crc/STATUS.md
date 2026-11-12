@@ -2399,3 +2399,26 @@ Event types: {'Protests': 1144821, 'Explosions/Remote violence': 508964, 'Battle
   analyses, so this needs name matching. Planned next.
 - 21:00 EST: **daily precipitation per cell kept** (owner): `chirps_weekly.py daily` (job `crc/jobs/35_ppt_daily.sh` 1724713, rc 0) → `$WORK/covariates/daily/ppt_<1990..2026>.npz`
   (mm/day, area-weighted cell mean, all 56,894 cells, with grid_id), 37 years, 2.9 GB. The raw CHIRPS files can now be deleted with the rest.
+
+## 2026-11-11 19:10 EST: Task 35 covariates complete; raw downloads deleted
+
+**HI and WBGT done.** Array 1718220 (daily caches 1990-2026) and weekly job 1718221 finished (rc=0); every year has all days.
+Weekly files grid/hi/hi_<y>.parquet and grid/wbgt/wbgt_<y>.parquet, 1990-2025.
+- Check (job 1729553, check.py), 56,894 cells x 1,879 weeks:
+
+  | variable | missing | missing, Europe | missing, "other" | vs $CLEAN 2018-2022: Pearson / Spearman | mean ours / CLEAN |
+  |---|---|---|---|---|---|
+  | HI | 0.0195 | 0.0095 | 0.0345 | 0.9928 / 0.9937 (n 12.5M) | 18.716 / 18.714 |
+  | WBGT | 0.0211 | 0.0095 | 0.0373 | 0.9902 / 0.9936 (n 12.5M) | 10.904 / 10.894 |
+
+  Missing is 0 in Latin America, the Middle East and South Asia, and 0.0002 in Africa. The ~2% overall are cells with no CHIRTS-ERA5 data
+  (same share as Tmax/Tmin), concentrated in the "other" region and Europe. Not yet confirmed which cells they are (likely north of 70N).
+
+**All task-35 outputs in $WORK/covariates/grid:** ppt, ppt_month, spi3 (1990-2025), tmax, tmin (1990-2026), hi, wbgt, pm25 (1990-2025),
+malaria, pop, ipc, national (WB, V-Dem, OWID, EPI, ecological footprint). Daily per-cell caches in $WORK/covariates/daily:
+ppt, tmax, tmin, hi, wbgt (15 GB).
+
+**Raw downloads deleted:** raw/{chirps, chirts, ghsl, map, pm25}, 18.7 GB. $WORK went from 44 GB to 26 GB.
+- Kept raw/{epi, ipc, gfn} (119 MB of tables). The EPI Dataverse workbooks were uploaded by the owner through a form, and the IPC
+  files are needed for the area-level step 2.
+- Still open: IPC step 2 and the extension to 2017, which wait for the IPC API key.
