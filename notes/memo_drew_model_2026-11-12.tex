@@ -1,0 +1,66 @@
+\documentclass[10.5pt]{article}
+\usepackage[margin=0.85in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=1.3em,topsep=2pt}
+\setlength{\parskip}{4pt}\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\begin{document}
+\textbf{Does unrest lead to armed conflict? Where we are} \hfill \small DRAFT, 12 November 2026\normalsize
+
+\textbf{The question.} Protests and riots and armed conflict often happen in the same places. In
+Africa and the Middle East (2023--24), a cell-week with unrest has conflict 18\% of the time,
+against 2\% without. There are three possible reasons, and they matter differently for theory and
+policy:
+\begin{enumerate}
+\item \textbf{Escalation:} unrest leads to conflict, e.g.\ through repression or radicalisation.
+\item \textbf{Shared places:} some places, such as capitals, contested towns and the administrative
+centres where ACLED places events of uncertain location, persistently record both, without one
+causing the other.
+\item \textbf{Shared episodes:} a regional crisis (a coup, an election, a collapse of authority)
+raises both at the same time for months.
+\end{enumerate}
+Simple correlations or forecasting models cannot tell these apart. Our model estimates all three
+at once.
+
+\textbf{What we do.} The world is divided into cells of about 55\,km, observed every week. For each
+cell-week we record whether any conflict event (battles, explosions/remote violence, violence
+against civilians) and any unrest event (protests, riots) occurred in ACLED. The model explains
+both together. It uses the cell's own recent history, climate, population, national conditions
+(GDP, democracy, food insecurity), country differences, persistent differences between places, and
+slowly moving regional ``episodes''. Escalation is measured as the extra risk of conflict in a cell
+after recent unrest \emph{there}, once places and episodes are accounted for. The reverse
+direction, conflict leading to unrest, is measured too.
+
+\textbf{What we find so far} (Africa and the Middle East, 2018--2024):
+\begin{itemize}
+\item \textbf{Escalation exists but is modest and local.} Recent unrest in a cell (previous four weeks)
+raises the odds of conflict there by roughly 4\% after one event and 11\% after five. A naive
+analysis that ignores shared places and episodes gives 10\% and 29\%.
+\item \textbf{Most of the co-occurrence is shared places and shared episodes}, not escalation.
+Accounting for persistent ``hotspot'' places alone cuts the apparent escalation effect by 40\%.
+\item \textbf{No spillover to neighbouring cells} within a month, and no sign of unrest feeding conflict
+months later (preliminary).
+\item Knowing both outcomes does not forecast conflict better on average. It helps in some
+countries (Afghanistan) and hurts where the relation broke down (Yemen, Palestine, Sudan in 2023).
+\end{itemize}
+\textbf{Caveat.} ACLED records reported events, so every result mixes violence with reporting. Shared
+places partly capture where the media look.
+
+\textbf{Next.} We now have all ACLED events from 1997 to 2025 and matching covariates worldwide. The
+next analysis asks \emph{where} escalation is stronger or weaker: Africa (from 1997), the Middle East,
+South and Southeast Asia, and Latin America, with Europe as a contrast case (much unrest, almost no
+conflict). Checks on how much of each component the data really support are running now.
+
+\textbf{Where your input would help most:}
+\begin{enumerate}
+\item Where would you \emph{expect} escalation to be strongest? For example, autocracies against
+democracies, or particular regions or periods (Myanmar 2021, Sudan 2019--23, the Sahel). We would
+like to state expectations before we see the regional results.
+\item Should ``conflict'' be split? State repression of protest (violence against civilians) and
+armed battles may escalate very differently.
+\item Is four weeks a sensible window for escalation, or do the mechanisms you know act over months?
+\item Which reporting biases in ACLED worry you most for this question?
+\end{enumerate}
+\end{document}
