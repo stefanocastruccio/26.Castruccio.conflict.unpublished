@@ -361,7 +361,9 @@ def semisynth(a, saved, dfs, covs, base, tr, wk, L, cell, barrier, Lv, T, parts,
     # replace outcomes and histories on the training rows, recompute the neighbour terms
     for o, yy, own, oth in (("conflict", yc, hc, hu), ("unrest", yu, hu, hc)):
         dd = dfs[o]
-        dd.loc[tr, "y"] = yy; dd.loc[tr, "lag_own"] = own; dd.loc[tr, "lag_other"] = oth
+        # cast to the columns' dtypes (pandas >= 3 refuses to downcast float64 into a float32 column)
+        dd.loc[tr, "y"] = yy.astype(dd["y"].dtype); dd.loc[tr, "lag_own"] = own.astype(dd["lag_own"].dtype)
+        dd.loc[tr, "lag_other"] = oth.astype(dd["lag_other"].dtype)
         for cc in ("lag_own", "lag_other"):
             v = neighbour_mean(dd, L, cc)
             mu, sd = v[dd.train].mean(), v[dd.train].std()
@@ -397,7 +399,7 @@ def semisynth(a, saved, dfs, covs, base, tr, wk, L, cell, barrier, Lv, T, parts,
     # posterior of kappa(s) on all training rows at the fitted hyperparameters
     mf = LatentGaussianModel(np.r_[P["conflict"]["y"], P["unrest"]["y"]], blocks(), designs(P["conflict"], P["unrest"]))
     mf.theta = th
-    mf.x_hat, _, _ = mf.mode(th)
+    mf.x_hat, mf.f_hat, mf.lu = mf.mode(th)   # keep the factorization: sample() solves with it
     kb = [b.name for b in mf.blocks].index("kappa_field_conflict")
     k0 = mf.blocks[0].names.index("conflict:lag_other")
     Sx = mf.sample(100, np.random.default_rng(a.sim_seed))
@@ -615,10 +617,10 @@ def main():
 
     saved = json.load(open(a.fixed_theta)) if a.fixed_theta else None
     init = json.load(open(a.init_theta)) if a.init_theta else None
+    parts_tr = {o: parts(o, tr) for o in OUTS}   # before --semisynth: the *_blocks() closures read parts_tr[o]["names"]
     if a.semisynth:
         semisynth(a, saved, dfs, covs, base, tr, wk, L, cell, barrier, Lv, T, parts, biv3_blocks, biv3_designs)
         return
-    parts_tr = {o: parts(o, tr) for o in OUTS}
     parts_te = {o: parts(o, te) for o in OUTS}
     if a.zero_frac:
         rng_s = np.random.default_rng(a.zero_seed)

@@ -2542,3 +2542,23 @@ Also: core/ (106 MB), cov/ (5.9 GB), core_report.json. Checks: results_real/tabl
   warm-started from biv3, with --hessian -> summary_biv3_nolam.json.
 - Each JSON is committed and pushed by ~/conflict_check/push41.sh as soon as it appears (log ~/conflict_check/push41.log).
 - Per-region report here when they are in. Nothing else started for the conflict project.
+
+## 2026-11-12 17:05 EST: Task 42: three bugs fixed in --semisynth; replicate 1 sensible; replicates 2-20 submitted
+
+Fixes in realdata/fit_bivariate.py (this code had not run before):
+1. `NameError: parts_tr` (free variable not yet assigned): main() called semisynth() before defining parts_tr, which the
+   *_blocks() closures read for the fixed-effect names. Fix: define parts_tr before the --semisynth branch.
+2. `TypeError: Invalid value ... for dtype 'float32'`: the simulated y and histories (float64) were written into float32
+   columns, which pandas 3 refuses. Fix: cast to the columns' dtypes.
+3. `AttributeError: 'LatentGaussianModel' object has no attribute 'lu'`: semisynth() kept only x_hat from mf.mode(th), but
+   sample() needs the factorization. Fix: `mf.x_hat, mf.f_hat, mf.lu = mf.mode(th)`, as elsewhere in the file.
+
+**Replicate 1 (null, seed 1; job 1735173; west_sahel_null_1.json):**
+- prev_conflict 0.0256 and prev_unrest 0.0129 (real: about 3% and 1.3%).
+- opt_success true in 5 iterations; 57 min (simulate 6, fit 45, summary 6).
+- kappa0_hat 0.0607 (SE 0.041) against kappa_true 0.0607.
+- Fitted gamma fields: conflict sd 0.050 (range 281 km), unrest sd 0.097 (range 342 km).
+- spread_q90_q10 0.018 against a true 0; no cell interval excludes kappa0; cover95 1.0; corr_with_truth n/a under the null.
+
+Replicates 2-20: job 1735748 (-tc 4, 4 cores each, EPYC queues). JSONs are pushed by ~/conflict_check/push42.sh as they appear.
+The per-scenario tables come here when all 20 are in, about 5 h.
