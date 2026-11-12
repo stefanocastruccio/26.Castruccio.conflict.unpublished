@@ -12,128 +12,127 @@
 \newcommand{\C}{\mathrm{C}}
 \newcommand{\U}{\mathrm{U}}
 \begin{document}
-\begin{center}\textbf{Design note: a global model of where unrest leads to conflict}\end{center}
+\begin{center}\textbf{A global model of where unrest leads to conflict: model equations}\end{center}
 
-\textbf{Question.} \emph{Where} does recorded unrest lead to later conflict (escalation), and
-where do the two only share episodes? The model answers it with escalation coefficients and a
-shared-episode loading that vary in space, estimated in one model over five regions.
+\section*{Notation}
+\begin{tabular}{@{}ll@{}}
+$s$, $t$ & $0.5^\circ$ cell, week \\
+$j \in \{\C, \U\}$ & outcome: conflict, unrest \\
+$c(s)$, $r(s)$ & country and region of cell $s$ (Africa, Middle East, South and Southeast Asia, Latin America) \\
+$y(t)$ & calendar year of week $t$ \\
+$g(s)$, $k(t)$ & coarse cell ($1^\circ$ or $2^\circ$) and time step ($\Delta$ weeks) of the space-time fields \\
+$\mathcal{T}_r$ & weeks observed in region $r$ (from the start of ACLED coverage to 2025)
+\end{tabular}
 
-\textbf{Principles.} (1) Effects of observed events go in the mean. (2) The latent part absorbs
-unobserved structure only. (3) Every parameter has a 95\% interval; a component, including any
-spatial variation, stays only if its interval supports it. (4) No latent coupling between fields.
-
-\section*{0. Data, regions and output}
-\textbf{Data.} Cells $s$ ($0.5^\circ$), weeks $t$; $Y_{\C st}, Y_{\U st} \in \{0,1\}$: at least one
-recorded conflict or unrest event. Covariates $\bm x_{st}$ (climate anomalies, population,
-national indicators, missingness indicators), the country $c(s)$, histories from the outcomes.\\
-\textbf{Regions} $r(s)$, by country, each from the start of ACLED coverage to 2025:
-Africa (1997), Middle East (about 2016), South and Southeast Asia (about 2010), Latin America and
-the Caribbean (2018); Europe (2018--2020) in the Supplementary Material only. Cell-weeks before
-coverage are not observed and do not enter the likelihood.\\
-\textbf{Output.} Maps of escalation $\kappa_{\U\to\C}(s)$ and $\kappa_{\C\to\U}(s)$ and of the loading
-$\lambda(s)$, with intervals; the escalation kernel over lags and distances; maps of the latent
-fields; held-out predictions by region.
-
-\section*{1. Data level}
-Given the linear predictors, $Y_{\C st}$ and $Y_{\U st}$ are independent Bernoulli variables,
-$\logit P(Y_{jst} = 1) = \eta_{jst}$, independent over cells and weeks.
-
-\section*{2. Linear predictors}
-\begin{align*}
-\eta_{\C st} &= \bm x_{st}^\top\bm\beta_{\C} + \alpha_{\C,r(s),y(t)}
-+ \delta_{\C}\, h_{\C st} + \delta^{nb}_{\C}\, \bar h_{\C st}
-+ \textstyle\sum_{b,\ell} \kappa_{\U\to\C}(b,\ell)\, H_{\U st}(b,\ell) + \gamma_{\U\to\C}(s)\, H_{\U st}(1,0)\\
-&\quad + u_{\C,c(s)} + e_{\C s} + w_{\C s} + v_{\C gk},\\
-\eta_{\U st} &= \bm x_{st}^\top\bm\beta_{\U} + \alpha_{\U,r(s),y(t)}
-+ \delta_{\U}\, h_{\U st} + \delta^{nb}_{\U}\, \bar h_{\U st}
-+ \textstyle\sum_{b,\ell} \kappa_{\C\to\U}(b,\ell)\, H_{\C st}(b,\ell) + \gamma_{\C\to\U}(s)\, H_{\C st}(1,0)\\
-&\quad + u_{\U,c(s)} + e_{\U s} + w_{\U s} + \lambda(s)\, v_{\C gk} + v_{\U gk},
-\end{align*}
-with coarse cell $g = g(s)$ and time step $k = k(t)$.
-\begin{itemize}
-\item \textbf{Year effects by region}, $\alpha_{j,r,y}$: absorb changes in ACLED's reporting,
-which differ between regions.
-\item \textbf{Own histories} (as now): $h_{jst} = \log(1+{}$events of type $j$ in cell $s$ in weeks
-$t-4,\dots,t-1)$ and $\bar h_{jst}$, its mean over the rook neighbours.
-\item \textbf{Escalation kernel}: $H_{\U st}(b,\ell)$ is the mean over the cells of distance ring
-$\ell$ ($R_0$: the cell; $R_1$: rook neighbours; $R_2$: 50--300\,km) of
-$\log(1+{}$unrest events in lag band $b$), with $B_1 = 1$--4, $B_2 = 5$--13 and $B_3 = 14$--26
-weeks. Its 9 coefficients per direction are common to all regions (the shape of escalation).
-\item \textbf{Spatially varying escalation}: the short-run, same-cell effect is
-$\kappa_{\U\to\C}(s) = \kappa_{\U\to\C}(1,0) + \gamma_{\U\to\C}(s)$, and likewise
-$\kappa_{\C\to\U}(s)$. Only this term varies, because it carries most of the data.
-\end{itemize}
-
-\section*{3. Latent level}
-\textbf{Static random effects}, one independent set per outcome $j$: country effects
-$u_{j,c} \sim \N(0,\sigma^2_{u,j})$; cell effects $e_{js} \sim \N(0,\sigma^2_{e,j})$; a Mat\'ern
-field $w_j$ with sea barriers.
-
-\textbf{Space-time fields}, independent: $v_{\C}$ (conflict) and $v_{\U}$ (unrest only), each
+\section*{Level 1: data}
+For $t \in \mathcal{T}_{r(s)}$,
 \[
-v_{jgk} = \varphi_j\, v_{jg,k-1} + \sqrt{1-\varphi_j^2}\;\varepsilon_{jgk},
-\qquad (\varepsilon_{j1k},\dots,\varepsilon_{jGk}) \sim \text{Mat\'ern}(\rho_j,\sigma_j)
-\text{ with sea barriers},
+Y_{jst} \mid \eta_{jst} \sim \mathrm{Bernoulli}\bigl(\pi_{jst}\bigr), \qquad
+\logit \pi_{jst} = \eta_{jst},
 \]
-independent over steps $k$. On a sphere-wide lattice the fields of different continents are
-independent through the sea barriers, but a field runs across land borders (Africa--Middle
-East--Asia).
+independent over $j$, $s$ and $t$ given the linear predictors. $Y_{jst} = 1$ if at least one
+event of type $j$ is recorded in cell $s$ in week $t$.
 
-\textbf{Spatial variation, two versions.} Each is a modelling choice to be settled by the
-prototype and the simulation (Section 6).
+\section*{Level 2: linear predictors}
+\begin{align*}
+\eta_{\C st} ={}& \underbrace{\bm x_{st}^\top \bm\beta_{\C} + \alpha_{\C,r(s),y(t)}}_{\text{covariates, region-year}}
++ \underbrace{\delta_{\C}\, h_{\C st} + \delta^{nb}_{\C}\, \bar h_{\C st}}_{\text{own history}}
++ \underbrace{\textstyle\sum_{b=1}^{3}\sum_{\ell=0}^{2} \kappa_{\U\to\C}(b,\ell)\, H_{\U st}(b,\ell)
++ \gamma_{\U\to\C}(s)\, H_{\U st}(1,0)}_{\text{escalation from unrest}}\\
+&+ \underbrace{u_{\C,c(s)} + e_{\C s} + a_s + w_{\C s}}_{\text{static}}
++ \underbrace{v_{\C,g(s),k(t)}}_{\text{space-time}},\\[4pt]
+\eta_{\U st} ={}& \bm x_{st}^\top \bm\beta_{\U} + \alpha_{\U,r(s),y(t)}
++ \delta_{\U}\, h_{\U st} + \delta^{nb}_{\U}\, \bar h_{\U st}
++ \textstyle\sum_{b=1}^{3}\sum_{\ell=0}^{2} \kappa_{\C\to\U}(b,\ell)\, H_{\C st}(b,\ell)
++ \gamma_{\C\to\U}(s)\, H_{\C st}(1,0)\\
+&+ u_{\U,c(s)} + e_{\U s} + \lambda_a\, a_s + w_{\U s}
++ \lambda(s)\, v_{\C,g(s),k(t)} + v_{\U,g(s),k(t)}.
+\end{align*}
+
+\textbf{Histories} (observed, computed from the outcomes):
+\begin{align*}
+h_{jst} &= \log\Bigl(1 + \textstyle\sum_{t'=t-4}^{t-1} N_{jst'}\Bigr), \qquad
+\bar h_{jst} = \frac{1}{|R_1(s)|}\sum_{s' \in R_1(s)} h_{js't},\\
+H_{jst}(b,\ell) &= \frac{1}{|R_\ell(s)|}\sum_{s' \in R_\ell(s)}
+\log\Bigl(1 + \textstyle\sum_{t' \in t - B_b} N_{js't'}\Bigr),
+\end{align*}
+where $N_{jst}$ is the number of recorded events, the lag bands are $B_1 = \{1,\dots,4\}$,
+$B_2 = \{5,\dots,13\}$, $B_3 = \{14,\dots,26\}$ weeks, and the distance rings are
+$R_0(s) = \{s\}$, $R_1(s)$ = rook neighbours, $R_2(s)$ = cells 50--300\,km from $s$. All $H$ are
+standardised on the training rows. The short-run, same-cell escalation is
+\[
+\kappa_{\U\to\C}(s) = \kappa_{\U\to\C}(1,0) + \gamma_{\U\to\C}(s), \qquad
+\kappa_{\C\to\U}(s) = \kappa_{\C\to\U}(1,0) + \gamma_{\C\to\U}(s).
+\]
+
+\section*{Level 3: latent effects, given the hyperparameters $\bm\theta$}
+All terms below are mutually independent.
+\begin{align*}
+&\text{country:} && u_{j,c} \overset{iid}{\sim} \N(0, \sigma^2_{u,j}),\\
+&\text{cell, outcome-specific:} && e_{js} \overset{iid}{\sim} \N(0, \sigma^2_{e,j}),\\
+&\text{cell, shared (new):} && a_s \overset{iid}{\sim} \N(0, \sigma^2_a), \quad
+\text{loading 1 for conflict, } \lambda_a \text{ for unrest},\\
+&\text{static field:} && \bm w_j \sim \N\bigl(\bm 0, \bm Q_s(\rho_{w,j}, \sigma_{w,j})^{-1}\bigr),\\
+&\text{space-time fields:} && v_{j,g,k} = \varphi_j\, v_{j,g,k-1} + \sqrt{1-\varphi_j^2}\;\varepsilon_{j,g,k},
+\qquad \bm\varepsilon_{j,\cdot,k} \sim \N\bigl(\bm 0, \bm Q_s(\rho_j, \sigma_j)^{-1}\bigr),
+\end{align*}
+with $v_{j,g,1} = \varepsilon_{j,g,1}$ (stationary start) and $\bm\varepsilon_{j,\cdot,k}$ independent over
+$k$. $\bm Q_s(\rho,\sigma)$ is the finite-volume SPDE precision of a Mat\'ern field
+($\nu = 1$, range $\rho$, SD $\sigma$) on the sphere, with sea barriers.
+
+\textbf{Spatial variation}, one of two versions:
 \begin{center}
-\small
 \begin{tabular}{@{}lll@{}}
 \toprule
- & piecewise by region & smooth \\
+ & piecewise & smooth \\
 \midrule
-escalation $\gamma(s)$ & $\gamma_r$: fixed effects, one per region & Mat\'ern field (spatially varying coefficient) \\
-loading $\lambda(s)$ & $\lambda_r$: one hyperparameter per region & $\sum_{m=1}^{M} \theta_m b_m(s)$, $M \approx 5$--10 smooth basis functions \\
+escalation & $\gamma_{\U\to\C}(s) = \gamma_{\U\to\C,r(s)}$, fixed effects & $\bm\gamma_{\U\to\C} \sim \N\bigl(\bm 0, \bm Q_s(\rho_\gamma,\sigma_\gamma)^{-1}\bigr)$ \\
+loading & $\lambda(s) = \lambda_{r(s)}$ & $\lambda(s) = \sum_{m=1}^{M} \vartheta_m\, b_m(s)$, $M \approx 5$--10 \\
 \bottomrule
 \end{tabular}
 \end{center}
-Both keep the model latent Gaussian. $\gamma(s)$ enters the mean linearly. For $\lambda(s)$, the
-loading sits in the prior precision of the pair $(v_{\C}, \lambda v_{\C})$, as in the current
-model, and the log-determinant does not depend on it, whether $\lambda$ is a region value or a
-basis expansion. A full Gaussian field \emph{in} the loading would break this, so we do not use one.
+Likewise for $\gamma_{\C\to\U}$. The loadings $\lambda_a$ and $\lambda(s)$ enter the prior precision of
+the pairs $(a_s, \lambda_a a_s)$ and $(v_{\C}, \lambda v_{\C})$ (copy construction), whose
+log-determinant does not depend on them, so the model stays latent Gaussian.
 
-\section*{4. Parameters and priors}
-\textbf{Fixed effects} ($\N(0,10^4)$): $\bm\beta_j$; $\alpha_{j,r,y}$; $\delta_j$, $\delta^{nb}_j$;
-$2\times 9$ kernel coefficients; $\gamma_r$ in the piecewise version.\\
-\textbf{Hyperparameters}: static, 8 (as now); space-time fields, 6 ($\rho_j,\sigma_j,\varphi_j$);
-loadings, 4 regions ($\lambda_r$) or $M$ basis coefficients, $\N(0,2^2)$; in the smooth version, the
-SD and range of each $\gamma$ field, 4, with PC prior $P(\sigma_\gamma > 0.2) = 0.05$, which
-shrinks towards no variation. In total 18 (piecewise) to about 28 (smooth).
+\section*{Level 4: priors}
+{\small\begin{tabular}{@{}lll@{}}
+\toprule
+parameter & role & prior \\
+\midrule
+$\bm\beta_j$, $\alpha_{j,r,y}$, $\delta_j$, $\delta^{nb}_j$, $\kappa(b,\ell)$, $\gamma_r$ & fixed effects & $\N(0, 10^4)$ \\
+$\sigma_{u,j}$, $\sigma_{e,j}$, $\sigma_a$ & SDs of iid effects & PC: $P(\sigma > 1) = 0.01$ \\
+$(\rho_{w,j}, \sigma_{w,j})$, $(\rho_j, \sigma_j)$ & Mat\'ern fields & PC: $P(\rho < 100\,\mathrm{km}) = 0.05$, $P(\sigma > 1) = 0.01$ \\
+$(\rho_\gamma, \sigma_\gamma)$ & varying escalation & PC: $P(\sigma_\gamma > 0.2) = 0.05$ \\
+$\varphi_j$ & persistence & $\operatorname{atanh}\varphi_j \sim \N(0, 1.5^2)$ \\
+$\lambda_a$, $\lambda_r$ or $\vartheta_m$ & loadings & $\N(0, 2^2)$ \\
+\bottomrule
+\end{tabular}}
 
-\section*{5. What each component answers, and the evidence it needs}
-\begin{itemize}
-\item $\kappa_{\U\to\C}(b,\ell)$: how escalation decays with lag and distance. Each coefficient with
-its interval.
-\item $\gamma_{\U\to\C}$: where escalation is stronger or weaker. Evidence of variation: the
-interval for $\sigma_\gamma$ well away from zero (smooth), or intervals for regional
-differences excluding zero (piecewise). Otherwise a constant $\kappa$.
-\item $\lambda(s)$: where conflict and unrest share episodes. Same rule. If every $\lambda_r$
-interval covers zero, the two outcomes are fitted separately.
-\item $v_{\U}$, $w_j$, $u_j$, $e_j$: as now, each with its interval (all supported in Africa and
-the Middle East).
-\end{itemize}
+\textbf{Inference.} Empirical Bayes: $\hat{\bm\theta}$ maximises the Laplace approximation of
+$p(\bm y \mid \bm\theta)\, p(\bm\theta)$; the latent effects and fixed effects are summarised by their
+Gaussian approximation at $\hat{\bm\theta}$; 95\% intervals for $\bm\theta$ from the Hessian at
+$\hat{\bm\theta}$.
 
-\section*{6. Validation before the global fit}
-\begin{enumerate}
-\item \textbf{Prototype on Africa and the Middle East} (existing data, three regions: Africa,
-Middle East, Afghanistan and Pakistan), warm-started from the current extended model:
-region loadings; region loadings with a smooth $\gamma(s)$; region loadings with regional
-$\gamma_r$. Intervals for every hyperparameter. With one region, it reproduces the current
-model exactly.
-\item \textbf{Simulation} (S2 design, two regions, 20 replicates): (i) constant $\kappa$ and $\lambda$,
-where no spurious variation should be found; (ii) $\kappa(s)$ varying (SD 0.3) and $\lambda_r =
-0.3$ and 1.2, which should be recovered with correct coverage.
-\end{enumerate}
+\textbf{Special cases.} $\lambda_a = 0$, $\sigma_a = 0$, $\lambda(s) \equiv \lambda$, $\gamma \equiv 0$,
+$\kappa(b,\ell) = 0$ for $(b,\ell) \notin \{(1,0),(1,1)\}$: the current extended model.
+With $\lambda = \lambda_a = 0$: two separate univariate models.
 
-\section*{7. Computation}
-About 60 million cell-weeks per outcome. Approximations, each checked against a full fit on a
-region where one is affordable and kept only if the conclusions are unchanged: case-control
-subsampling of empty cell-weeks; space-time fields on $2^\circ$ cells and 13--26 week steps;
-intervals from the Hessian at the estimate. Engineering: CHOLMOD on the CRC, and analytic
-gradients for the outer optimisation (the number of hyperparameters doubles).
+\section*{Evidence so far (Africa and the Middle East; West Africa in brackets)}
+\begin{tabular}{@{}lll@{}}
+\toprule
+component & estimate, 95\% interval & reading \\
+\midrule
+$\delta_{\C}$ & 0.61 [0.59, 0.63] \; (0.45 [0.41, 0.48]) & supported \\
+$\kappa_{\U\to\C}(1,0)$, no shared cell effect & 0.094 [0.065, 0.123] \; (0.095 [0.032, 0.158]) & supported \\
+$\kappa_{\U\to\C}(1,0)$, with shared static effect & 0.057 [0.028, 0.086] \; (0.061 [$-$0.002, 0.124]) & modest \\
+$\kappa_{\U\to\C}(1,1)$ (neighbours) & $-$0.011 [$-$0.021, $-$0.001] \; ($-$0.005 [$-$0.021, 0.011]) & about zero \\
+shared static effect & log-ML $+778$ \; ($+156$); range 44\,km (one cell) & supported; interval to do \\
+$\lambda$ & 0.52 [0.46, 0.58] \; (0.58 [0.45, 0.71]); 0.35 with shared static & supported \\
+$\varphi_{\C}$, $\rho_{\C}$ & 0.95 [0.945, 0.963], 453--551\,km & supported \\
+$\sigma_{\U}$, $\varphi_{\U}$ (unrest only) & [0.40, 0.50], [0.54, 0.73] & supported \\
+$\sigma_{w,\U}$ (static unrest field) & [0.29, 0.62] \; ([0.10, 1.23]) & weak \\
+$\gamma$, $\lambda(s)$, $\kappa(b,\ell)$ for $b \ge 2$ & --- & not yet tested \\
+\bottomrule
+\end{tabular}
 \end{document}
