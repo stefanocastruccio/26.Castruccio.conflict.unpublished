@@ -21,3 +21,8 @@ Each model we report must justify its components through this uncertainty.
   we do not interpret.
 - A good story is not evidence. Do not justify a component by its interpretation alone.
 - Do not run ablation studies (refits without a component) unless the user asks for them.
+
+## No runs without explicit authorization
+Do not submit CRC jobs, start simulations or fits, or send run tasks to the CRC agent until the user
+explicitly authorizes that specific run. During brainstorming, write code or job scripts only if asked,
+and describe proposed runs (purpose, cost) instead of launching them.
