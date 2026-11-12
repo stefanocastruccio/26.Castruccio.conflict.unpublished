@@ -53,12 +53,22 @@ def week_grid():
     return w[w + pd.Timedelta(days=6) < END]
 
 
-def iso_map():
+def iso_map(cell_codes):
+    """ACLED numeric iso / country name -> the cells' ISO_A3 codes. Natural Earth codes a country by ISO_A3 when it has one
+    (e.g. PSE) and by ADM0_A3 otherwise (e.g. SOL, KOS, CYN); the cells use whichever of the two is in their code list.
+    Names: ADMIN, NAME, NAME_LONG take precedence over SOVEREIGNT (else 'France' would map to an overseas territory)."""
     import pyogrio
     ne = pyogrio.read_dataframe(os.path.join(WORK, "inputs", "ne_10m_admin_0_countries"), read_geometry=False)
+    code = [a if a in cell_codes else b for a, b in zip(ne["ISO_A3"], ne["ADM0_A3"])]
     n3 = pd.to_numeric(ne["ISO_N3"], errors="coerce")
-    m = {int(k): v for k, v in zip(n3, ne["ADM0_A3"]) if pd.notna(k) and k > 0}
-    names = {str(n).lower(): a for col in ("ADMIN", "NAME", "NAME_LONG", "SOVEREIGNT") for n, a in zip(ne[col], ne["ADM0_A3"])}
+    m = {}
+    for k, v in zip(n3, code):
+        if pd.notna(k) and k > 0 and (int(k) not in m or v in cell_codes):
+            m[int(k)] = v
+    names = {}
+    for col in ("ADMIN", "NAME", "NAME_LONG", "SOVEREIGNT"):
+        for n, a in zip(ne[col], code):
+            names.setdefault(str(n).lower(), a)
     return m, names
 
 
@@ -79,7 +89,7 @@ def main():
     for c in ("latitude", "longitude", "geo_precision", "time_precision", "fatalities", "iso"):
         ev[c] = pd.to_numeric(ev[c], errors="coerce")
     rep["events_raw"] = int(len(ev))
-    m3, names = iso_map()
+    m3, names = iso_map(set(cells.ISO_A3))
     ev["iso3"] = ev.iso.map(m3)
     miss = ev.iso3.isna()
     ev.loc[miss, "iso3"] = ev.loc[miss, "country"].str.lower().map(names)
