@@ -2423,7 +2423,7 @@ ppt, tmax, tmin, hi, wbgt (15 GB).
   files are needed for the area-level step 2.
 - Still open: IPC step 2 and the extension to 2017, which wait for the IPC API key.
 
-## 2026-11-12 13:20 EST: Task 40, stage A done (global core table); covariates (B) running
+## 2026-11-12 12:50 EST: Task 40, stage A done (global core table); covariates (B) running
 
 Scripts: realdata/table/{core,join_cov,assemble,checks}.py; jobs crc/jobs/40_{core,cov,checks}.sh (EPYC queues, at most 4 cores).
 Rows stay in $WORK/table_global. Aggregate checks: results_real/table_global_checks.json.
@@ -2491,7 +2491,7 @@ apparently a dateline assignment error; the other 36 dateline cells look plausib
 tmax, tmin, hi and wbgt. WBGT also goes below -60 in some Siberian/Canadian winter weeks: that is the source product's behaviour in
 extreme cold, left as is and flagged here.
 
-## 2026-11-12 13:45 EST: Task 40, coordinator's decision on events outside every cell applied; core rerun queued
+## 2026-11-12 12:57 EST: Task 40, coordinator's decision on events outside every cell applied; core rerun queued
 
 - **Rule now:** an event outside every cell goes to the nearest of the 8 neighbouring cells of ANY country. It stays dropped if no
   neighbouring cell exists or if its country has no cell in the grid (e.g. Bahrain).
