@@ -2503,3 +2503,33 @@ extreme cold, left as is and flagged here.
   the source pixels at the dateline, not in the cell alignment. Masked (NaN) in the covariate files with flag <var>_masked; the
   task-35 grid files themselves are unchanged.
 - (send_message to the coordinating session failed: "elevated_session_untrusted_device"; this file is the channel.)
+
+## 2026-11-12 14:12 EST: Task 40 done: global model-ready table
+
+**Output:** $WORK/table_global/clean_global/year=<y>.parquet, 1996-2025, 30 files, 33,084,975 cell-weeks, 80 columns, 2.1 GB.
+Also: core/ (106 MB), cov/ (5.9 GB), core_report.json. Checks: results_real/table_global_checks.json.
+
+**Final core (jobs 1734229 core, 1734230 checks, 1734288 assemble; all rc=0):**
+- Event country codes now map to the cells' codes (Natural Earth ISO_A3 when the cells use it, e.g. PSE; else ADM0_A3, e.g. SOL,
+  KOS, CYN). The first rerun had wrongly dropped Gaza, coastal France and coastal Australia events.
+- **Events:** 2,804,500 used; 217,766 moved to a neighbouring cell; 9,710 of those crossed a border.
+  - Top border crossings: PSE->ISR 4,366; ISR->PSE 1,618; YEM->SAU 990; ESP->MAR 279; CYP->CYN 235; ECU->PER 214; GRC->TUR 207.
+  - **22,074 dropped (0.8%).** Bahrain 13,730 (no cell); open sea (Indian/Pacific Ocean) about 1,200; small islands and
+    territories without a cell (Reunion, Mayotte, Martinique, Malta, ...); a few hundred events more than one cell offshore
+    (Spain 644, Philippines 459, United States 427).
+  - Dropped share by ACLED region: Oceania 2.6%, Middle East 2.5% (Bahrain), Caribbean 5.9%, Europe 0.24%, all others below 1%.
+- **Agreement with $CLEAN (2018-2024)** is unchanged by the rerun: Conflict equal in 99.856% of cell-weeks, Unrest in 99.702%.
+
+**Table:**
+- Core columns as in the 12:50 entry.
+- Covariates: tmax, tmin, hi, wbgt (each with *_rollmean_4 and a *_masked flag for the Fiji cell); ppt and drought (= SPI-3), each
+  with *_rollmean_4 and a *_pending_era5 flag; pm25; IPC phase_1..5 with shares and ipc_carried; population; malaria; gdp, gdp_pc,
+  electricity_access, v2x_libdem, GHG_pc_t, EPI_index, ECO_pc_gha with their flags; river_length, lake_area, BIOME_NAME.
+- **MF_pc_t (material footprint) is all NaN:** no open source was found in task 35. The column exists because fit_glmm.prepare()
+  needs it.
+- Columns of $CLEAN not carried over (pipeline bookkeeping): n_copies, nat_source, country_is_proxy, gdp_flag.
+- **fit_glmm.prepare() runs unchanged** on the table: Africa sample of 300,000 cell-weeks from 2022-2023 (prepare trains on years
+  <= 2022), 45 covariates for both outcomes, no NaN after preparation.
+
+**Adding ERA5 precipitation later:** era5_precip.py process + merge (task 35); `join_cov.py --var ppt`; `join_cov.py --var spi3`
+(after rerunning spi3.py); `assemble.py`. About an hour of jobs, no rebuild of the core.

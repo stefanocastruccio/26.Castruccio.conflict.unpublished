@@ -3,21 +3,21 @@
   {
    "region": "africa",
    "rows": 518076,
-   "conflict_cw": 1295,
+   "conflict_cw": 1298,
    "unrest_cw": 288,
    "year": 1997
   },
   {
    "region": "africa",
    "rows": 518076,
-   "conflict_cw": 1539,
+   "conflict_cw": 1542,
    "unrest_cw": 319,
    "year": 1998
   },
   {
    "region": "africa",
    "rows": 518076,
-   "conflict_cw": 1773,
+   "conflict_cw": 1772,
    "unrest_cw": 279,
    "year": 1999
   },
@@ -31,43 +31,43 @@
   {
    "region": "africa",
    "rows": 518076,
-   "conflict_cw": 1529,
+   "conflict_cw": 1524,
    "unrest_cw": 327,
    "year": 2001
   },
   {
    "region": "africa",
    "rows": 528039,
-   "conflict_cw": 1921,
+   "conflict_cw": 1918,
    "unrest_cw": 371,
    "year": 2002
   },
   {
    "region": "africa",
    "rows": 518076,
-   "conflict_cw": 1563,
-   "unrest_cw": 401,
+   "conflict_cw": 1562,
+   "unrest_cw": 402,
    "year": 2003
   },
   {
    "region": "africa",
    "rows": 518076,
-   "conflict_cw": 1527,
+   "conflict_cw": 1526,
    "unrest_cw": 414,
    "year": 2004
   },
   {
    "region": "africa",
    "rows": 518076,
-   "conflict_cw": 1346,
-   "unrest_cw": 561,
+   "conflict_cw": 1347,
+   "unrest_cw": 564,
    "year": 2005
   },
   {
    "region": "africa",
    "rows": 518076,
-   "conflict_cw": 1331,
-   "unrest_cw": 399,
+   "conflict_cw": 1329,
+   "unrest_cw": 400,
    "year": 2006
   },
   {
@@ -80,21 +80,21 @@
   {
    "region": "africa",
    "rows": 528039,
-   "conflict_cw": 2012,
+   "conflict_cw": 2013,
    "unrest_cw": 577,
    "year": 2008
   },
   {
    "region": "africa",
    "rows": 518076,
-   "conflict_cw": 1574,
+   "conflict_cw": 1572,
    "unrest_cw": 654,
    "year": 2009
   },
   {
    "region": "africa",
    "rows": 518076,
-   "conflict_cw": 1607,
+   "conflict_cw": 1608,
    "unrest_cw": 767,
    "year": 2010
   },
@@ -102,14 +102,14 @@
    "region": "south_asia",
    "rows": 56888,
    "conflict_cw": 1841,
-   "unrest_cw": 2678,
+   "unrest_cw": 2679,
    "year": 2010
   },
   {
    "region": "africa",
    "rows": 528580,
-   "conflict_cw": 2385,
-   "unrest_cw": 1633,
+   "conflict_cw": 2388,
+   "unrest_cw": 1634,
    "year": 2011
   },
   {
@@ -123,21 +123,21 @@
    "region": "africa",
    "rows": 528580,
    "conflict_cw": 3251,
-   "unrest_cw": 2078,
+   "unrest_cw": 2079,
    "year": 2012
   },
   {
    "region": "south_asia",
    "rows": 56888,
    "conflict_cw": 1768,
-   "unrest_cw": 2872,
+   "unrest_cw": 2873,
    "year": 2012
   },
   {
    "region": "africa",
    "rows": 538745,
-   "conflict_cw": 4358,
-   "unrest_cw": 3080,
+   "conflict_cw": 4355,
+   "unrest_cw": 3081,
    "year": 2013
   },
   {
@@ -150,8 +150,8 @@
   {
    "region": "africa",
    "rows": 528580,
-   "conflict_cw": 5225,
-   "unrest_cw": 3566,
+   "conflict_cw": 5226,
+   "unrest_cw": 3568,
    "year": 2014
   },
   {
@@ -164,439 +164,439 @@
   {
    "region": "africa",
    "rows": 528580,
-   "conflict_cw": 5296,
-   "unrest_cw": 4089,
+   "conflict_cw": 5298,
+   "unrest_cw": 4092,
    "year": 2015
   },
   {
    "region": "middle_east",
    "rows": 43420,
-   "conflict_cw": 1760,
+   "conflict_cw": 1764,
    "unrest_cw": 140,
    "year": 2015
   },
   {
    "region": "south_asia",
    "rows": 88764,
-   "conflict_cw": 1787,
+   "conflict_cw": 1788,
    "unrest_cw": 3311,
    "year": 2015
   },
   {
    "region": "africa",
    "rows": 528580,
-   "conflict_cw": 5372,
-   "unrest_cw": 4348,
+   "conflict_cw": 5373,
+   "unrest_cw": 4351,
    "year": 2016
   },
   {
    "region": "middle_east",
    "rows": 111436,
-   "conflict_cw": 4793,
-   "unrest_cw": 2406,
+   "conflict_cw": 4804,
+   "unrest_cw": 2419,
    "year": 2016
   },
   {
    "region": "south_asia",
    "rows": 151632,
    "conflict_cw": 3386,
-   "unrest_cw": 7849,
+   "unrest_cw": 7850,
    "year": 2016
   },
   {
    "region": "africa",
    "rows": 528580,
-   "conflict_cw": 6159,
-   "unrest_cw": 4427,
+   "conflict_cw": 6160,
+   "unrest_cw": 4429,
    "year": 2017
   },
   {
    "region": "middle_east",
    "rows": 115128,
-   "conflict_cw": 6459,
-   "unrest_cw": 2265,
+   "conflict_cw": 6467,
+   "unrest_cw": 2277,
    "year": 2017
   },
   {
    "region": "south_asia",
    "rows": 164736,
-   "conflict_cw": 6955,
+   "conflict_cw": 6956,
    "unrest_cw": 9170,
    "year": 2017
   },
   {
    "region": "africa",
    "rows": 528580,
-   "conflict_cw": 6960,
-   "unrest_cw": 4544,
+   "conflict_cw": 6959,
+   "unrest_cw": 4546,
    "year": 2018
   },
   {
    "region": "europe",
    "rows": 17836,
-   "conflict_cw": 132,
-   "unrest_cw": 1298,
+   "conflict_cw": 130,
+   "unrest_cw": 1295,
    "year": 2018
   },
   {
    "region": "latam",
    "rows": 368212,
-   "conflict_cw": 10530,
-   "unrest_cw": 11142,
+   "conflict_cw": 10532,
+   "unrest_cw": 11151,
    "year": 2018
   },
   {
    "region": "middle_east",
    "rows": 115336,
-   "conflict_cw": 5927,
-   "unrest_cw": 3680,
+   "conflict_cw": 5933,
+   "unrest_cw": 3688,
    "year": 2018
   },
   {
    "region": "other",
    "rows": 932464,
-   "conflict_cw": 2115,
+   "conflict_cw": 2116,
    "unrest_cw": 6072,
    "year": 2018
   },
   {
    "region": "south_asia",
    "rows": 170300,
-   "conflict_cw": 7821,
-   "unrest_cw": 12135,
+   "conflict_cw": 7824,
+   "unrest_cw": 12138,
    "year": 2018
   },
   {
    "region": "africa",
    "rows": 538745,
-   "conflict_cw": 7652,
-   "unrest_cw": 7771,
+   "conflict_cw": 7651,
+   "unrest_cw": 7774,
    "year": 2019
   },
   {
    "region": "europe",
    "rows": 18179,
    "conflict_cw": 176,
-   "unrest_cw": 2080,
+   "unrest_cw": 2074,
    "year": 2019
   },
   {
    "region": "latam",
    "rows": 375293,
-   "conflict_cw": 10067,
-   "unrest_cw": 11479,
+   "conflict_cw": 10072,
+   "unrest_cw": 11482,
    "year": 2019
   },
   {
    "region": "middle_east",
    "rows": 117554,
-   "conflict_cw": 5530,
-   "unrest_cw": 4320,
+   "conflict_cw": 5545,
+   "unrest_cw": 4345,
    "year": 2019
   },
   {
    "region": "other",
    "rows": 950396,
    "conflict_cw": 1760,
-   "unrest_cw": 6753,
+   "unrest_cw": 6757,
    "year": 2019
   },
   {
    "region": "south_asia",
    "rows": 173575,
-   "conflict_cw": 8592,
-   "unrest_cw": 15526,
+   "conflict_cw": 8599,
+   "unrest_cw": 15530,
    "year": 2019
   },
   {
    "region": "africa",
    "rows": 528788,
-   "conflict_cw": 9790,
-   "unrest_cw": 8811,
+   "conflict_cw": 9784,
+   "unrest_cw": 8824,
    "year": 2020
   },
   {
    "region": "europe",
    "rows": 142792,
-   "conflict_cw": 195,
-   "unrest_cw": 16042,
+   "conflict_cw": 193,
+   "unrest_cw": 16163,
    "year": 2020
   },
   {
    "region": "latam",
    "rows": 368212,
-   "conflict_cw": 10025,
-   "unrest_cw": 11687,
+   "conflict_cw": 10028,
+   "unrest_cw": 11696,
    "year": 2020
   },
   {
    "region": "middle_east",
    "rows": 115336,
-   "conflict_cw": 5939,
-   "unrest_cw": 4240,
+   "conflict_cw": 5955,
+   "unrest_cw": 4268,
    "year": 2020
   },
   {
    "region": "other",
    "rows": 1170936,
    "conflict_cw": 1722,
-   "unrest_cw": 17023,
+   "unrest_cw": 17029,
    "year": 2020
   },
   {
    "region": "south_asia",
    "rows": 171288,
-   "conflict_cw": 6776,
-   "unrest_cw": 13937,
+   "conflict_cw": 6779,
+   "unrest_cw": 13938,
    "year": 2020
   },
   {
    "region": "africa",
    "rows": 528892,
-   "conflict_cw": 11536,
-   "unrest_cw": 9192,
+   "conflict_cw": 11535,
+   "unrest_cw": 9207,
    "year": 2021
   },
   {
    "region": "europe",
    "rows": 142792,
-   "conflict_cw": 175,
-   "unrest_cw": 18936,
+   "conflict_cw": 174,
+   "unrest_cw": 19086,
    "year": 2021
   },
   {
    "region": "latam",
    "rows": 368212,
-   "conflict_cw": 10117,
-   "unrest_cw": 13529,
+   "conflict_cw": 10118,
+   "unrest_cw": 13526,
    "year": 2021
   },
   {
    "region": "middle_east",
    "rows": 115336,
-   "conflict_cw": 5799,
-   "unrest_cw": 5619,
+   "conflict_cw": 5809,
+   "unrest_cw": 5648,
    "year": 2021
   },
   {
    "region": "other",
    "rows": 1631968,
-   "conflict_cw": 1566,
-   "unrest_cw": 16159,
+   "conflict_cw": 1567,
+   "unrest_cw": 16261,
    "year": 2021
   },
   {
    "region": "south_asia",
    "rows": 171288,
-   "conflict_cw": 7814,
-   "unrest_cw": 16839,
+   "conflict_cw": 7820,
+   "unrest_cw": 16842,
    "year": 2021
   },
   {
    "region": "africa",
    "rows": 528892,
-   "conflict_cw": 12270,
-   "unrest_cw": 8589,
+   "conflict_cw": 12269,
+   "unrest_cw": 8599,
    "year": 2022
   },
   {
    "region": "europe",
    "rows": 142792,
-   "conflict_cw": 139,
-   "unrest_cw": 16445,
+   "conflict_cw": 141,
+   "unrest_cw": 16618,
    "year": 2022
   },
   {
    "region": "latam",
    "rows": 368212,
-   "conflict_cw": 11437,
-   "unrest_cw": 13609,
+   "conflict_cw": 11456,
+   "unrest_cw": 13616,
    "year": 2022
   },
   {
    "region": "middle_east",
    "rows": 115336,
-   "conflict_cw": 5532,
-   "unrest_cw": 5558,
+   "conflict_cw": 5545,
+   "unrest_cw": 5601,
    "year": 2022
   },
   {
    "region": "other",
    "rows": 1631968,
-   "conflict_cw": 4673,
-   "unrest_cw": 13770,
+   "conflict_cw": 4675,
+   "unrest_cw": 13866,
    "year": 2022
   },
   {
    "region": "south_asia",
    "rows": 171288,
    "conflict_cw": 7755,
-   "unrest_cw": 16745,
+   "unrest_cw": 16749,
    "year": 2022
   },
   {
    "region": "africa",
    "rows": 528892,
-   "conflict_cw": 12682,
-   "unrest_cw": 8465,
+   "conflict_cw": 12681,
+   "unrest_cw": 8473,
    "year": 2023
   },
   {
    "region": "europe",
    "rows": 142792,
-   "conflict_cw": 163,
-   "unrest_cw": 16169,
+   "conflict_cw": 166,
+   "unrest_cw": 16316,
    "year": 2023
   },
   {
    "region": "latam",
    "rows": 368212,
-   "conflict_cw": 11879,
-   "unrest_cw": 12912,
+   "conflict_cw": 11910,
+   "unrest_cw": 12923,
    "year": 2023
   },
   {
    "region": "middle_east",
    "rows": 115336,
-   "conflict_cw": 4947,
-   "unrest_cw": 6545,
+   "conflict_cw": 4959,
+   "unrest_cw": 6576,
    "year": 2023
   },
   {
    "region": "other",
    "rows": 1631968,
-   "conflict_cw": 4785,
-   "unrest_cw": 12204,
+   "conflict_cw": 4791,
+   "unrest_cw": 12295,
    "year": 2023
   },
   {
    "region": "south_asia",
    "rows": 171288,
-   "conflict_cw": 7885,
-   "unrest_cw": 18284,
+   "conflict_cw": 7886,
+   "unrest_cw": 18282,
    "year": 2023
   },
   {
    "region": "africa",
    "rows": 539063,
    "conflict_cw": 14193,
-   "unrest_cw": 9183,
+   "unrest_cw": 9182,
    "year": 2024
   },
   {
    "region": "europe",
    "rows": 145538,
-   "conflict_cw": 211,
-   "unrest_cw": 16556,
+   "conflict_cw": 214,
+   "unrest_cw": 16723,
    "year": 2024
   },
   {
    "region": "latam",
    "rows": 375293,
-   "conflict_cw": 11507,
-   "unrest_cw": 10855,
+   "conflict_cw": 11531,
+   "unrest_cw": 10858,
    "year": 2024
   },
   {
    "region": "middle_east",
    "rows": 117554,
-   "conflict_cw": 5132,
-   "unrest_cw": 8038,
+   "conflict_cw": 5133,
+   "unrest_cw": 8047,
    "year": 2024
   },
   {
    "region": "other",
    "rows": 1663352,
-   "conflict_cw": 5373,
-   "unrest_cw": 11933,
+   "conflict_cw": 5378,
+   "unrest_cw": 12059,
    "year": 2024
   },
   {
    "region": "south_asia",
    "rows": 174582,
    "conflict_cw": 8251,
-   "unrest_cw": 19363,
+   "unrest_cw": 19366,
    "year": 2024
   },
   {
    "region": "africa",
    "rows": 437353,
-   "conflict_cw": 12934,
-   "unrest_cw": 7411,
+   "conflict_cw": 12933,
+   "unrest_cw": 7414,
    "year": 2025
   },
   {
    "region": "europe",
    "rows": 118078,
-   "conflict_cw": 211,
-   "unrest_cw": 13909,
+   "conflict_cw": 216,
+   "unrest_cw": 14025,
    "year": 2025
   },
   {
    "region": "latam",
    "rows": 304483,
-   "conflict_cw": 10222,
+   "conflict_cw": 10240,
    "unrest_cw": 9325,
    "year": 2025
   },
   {
    "region": "middle_east",
    "rows": 95374,
-   "conflict_cw": 3962,
-   "unrest_cw": 6462,
+   "conflict_cw": 3963,
+   "unrest_cw": 6493,
    "year": 2025
   },
   {
    "region": "other",
    "rows": 1349512,
-   "conflict_cw": 5461,
-   "unrest_cw": 14010,
+   "conflict_cw": 5466,
+   "unrest_cw": 14103,
    "year": 2025
   },
   {
    "region": "south_asia",
    "rows": 141642,
-   "conflict_cw": 6771,
-   "unrest_cw": 16355,
+   "conflict_cw": 6773,
+   "unrest_cw": 16360,
    "year": 2025
   }
  ],
  "rows_total": 33084975,
  "c_geo_precision1_share_by_region": {
-  "africa": 0.7431,
-  "europe": 0.9652,
-  "latam": 0.8879,
-  "middle_east": 0.6349,
-  "south_asia": 0.7025,
-  "nan": 0.6164
+  "africa": 0.7432,
+  "europe": 0.9659,
+  "latam": 0.8878,
+  "middle_east": 0.6325,
+  "south_asia": 0.7024,
+  "nan": 0.6168
  },
  "events": {
   "events_raw": 2833695,
-  "events_used": 2787962,
-  "events_dropped_no_cell": 38612,
-  "events_moved_to_neighbour_cell": 201188,
+  "events_used": 2804500,
+  "events_dropped_no_cell": 22074,
+  "events_moved_to_neighbour_cell": 217766,
   "events_outside_week_range": 7121,
   "events_unknown_type": 0
  },
  "dropped_share_by_acled_region": {
   "Antarctica": 1.0,
-  "Caribbean": 0.05869,
-  "Caucasus and Central Asia": 6e-05,
+  "Caribbean": 0.0585,
+  "Caucasus and Central Asia": 0.0,
   "Central America": 3e-05,
-  "East Asia": 0.00251,
-  "Eastern Africa": 0.00967,
-  "Europe": 0.0103,
+  "East Asia": 0.00173,
+  "Eastern Africa": 0.00931,
+  "Europe": 0.00239,
   "International Waters": 0.99567,
   "Middle Africa": 0.00061,
-  "Middle East": 0.04516,
+  "Middle East": 0.02499,
   "North America": 0.00221,
   "Northern Africa": 0.0,
-  "Oceania": 0.11856,
+  "Oceania": 0.02595,
   "South America": 0.00107,
-  "South Asia": 0.00151,
-  "Southeast Asia": 0.00394,
+  "South Asia": 0.00125,
+  "Southeast Asia": 0.00382,
   "Southern Africa": 6e-05,
-  "Western Africa": 0.00064
+  "Western Africa": 0.00061
  },
  "weeks": [
   "1996-12-03",
@@ -626,81 +626,81 @@
    "PNG": 148,
    "GBR": 133
   },
-  "Conflict_share_equal": 0.9985662450891399,
+  "Conflict_share_equal": 0.998556372665534,
   "Conflict_clean_rate": 0.013033369757568688,
-  "Conflict_global_rate": 0.01430970243549471,
+  "Conflict_global_rate": 0.014319574859100664,
   "Conflict_only_in_clean": 1467,
-  "Conflict_only_in_global": 25255,
+  "Conflict_only_in_global": 25439,
   "Conflict_disagreements_by_country_top": {
    "BRA": 4768,
-   "MEX": 1870,
-   "PHL": 1448,
-   "COD": 1362,
-   "NGA": 1039,
-   "YEM": 883,
-   "SOM": 815,
+   "MEX": 1868,
+   "PHL": 1447,
+   "COD": 1352,
+   "NGA": 1037,
+   "YEM": 879,
+   "MMR": 819,
    "PAK": 805,
-   "MMR": 803,
-   "COL": 718,
-   "VEN": 667,
+   "SOM": 785,
+   "COL": 728,
+   "VEN": 688,
    "AFG": 625,
-   "ECU": 624,
-   "IND": 522,
-   "UKR": 521
+   "ECU": 616,
+   "IND": 524,
+   "UKR": 508
   },
-  "Unrest_share_equal": 0.9970984732404202,
+  "Unrest_share_equal": 0.9970208888679517,
   "Unrest_clean_rate": 0.022060252474356647,
-  "Unrest_global_rate": 0.024845670947614237,
-  "Unrest_only_in_clean": 1082,
-  "Unrest_only_in_global": 52996,
+  "Unrest_global_rate": 0.024923362629034992,
+  "Unrest_only_in_clean": 1081,
+  "Unrest_only_in_global": 54443,
   "Unrest_disagreements_by_country_top": {
-   "IND": 4002,
-   "USA": 3309,
+   "IND": 4001,
+   "USA": 3328,
    "CHL": 2882,
-   "IDN": 2704,
-   "ITA": 2174,
+   "IDN": 2703,
    "BRA": 2165,
+   "ITA": 2152,
    "MEX": 2060,
-   "MAR": 1441,
-   "ESP": 1407,
-   "TUR": 1372,
+   "MAR": 1478,
+   "TUR": 1434,
+   "FRA": 1373,
+   "ESP": 1358,
    "JPN": 1148,
-   "VEN": 1102,
-   "PER": 1041,
-   "KOR": 976,
-   "PAK": 821
+   "VEN": 1118,
+   "PER": 1045,
+   "KOR": 976
   },
   "partition_cell_weeks_matched": 18637774,
-  "Battles_count_share_equal": 0.9989582983461437,
-  "Battles_count_pearson": 0.9661035767374172,
+  "Battles_count_share_equal": 0.9989491770852034,
+  "Battles_count_pearson": 0.9655218537210281,
   "Battles_total_luca_vs_global": [
    291886.0,
-   317209.0
+   317819.0
   ],
-  "ExplosionsRemote_violence_count_share_equal": 0.9995302550615754,
-  "ExplosionsRemote_violence_count_pearson": 0.9813260977367476,
+  "ExplosionsRemote_violence_count_share_equal": 0.9995171633694023,
+  "ExplosionsRemote_violence_count_pearson": 0.9773448010258633,
   "ExplosionsRemote_violence_total_luca_vs_global": [
    324177.0,
-   349996.0
+   354101.0
   ],
-  "Violence_against_civilians_count_share_equal": 0.9986807437411785,
-  "Violence_against_civilians_count_pearson": 0.932684163435139,
+  "Violence_against_civilians_count_share_equal": 0.9986690470653845,
+  "Violence_against_civilians_count_pearson": 0.932486574913607,
   "Violence_against_civilians_total_luca_vs_global": [
    194838.0,
-   229339.0
+   229648.0
   ],
-  "Protests_count_share_equal": 0.9960840280604325,
-  "Protests_count_pearson": 0.9399809893126879,
+  "Protests_count_share_equal": 0.9959359953608193,
+  "Protests_count_pearson": 0.93984865460506,
   "Protests_total_luca_vs_global": [
    753868.0,
-   891298.0
+   895946.0
   ],
-  "Riots_count_share_equal": 0.9992887562645625,
-  "Riots_count_pearson": 0.9792879051393327,
+  "Riots_count_share_equal": 0.9992635386607864,
+  "Riots_count_pearson": 0.9789138736920593,
   "Riots_total_luca_vs_global": [
    108880.0,
-   126327.0
+   127355.0
   ]
  },
- "d_disk": "106M\t/groups/scastruc/conflict_spatial_work/table_global/core\n12K\t/groups/scastruc/conflict_spatial_work/table_global/core_report.json\n2.3G\t/groups/scastruc/conflict_spatial_work/table_global/cov\n"
+ "d_disk": "106M\t/groups/scastruc/conflict_spatial_work/table_global/core\n16K\t/groups/scastruc/conflict_spatial_work/table_global/core_report.json\n5.9G\t/groups/scastruc/conflict_spatial_work/table_global/cov\n2.1G\t/groups/scastruc/conflict_spatial_work/table_global/clean_global\n"
 }
