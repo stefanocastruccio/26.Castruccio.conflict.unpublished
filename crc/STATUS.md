@@ -2533,3 +2533,12 @@ Also: core/ (106 MB), cov/ (5.9 GB), core_report.json. Checks: results_real/tabl
 
 **Adding ERA5 precipitation later:** era5_precip.py process + merge (task 35); `join_cov.py --var ppt`; `join_cov.py --var spi3`
 (after rerunning spi3.py); `assemble.py`. About an hour of jobs, no rebuild of the core.
+
+## 2026-11-12 14:35 EST: Task 41 submitted (user authorized in the CRC session)
+
+- Job 1734593, array 1-2 (ame, west_sahel): crc/jobs/41_channels.sh at commit 88eac40 (includes c1a5f5a). 16 cores and 200 GB per
+  task, EPYC queues.
+- Steps: (1) Hessian intervals for the saved biv3 -> ci_biv3.json; (2) biv3_nolam (lambda = 0, shared static field kept),
+  warm-started from biv3, with --hessian -> summary_biv3_nolam.json.
+- Each JSON is committed and pushed by ~/conflict_check/push41.sh as soon as it appears (log ~/conflict_check/push41.log).
+- Per-region report here when they are in. Nothing else started for the conflict project.
