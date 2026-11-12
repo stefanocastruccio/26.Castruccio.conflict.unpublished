@@ -2422,3 +2422,71 @@ ppt, tmax, tmin, hi, wbgt (15 GB).
 - Kept raw/{epi, ipc, gfn} (119 MB of tables). The EPI Dataverse workbooks were uploaded by the owner through a form, and the IPC
   files are needed for the area-level step 2.
 - Still open: IPC step 2 and the extension to 2017, which wait for the IPC API key.
+
+## 2026-11-12 13:20 EST: Task 40, stage A done (global core table); covariates (B) running
+
+Scripts: realdata/table/{core,join_cov,assemble,checks}.py; jobs crc/jobs/40_{core,cov,checks}.sh (EPYC queues, at most 4 cores).
+Rows stay in $WORK/table_global. Aggregate checks: results_real/table_global_checks.json.
+
+**Core table (A), job 1733666, rc=0:** $WORK/table_global/core/year=<y>/part.parquet.
+- **Size:** 33,084,975 cell-weeks (56,894 cells; weeks 1996-12-03 to 2025-10-28, 1,509 weeks, Tuesday start as in $CLEAN; last week
+  ends 2025-11-03, before the account's 2025-11-10 cutoff); 106 MB.
+- **Coverage:** start for all 190 cell countries from $WORK/inputs/acled_coverage.csv, the table $CLEAN used. The region fallback in
+  the spec was not needed: every cell country is in the table. A country's first row is the first week whose week_start is on or
+  after its coverage start; hist_incomplete flags its first 4 weeks, where the *_rollsum_4 histories are NaN.
+- **Events:** 2,833,695 raw; 7,121 outside the week range; 2,787,962 used.
+  - 201,188 events outside every cell were moved to the nearest neighbouring cell of the same country.
+  - 38,612 (1.4%) were dropped: no same-country cell within one cell.
+  - Dropped share by ACLED region: Middle East 4.5%, Oceania 11.9%, Caribbean 5.9%, Europe 1.0%, Eastern Africa 1.0%, all others
+    under 0.5%. International Waters and Antarctica: about 100%.
+  - Largest dropped by country: Yemen 14,694; Bahrain 13,744 (no Bahrain cell in the grid); Palestine 11,355 (Gaza's neighbouring
+    cells are coded ISR/EGY); Italy 7,570; Turkey 7,514; Spain 5,669; Israel 5,322; Lebanon 4,142.
+  - **Choice for the coordinator:** keep the spec's same-country rule, or assign such events to the nearest cell of any country.
+- **Event ISO3:** ACLED's numeric iso is mapped to Natural Earth ADM0_A3 (the cells' codes) by ISO_N3, with a country-name fallback
+  for France, Norway, Kosovo, Guadeloupe and Martinique.
+- **Columns:**
+  - grid_id, week_start, ISO_A3, region, lon, lat.
+  - The six per-type counts (Battles, ExplosionsRemote_violence, Violence_against_civilians, Protests, Riots, Strategic_developments).
+  - n_conflict, n_unrest; n_conflict_gp1/n_unrest_gp1 (geo_precision 1); n_conflict_tp1/n_unrest_tp1 (time_precision 1); fatalities.
+  - Conflict, Unrest; the 5 <Type>_rollsum_4 histories ($CLEAN's names); hist_incomplete.
+- **(c) Share of events with geo_precision 1** by study region: Europe 0.965, Latin America 0.888, Africa 0.743, South Asia 0.703,
+  Middle East 0.635, other cells 0.616.
+
+**(b) Agreement with $CLEAN, 2018-2024** (19,322,791 $CLEAN cell-weeks):
+- 685,017 $CLEAN cell-weeks are absent from the global table. Almost all are outside 60S-72N: RUS 304k, CAN 207k, GRL 115k,
+  NOR 27k, ATA 23k; a few thousand elsewhere.
+- **Conflict:** equal in 99.857% of cell-weeks. Rate 1.30% ($CLEAN) against 1.43% (global): 1,467 conflict cell-weeks only in
+  $CLEAN, 25,255 only in the global table. Largest disagreements: BRA 4,768, MEX 1,870, PHL 1,448, COD 1,362, NGA 1,039.
+- **Unrest:** equal in 99.710%. Rate 2.21% against 2.48%: 1,082 only in $CLEAN, 52,996 only in the global table. Largest: IND, USA,
+  CHL, IDN, ITA.
+- **Per-type counts vs Luca's partitions (first copy), 18.6M matched cell-weeks:**
+
+  | Type | Share equal | Pearson | Events: Luca vs global |
+  |---|---|---|---|
+  | Battles | 0.9990 | 0.966 | 292k vs 317k |
+  | Explosions/Remote violence | 0.9995 | 0.981 | 324k vs 350k |
+  | Violence against civilians | 0.9987 | 0.933 | 195k vs 229k |
+  | Protests | 0.9961 | 0.940 | 754k vs 891k |
+  | Riots | 0.9993 | 0.979 | 109k vs 126k |
+
+- Reading (not verified event by event): the 2025 download holds 8-18% more events for 2018-2024 than the data behind $CLEAN and
+  the partitions. ACLED adds and revises events after publication, so the differences are almost all extra events in our table,
+  not missing ones.
+
+**(d) Disk:** $WORK/table_global 2.4 GB so far (core 106 MB; covariate files being written).
+
+**Covariate files (B), job 1733675, running:**
+- SPI-3 is mapped to $CLEAN's drought slot: drought = SPI-3 of the week's calendar month; drought_rollmean_4 over weeks t-4..t-1.
+- ppt and drought are NaN for cells outside the CHIRPS domain (|lat| > 50). ppt_pending_era5 and drought_pending_era5 flag them
+  until the ERA5 fill arrives; the ERA5 download is slow.
+- *_rollmean_4 needs all four weeks t-4..t-1, else NaN.
+- Each covariate is stored at its natural resolution, not repeated per week: weekly (grid_id, week_start); per cell-year
+  (population, malaria); per country-year (national variables); static per cell (river_length, lake_area, BIOME_NAME, taken from
+  $CLEAN). assemble.py expands them onto the cell-weeks.
+- IPC: phase_1..phase_5 hold people per cell (national numbers spread by population), which is about 10x $CLEAN's scale
+  (task 35 check); the shares are added as phase<k>_share.
+
+**Known data issue (task 35):** cell 14 (Fiji, 179.75W, 16.75S) has impossible Tmax/Tmin (an annual cycle from -51 to +70 C),
+apparently a dateline assignment error; the other 36 dateline cells look plausible. Being traced; the fix will rerun join_cov for
+tmax, tmin, hi and wbgt. WBGT also goes below -60 in some Siberian/Canadian winter weeks: that is the source product's behaviour in
+extreme cold, left as is and flagged here.
