@@ -1,0 +1,173 @@
+{
+ "region": "west_sahel",
+ "rows_per_outcome": 906810,
+ "box": [
+  -18,
+  16,
+  4,
+  25
+ ],
+ "validation": false,
+ "cells": 2505,
+ "countries": 22,
+ "st_res_deg": 1.0,
+ "st_step_weeks": 13,
+ "st_cells": 641,
+ "time_steps": 28,
+ "zero_frac": null,
+ "models": {
+  "biv3": {
+   "hyper": {
+    "country_conflict.sd": 0.6057658382579223,
+    "country_unrest.sd": 0.44593770853435494,
+    "cell_conflict.sd": 0.1364661752255123,
+    "cell_unrest.sd": 0.7151691085128251,
+    "field_conflict.range_km": 507.32457642007904,
+    "field_conflict.sd": 1.4466892168012824,
+    "field_unrest.range_km": 604.714146900038,
+    "field_unrest.sd": 0.27422668395679267,
+    "shared_st.range_km": 437.0846084686455,
+    "shared_st.sd": 0.7420550543360543,
+    "shared_st.rho": 0.9143290647534188,
+    "shared_st.loading": 0.5004241732913981,
+    "st_unrest.range_km": 787.6705541018639,
+    "st_unrest.sd": 0.5053526512210554,
+    "st_unrest.rho": 0.6973392231498082,
+    "shared_field.range_km": 44.963405425718804,
+    "shared_field.sd": 1.021043484609341,
+    "shared_field.loading": 1.6523112438879852
+   },
+   "hyper_ci95": {
+    "country_conflict.sd": [
+     NaN,
+     NaN
+    ],
+    "country_unrest.sd": [
+     NaN,
+     NaN
+    ],
+    "cell_conflict.sd": [
+     NaN,
+     NaN
+    ],
+    "cell_unrest.sd": [
+     NaN,
+     NaN
+    ],
+    "field_conflict.range_km": [
+     NaN,
+     NaN
+    ],
+    "field_conflict.sd": [
+     NaN,
+     NaN
+    ],
+    "field_unrest.range_km": [
+     NaN,
+     NaN
+    ],
+    "field_unrest.sd": [
+     NaN,
+     NaN
+    ],
+    "shared_st.range_km": [
+     NaN,
+     NaN
+    ],
+    "shared_st.sd": [
+     NaN,
+     NaN
+    ],
+    "shared_st.rho": [
+     NaN,
+     NaN
+    ],
+    "shared_st.loading": [
+     NaN,
+     NaN
+    ],
+    "st_unrest.range_km": [
+     NaN,
+     NaN
+    ],
+    "st_unrest.sd": [
+     NaN,
+     NaN
+    ],
+    "st_unrest.rho": [
+     NaN,
+     NaN
+    ],
+    "shared_field.range_km": [
+     NaN,
+     NaN
+    ],
+    "shared_field.sd": [
+     NaN,
+     NaN
+    ],
+    "shared_field.loading": [
+     NaN,
+     NaN
+    ]
+   },
+   "theta_se": [
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN
+   ],
+   "hessian_eig_min": -0.15317399041120122,
+   "hessian_rows": 1292580,
+   "hessian_seconds": 8994.233824014664,
+   "lag_coefficients": {
+    "conflict:lag_own": [
+     0.4463559835552466,
+     0.01681955601740587
+    ],
+    "conflict:lag_other": [
+     0.06072929494528107,
+     0.03164585450956107
+    ],
+    "conflict:lag_own_nb": [
+     0.052157864703008365,
+     0.007807692521693296
+    ],
+    "conflict:lag_other_nb": [
+     -0.0021446919768680814,
+     0.008213186327641108
+    ],
+    "unrest:lag_own": [
+     0.26881544004662616,
+     0.029358037636522144
+    ],
+    "unrest:lag_other": [
+     0.07587636139996916,
+     0.031167533483553247
+    ],
+    "unrest:lag_own_nb": [
+     -0.004419415242403959,
+     0.008786895882924006
+    ],
+    "unrest:lag_other_nb": [
+     -0.00590137392476388,
+     0.014005748751344983
+    ]
+   }
+  }
+ }
+}
