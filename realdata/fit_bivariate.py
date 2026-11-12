@@ -310,6 +310,121 @@ def export_fitted(m, model, base, tr, tstep, a):
     d.to_parquet(os.path.join(a.out, f"fitted_{model}.parquet"), index=False)
 
 
+def semisynth(a, saved, dfs, covs, base, tr, wk, L, cell, barrier, Lv, T, parts, biv3_blocks, biv3_designs):
+    """One replicate of the semi-synthetic check (see --semisynth). The truth is the fitted biv3 at its saved
+    hyperparameters: fixed effects and latent effects at their posterior mode on all training rows, the
+    own and cross histories recomputed from the simulated outcomes, neighbour terms set to zero."""
+    import time
+    from scipy.optimize import minimize
+    from scipy.special import expit
+    t0 = time.time()
+    rng = np.random.default_rng(1000 + a.sim_seed)
+    if saved is None or "biv3" not in saved.get("models", {}):
+        sys.exit("--semisynth needs --fixed-theta with a saved biv3")
+    P = {o: parts(o, tr) for o in OUTS}
+    y = np.r_[P["conflict"]["y"], P["unrest"]["y"]]
+    m = LatentGaussianModel(y, biv3_blocks(), biv3_designs(P["conflict"], P["unrest"]))
+    m.theta = theta_from_hyper(m.blocks, saved["models"]["biv3"]["hyper"])
+    m.x_hat, _, _ = m.mode(m.theta)
+    names = m.blocks[0].names
+    ix = {k: names.index(k) for k in ("conflict:lag_own", "conflict:lag_other", "conflict:lag_own_nb", "conflict:lag_other_nb",
+                                     "unrest:lag_own", "unrest:lag_other", "unrest:lag_own_nb", "unrest:lag_other_nb")}
+    x0 = m.x_hat.copy(); xs = m.slices[0]
+    coef = {k: float(m.x_hat[xs][i]) for k, i in ix.items()}
+    for i in ix.values():
+        x0[xs.start + i] = 0.0
+    eta0 = np.asarray(m.A @ x0).ravel()
+    n = len(P["conflict"]["y"]); eta0c, eta0u = eta0[:n], eta0[n:]
+    kappa = coef["conflict:lag_other"]
+    gsd = abs(kappa) if a.sim_gamma_sd < 0 else a.sim_gamma_sd
+    gamma = np.zeros(L.n)
+    if gsd > 0:
+        gb = MaternBlock(L, name="g", barrier=barrier)
+        gamma = gb.sample(np.log([500.0, gsd]), rng).ravel()
+    # week-by-week simulation on the training rows (same order in both outcomes)
+    c_tr = cell[tr]; w_tr = wk[tr]; w0 = w_tr.min(); W = int(w_tr.max() - w0 + 1)
+    Yc = np.zeros((L.n, W + 4)); Yu = np.zeros((L.n, W + 4))     # 4 empty weeks of burn-in at the start
+    yc = np.zeros(n, int); yu = np.zeros(n, int); hc = np.zeros(n); hu = np.zeros(n)
+    order = np.argsort(w_tr, kind="stable")
+    bounds_w = np.searchsorted(w_tr[order], np.arange(w0, w0 + W + 1))
+    for k in range(W):
+        i = order[bounds_w[k]:bounds_w[k + 1]]
+        if len(i) == 0:
+            continue
+        c = c_tr[i]; col = k + 4
+        hc[i] = np.log1p(Yc[c, col - 4:col].sum(1)); hu[i] = np.log1p(Yu[c, col - 4:col].sum(1))
+        pc = expit(eta0c[i] + coef["conflict:lag_own"] * hc[i] + (kappa + gamma[c]) * hu[i])
+        pu = expit(eta0u[i] + coef["unrest:lag_own"] * hu[i] + coef["unrest:lag_other"] * hc[i])
+        yc[i] = rng.random(len(i)) < pc; yu[i] = rng.random(len(i)) < pu
+        Yc[c, col] = yc[i]; Yu[c, col] = yu[i]
+    t_sim = time.time() - t0
+    # replace outcomes and histories on the training rows, recompute the neighbour terms
+    for o, yy, own, oth in (("conflict", yc, hc, hu), ("unrest", yu, hu, hc)):
+        dd = dfs[o]
+        dd.loc[tr, "y"] = yy; dd.loc[tr, "lag_own"] = own; dd.loc[tr, "lag_other"] = oth
+        for cc in ("lag_own", "lag_other"):
+            v = neighbour_mean(dd, L, cc)
+            mu, sd = v[dd.train].mean(), v[dd.train].std()
+            dd[cc + "_nb"] = (v - mu) / (sd if sd > 0 else 1)
+    P = {o: parts(o, tr) for o in OUTS}
+    rng_s = np.random.default_rng(a.zero_seed + a.sim_seed)
+    S = {o: subsample(P[o], a.zero_frac or 1.0, rng_s) for o in OUTS}
+
+    def blocks():
+        return biv3_blocks() + [
+            MaternBlock(L, name="kappa_field_conflict", range_init=800.0, sd_init=0.05, pc_sd=(0.2, 0.05), barrier=barrier),
+            MaternBlock(L, name="kappa_field_unrest", range_init=800.0, sd_init=0.05, pc_sd=(0.2, 0.05), barrier=barrier)]
+
+    def designs(Pc, Pu):
+        return biv3_designs(Pc, Pu) + [stack(Pc["K"], None, nu=len(Pu["y"])), stack(None, Pu["K"], nc=len(Pc["y"]))]
+
+    ms = LatentGaussianModel(np.r_[S["conflict"]["y"], S["unrest"]["y"]], blocks(), designs(S["conflict"], S["unrest"]),
+                             offset=np.r_[S["conflict"]["off"], S["unrest"]["off"]] if a.zero_frac else None)
+    th = theta0_from_init(ms.blocks, saved["models"]["biv3"]["hyper"])
+    nb = sum(b.n_theta for b in ms.blocks[:-2]); free = np.arange(nb, ms.n_theta)
+    bds = [bd for b in ms.blocks for bd in b.bounds()]
+
+    def nlp(z):
+        t = th.copy(); t[free] = z
+        try:
+            v = -(ms.log_marginal(t, require_converged=True) + ms.log_prior(t))
+        except Exception:
+            return 1e100
+        return v if np.isfinite(v) else 1e100
+    opt = minimize(nlp, th[free], method="L-BFGS-B", bounds=[bds[i] for i in free], options=dict(eps=1e-4, maxiter=60))
+    th[free] = opt.x
+    t_fit = time.time() - t0 - t_sim
+    # posterior of kappa(s) on all training rows at the fitted hyperparameters
+    mf = LatentGaussianModel(np.r_[P["conflict"]["y"], P["unrest"]["y"]], blocks(), designs(P["conflict"], P["unrest"]))
+    mf.theta = th
+    mf.x_hat, _, _ = mf.mode(th)
+    kb = [b.name for b in mf.blocks].index("kappa_field_conflict")
+    k0 = mf.blocks[0].names.index("conflict:lag_other")
+    Sx = mf.sample(100, np.random.default_rng(a.sim_seed))
+    draws = Sx[mf.slices[0]][k0][None, :] + Sx[mf.slices[kb]]           # kappa_0 + gamma(s), cells x 100
+    hasu = np.zeros(L.n, bool); hasu[c_tr[yu == 1]] = True             # cells with simulated unrest
+    km = draws.mean(1)
+    lo, hi = np.quantile(draws, [0.025, 0.975], axis=1)
+    k0hat = float(mf.x_hat[mf.slices[0]][k0])
+    q10, q90 = np.quantile(km[hasu], [0.1, 0.9])
+    tru = kappa + gamma
+    out = {"seed": a.sim_seed, "gamma_sd_true": gsd, "kappa_true": kappa, "region": a.region,
+           "kappa0_hat": k0hat, "kappa0_se": float(np.sqrt(np.var(Sx[mf.slices[0]][k0]))),
+           "hyper_gamma": {b.name: b.describe(t) for b, t in zip(mf.blocks, mf._split(th)) if b.name.startswith("kappa_field")},
+           "spread_q90_q10": float(q90 - q10), "spread_true_q90_q10": float(np.subtract(*np.quantile(tru[hasu], [0.9, 0.1]))),
+           "share_cells_interval_excl_kappa0": float(np.mean(((lo > k0hat) | (hi < k0hat))[hasu])),
+           "share_cells_sign_opposite": float(np.mean((np.sign(km) != np.sign(k0hat))[hasu])),
+           "corr_with_truth": float(np.corrcoef(km[hasu], tru[hasu])[0, 1]) if gsd > 0 else None,
+           "rmse": float(np.sqrt(np.mean((km - tru)[hasu] ** 2))), "cover95": float(np.mean(((lo <= tru) & (tru <= hi))[hasu])),
+           "cells_with_unrest": int(hasu.sum()), "prev_conflict": float(yc.mean()), "prev_unrest": float(yu.mean()),
+           "truth_coef": coef, "opt_nit": int(opt.nit), "opt_success": bool(opt.success),
+           "seconds": {"simulate": t_sim, "fit": t_fit, "total": time.time() - t0}}
+    print("semisynth", json.dumps(out, default=float), flush=True)
+    if a.sim_out:
+        os.makedirs(os.path.dirname(os.path.abspath(a.sim_out)), exist_ok=True)
+        json.dump(out, open(a.sim_out, "w"), indent=1, default=float)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("table"); ap.add_argument("--region", default="west_sahel")
@@ -332,6 +447,16 @@ def main():
                          "(exact for the logistic likelihood); the latent posterior is then computed "
                          "on all training rows at those hyperparameters")
     ap.add_argument("--zero-seed", type=int, default=0)
+    ap.add_argument("--semisynth", action="store_true",
+                    help="semi-synthetic check of a spatially varying kappa (needs --fixed-theta with a biv3 summary): "
+                         "regenerate both outcomes on the real training rows from the fitted biv3, week by week, with "
+                         "kappa_U->C(s) = kappa + gamma(s), refit biv3 + gamma fields with only the gamma hyperparameters "
+                         "free (others at the truth), and report the fitted spread of kappa(s)")
+    ap.add_argument("--sim-seed", type=int, default=1)
+    ap.add_argument("--sim-gamma-sd", type=float, default=0.0,
+                    help="SD of the planted gamma field (Matern, 500 km); 0 = constant kappa (null); "
+                         "negative = |fitted kappa_U->C|")
+    ap.add_argument("--sim-out", default=None, help="JSON file for one replicate's results")
     ap.add_argument("--hessian-only", action="store_true",
                     help="with --fixed-theta: only the hyperparameter intervals (no predictions, no exports)")
     ap.add_argument("--hessian", action="store_true",
@@ -490,6 +615,9 @@ def main():
 
     saved = json.load(open(a.fixed_theta)) if a.fixed_theta else None
     init = json.load(open(a.init_theta)) if a.init_theta else None
+    if a.semisynth:
+        semisynth(a, saved, dfs, covs, base, tr, wk, L, cell, barrier, Lv, T, parts, biv3_blocks, biv3_designs)
+        return
     parts_tr = {o: parts(o, tr) for o in OUTS}
     parts_te = {o: parts(o, te) for o in OUTS}
     if a.zero_frac:
