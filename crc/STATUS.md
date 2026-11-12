@@ -2490,3 +2490,16 @@ Rows stay in $WORK/table_global. Aggregate checks: results_real/table_global_che
 apparently a dateline assignment error; the other 36 dateline cells look plausible. Being traced; the fix will rerun join_cov for
 tmax, tmin, hi and wbgt. WBGT also goes below -60 in some Siberian/Canadian winter weeks: that is the source product's behaviour in
 extreme cold, left as is and flagged here.
+
+## 2026-11-12 13:45 EST: Task 40, coordinator's decision on events outside every cell applied; core rerun queued
+
+- **Rule now:** an event outside every cell goes to the nearest of the 8 neighbouring cells of ANY country. It stays dropped if no
+  neighbouring cell exists or if its country has no cell in the grid (e.g. Bahrain).
+- **Report additions (core_report.json):** events moved across a border (count and top country->cell-country pairs), dropped events
+  by country, and the countries without a cell.
+- **Jobs:** core rerun 1733789, then checks 1733791. The covariate rerun 1733786 (tmax, tmin, hi, wbgt with the Fiji cell masked)
+  and assemble.py 1733787 wait for it.
+- **Fiji cell:** grid_id 14 has impossible CHIRTS-ERA5 values in every year's daily data, from both cache paths, so the problem is in
+  the source pixels at the dateline, not in the cell alignment. Masked (NaN) in the covariate files with flag <var>_masked; the
+  task-35 grid files themselves are unchanged.
+- (send_message to the coordinating session failed: "elevated_session_untrusted_device"; this file is the channel.)

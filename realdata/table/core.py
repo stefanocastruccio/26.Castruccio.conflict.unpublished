@@ -6,7 +6,9 @@ Cells: the 56,894 task-35 cells (covariates/cells_60S.parquet: grid_id, lon, lat
 Weeks: week_start on the weekday of $CLEAN's week_start; from the first such day in December 1996 to the last week that ends
 (week_start + 6) before 2025-11-10, the end of the account's ACLED data.
 Events -> cells: the 0.5-degree cell containing (latitude, longitude). Events outside every cell (sea, coast): the nearest of the
-8 neighbouring cells with the event's country (ISO3), else dropped. The event's ISO3 is ACLED's numeric `iso` mapped to Natural
+8 neighbouring cells, of ANY country (coordinator decision 2026-11-12: an event belongs to the place where it happened; the cell's
+country only drives the country effect and the national covariates); dropped if no neighbouring cell exists or if the event's
+country has no cell at all in the grid (e.g. Bahrain). Reassignments across a country border are counted in the report. The event's ISO3 is ACLED's numeric `iso` mapped to Natural
 Earth ADM0_A3 (the cells' ISO_A3 codes) by ISO_N3, with a country-name fallback.
 Counts per cell-week: the six ACLED event types (columns as in $CLEAN: Battles, ExplosionsRemote_violence,
 Violence_against_civilians, Protests, Riots, Strategic_developments); n_conflict = Battles + ExplosionsRemote_violence +
@@ -85,11 +87,12 @@ def main():
     ok = (r >= 0) & (r < 360) & (c >= 0) & (c < 720)
     k = np.full(len(ev), -1, np.int64); k[ok] = lut[r[ok] * 720 + c[ok] % 720]
     # outside every cell: nearest neighbouring cell of the same ISO3
-    out = np.where(k < 0)[0]; moved = 0
+    out = np.where(k < 0)[0]; moved = 0; cross = {}
+    has_cell = set(cells.ISO_A3)
     iso_arr = cells.ISO_A3.to_numpy(); clon = cells.lon.to_numpy(); clat = cells.lat.to_numpy()
     e_iso = ev.iso3.to_numpy(); e_lat = ev.latitude.to_numpy(); e_lon = ev.longitude.to_numpy()
     for i in out:
-        if not ok[i]:
+        if not ok[i] or e_iso[i] not in has_cell:
             continue
         best, bd = -1, 9e9
         for dr in (-1, 0, 1):
@@ -97,20 +100,26 @@ def main():
                 rr, cc = r[i] + dr, (c[i] + dc) % 720
                 if 0 <= rr < 360:
                     j = lut[rr * 720 + cc]
-                    if j >= 0 and iso_arr[j] == e_iso[i]:
+                    if j >= 0:
                         d = (clat[j] - e_lat[i]) ** 2 + ((clon[j] - e_lon[i] + 180) % 360 - 180) ** 2
                         if d < bd:
                             best, bd = j, d
         if best >= 0:
             k[i] = best; moved += 1
+            if iso_arr[best] != e_iso[i]:
+                key = f"{e_iso[i]}->{iso_arr[best]}"; cross[key] = cross.get(key, 0) + 1
     ev["cell"] = k
     ev["widx"] = ((ev.event_date - W0).dt.days // 7).astype(int)
     inweek = (ev.widx >= 0) & (ev.widx < nW)
     rep["events_outside_week_range"] = int((~inweek).sum())
     rep["events_moved_to_neighbour_cell"] = int(moved)
+    rep["events_moved_across_border"] = int(sum(cross.values()))
+    rep["moved_across_border_top"] = dict(sorted(cross.items(), key=lambda x: -x[1])[:25])
     drop = (ev.cell < 0) & inweek
     rep["events_dropped_no_cell"] = int(drop.sum())
     rep["dropped_share_by_acled_region"] = (ev[inweek].assign(d=drop[inweek]).groupby("region").d.mean().round(5).to_dict())
+    rep["dropped_by_country_top"] = ev[drop].groupby("country").size().sort_values(ascending=False).head(25).to_dict()
+    rep["dropped_countries_without_cell"] = sorted(set(ev.loc[drop & ~ev.iso3.isin(has_cell), "country"]))
     ev = ev[inweek & (ev.cell >= 0)].copy()
     ev["type"] = ev.event_type.map(TYPES)
     rep["events_unknown_type"] = int(ev.type.isna().sum())

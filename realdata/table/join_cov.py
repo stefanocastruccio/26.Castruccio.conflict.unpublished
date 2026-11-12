@@ -29,6 +29,10 @@ import common as C  # noqa: E402
 
 OUT = os.path.join(C.WORK, "table_global", "cov")
 YEARS = range(1996, 2026)
+# Cells whose task-35 values are physically impossible, masked (NaN) with a flag column <name>_masked:
+# grid_id 14 (Fiji, 179.75W 16.75S, on the dateline): CHIRTS-ERA5 daily Tmax/Tmin/HI/WBGT follow an annual cycle from about -52 to
+# +38 C in every year (both cache paths), i.e. not this tropical island's climate. Owner/coordinator informed (STATUS 2026-11-12).
+MASK = {"tmax": [14], "tmin": [14], "hi": [14], "wbgt": [14]}
 WEEKLY = {"tmax": "tmax", "tmin": "tmin", "hi": "hi", "wbgt": "wbgt", "ppt": "ppt", "pm25": "pm25", "spi3": "drought"}
 
 
@@ -52,6 +56,10 @@ def weekly(var):
                             "week_start": np.repeat(d.index.to_numpy(), d.shape[1]),
                             name: d.to_numpy().ravel().astype("float32"),
                             f"{name}_rollmean_4": roll.to_numpy().ravel().astype("float32")})
+        if var in MASK:
+            bad = out.grid_id.isin(MASK[var])
+            out.loc[bad, [name, f"{name}_rollmean_4"]] = np.nan
+            out[f"{name}_masked"] = bad
         if var in ("ppt", "spi3"):
             out[f"{name}_pending_era5"] = out.grid_id.isin(outside) & out[name].isna()
         write(var, f"year={y}.parquet", out)
