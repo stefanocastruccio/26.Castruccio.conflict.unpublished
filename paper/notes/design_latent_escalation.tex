@@ -38,12 +38,12 @@ event of type $j$ is recorded in cell $s$ in week $t$.
 \eta_{\C st} ={}& \underbrace{\bm x_{st}^\top \bm\beta_{\C} + \alpha_{\C,r(s),y(t)}}_{\text{covariates, region-year}}
 + \underbrace{\delta_{\C}\, h_{\C st} + \delta^{nb}_{\C}\, \bar h_{\C st}}_{\text{own history}}
 + \underbrace{\kappa_{\U\to\C}(s)\, h_{\U st}}_{\text{escalation}}\\
-&+ \underbrace{u_{\C,c(s)} + e_{\C s} + a_s + w_{\C s}}_{\text{static}}
+&+ \underbrace{u_{\C,c(s)} + e_{\C,s} + w_{\C,s}}_{\text{static}}
 + \underbrace{v_{\C,g(s),k(t)}}_{\text{space-time}},\\[4pt]
 \eta_{\U st} ={}& \bm x_{st}^\top \bm\beta_{\U} + \alpha_{\U,r(s),y(t)}
 + \delta_{\U}\, h_{\U st} + \delta^{nb}_{\U}\, \bar h_{\U st}
 + \kappa_{\C\to\U}(s)\, h_{\C st}\\
-&+ u_{\U,c(s)} + e_{\U s} + \lambda_a\, a_s + w_{\U s}
+&+ u_{\U,c(s)} + e_{\U,s}
 + \lambda(s)\, v_{\C,g(s),k(t)} + v_{\U,g(s),k(t)}.
 \end{align*}
 
@@ -67,13 +67,16 @@ fitted latent fields shows no unexplained lagged association between unrest and 
 and 26-week lags (Supplementary Material).
 
 \section*{Level 3: latent effects, given the hyperparameters $\bm\theta$}
-All terms below are mutually independent.
+All terms below are mutually independent, except the two cell effects of the same cell, which are
+correlated: a place persistently high in conflict tends to be high in unrest as well ($\rho_e > 0$).
+This replaces a cell effect shared by both outcomes plus one specific to each: the correlation does
+the job of the shared part, with the same number of parameters.
 \begin{align*}
 &\text{country:} && u_{j,c} \overset{iid}{\sim} \N(0, \sigma^2_{u,j}),\\
-&\text{cell, outcome-specific:} && e_{js} \overset{iid}{\sim} \N(0, \sigma^2_{e,j}),\\
-&\text{cell, shared (new):} && a_s \overset{iid}{\sim} \N(0, \sigma^2_a), \quad
-\text{loading 1 for conflict, } \lambda_a \text{ for unrest},\\
-&\text{static field:} && \bm w_j \sim \N\bigl(\bm 0, \bm Q_s(\rho_{w,j}, \sigma_{w,j})^{-1}\bigr),\\
+&\text{cell, correlated across outcomes:} && \begin{pmatrix} e_{\C,s}\\ e_{\U,s}\end{pmatrix}
+\overset{iid}{\sim} \N\left(\bm 0, \begin{pmatrix} \sigma^2_{e,\C} & \rho_e\sigma_{e,\C}\sigma_{e,\U}\\
+\rho_e\sigma_{e,\C}\sigma_{e,\U} & \sigma^2_{e,\U}\end{pmatrix}\right) \text{ over cells } s,\\
+&\text{static field (conflict only):} && \bm w_{\C} \sim \N\bigl(\bm 0, \bm Q_s(\rho_{w}, \sigma_{w})^{-1}\bigr),\\
 &\text{space-time fields:} && v_{j,g,k} = \varphi_j\, v_{j,g,k-1} + \sqrt{1-\varphi_j^2}\;\varepsilon_{j,g,k},
 \qquad \bm\varepsilon_{j,\cdot,k} \sim \N\bigl(\bm 0, \bm Q_s(\rho_j, \sigma_j)^{-1}\bigr),
 \end{align*}
@@ -92,9 +95,9 @@ loading & $\lambda(s) = \lambda_{r(s)}$ & $\lambda(s) = \sum_{m=1}^{M} \vartheta
 \bottomrule
 \end{tabular}
 \end{center}
-Likewise for $\gamma_{\C\to\U}$. The loadings $\lambda_a$ and $\lambda(s)$ enter the prior precision of
-the pairs $(a_s, \lambda_a a_s)$ and $(v_{\C}, \lambda v_{\C})$ (copy construction), whose
-log-determinant does not depend on them, so the model stays latent Gaussian.
+Likewise for $\gamma_{\C\to\U}$. The loading $\lambda(s)$ enters the prior precision of the pair
+$(v_{\C}, \lambda v_{\C})$ (copy construction), whose log-determinant does not depend on it, so the
+model stays latent Gaussian.
 
 \section*{Level 4: priors}
 {\small\begin{tabular}{@{}lll@{}}
@@ -102,11 +105,12 @@ log-determinant does not depend on them, so the model stays latent Gaussian.
 parameter & role & prior \\
 \midrule
 $\bm\beta_j$, $\alpha_{j,r,y}$, $\delta_j$, $\delta^{nb}_j$, $\kappa_{\U\to\C}$, $\kappa_{\C\to\U}$, $\gamma_r$ & fixed effects & $\N(0, 10^4)$ \\
-$\sigma_{u,j}$, $\sigma_{e,j}$, $\sigma_a$ & SDs of iid effects & PC: $P(\sigma > 1) = 0.01$ \\
-$(\rho_{w,j}, \sigma_{w,j})$, $(\rho_j, \sigma_j)$ & Mat\'ern fields & PC: $P(\rho < 100\,\mathrm{km}) = 0.05$, $P(\sigma > 1) = 0.01$ \\
+$\sigma_{u,j}$, $\sigma_{e,j}$ & SDs of iid effects & PC: $P(\sigma > 1) = 0.01$ \\
+$\rho_e$ & correlation of the cell effects & $\operatorname{atanh}\rho_e \sim \N(0, 1)$ \\
+$(\rho_w, \sigma_w)$, $(\rho_j, \sigma_j)$ & Mat\'ern fields & PC: $P(\rho < 100\,\mathrm{km}) = 0.05$, $P(\sigma > 1) = 0.01$ \\
 $(\rho_\gamma, \sigma_\gamma)$ & varying escalation & PC: $P(\sigma_\gamma > 0.2) = 0.05$ \\
 $\varphi_j$ & persistence & $\operatorname{atanh}\varphi_j \sim \N(0, 1.5^2)$ \\
-$\lambda_a$, $\lambda_r$ or $\vartheta_m$ & loadings & $\N(0, 2^2)$ \\
+$\lambda$, $\lambda_r$ or $\vartheta_m$ & loadings & $\N(0, 2^2)$ \\
 \bottomrule
 \end{tabular}}
 
@@ -115,9 +119,13 @@ $p(\bm y \mid \bm\theta)\, p(\bm\theta)$; the latent effects and fixed effects a
 Gaussian approximation at $\hat{\bm\theta}$; 95\% intervals for $\bm\theta$ from the Hessian at
 $\hat{\bm\theta}$.
 
-\textbf{Special cases.} $\lambda_a = 0$, $\sigma_a = 0$, $\lambda(s) \equiv \lambda$, $\gamma \equiv 0$, plus the
-neighbour cross terms: the current extended model.
-With $\lambda = \lambda_a = 0$: two separate univariate models.
+\textbf{Special cases.} $\rho_e = 0$, $\lambda(s) \equiv \lambda$, $\gamma \equiv 0$, plus the neighbour cross
+terms and a static unrest field: the current extended model. With $\rho_e = \lambda = 0$: two separate
+univariate models.
+
+\textbf{Static terms, before and after.} Conflict: $u_{\C,c(s)} + e_{\C,s} + w_{\C,s}$; unrest:
+$u_{\U,c(s)} + e_{\U,s}$. Dropped: the separate shared cell effect (now the correlation $\rho_e$) and
+the static unrest field (weak in both regions).
 
 \section*{Evidence so far (Africa and the Middle East; West Africa in brackets)}
 {\small\begin{tabular}{@{}lll@{}}
@@ -126,14 +134,15 @@ component & estimate, 95\% interval & reading \\
 \midrule
 $\delta_{\C}$ & 0.61 [0.59, 0.63] \; (0.45 [0.41, 0.48]) & supported \\
 $\kappa_{\U\to\C}$, no shared cell effect & 0.094 [0.065, 0.123] \; (0.095 [0.032, 0.158]) & supported \\
-$\kappa_{\U\to\C}$, with shared static effect & 0.057 [0.028, 0.086] \; (0.061 [$-$0.002, 0.124]) & modest \\
+$\kappa_{\U\to\C}$, with shared cell component & 0.057 [0.028, 0.086] \; (0.061 [$-$0.002, 0.124]) & modest \\
 neighbours' unrest (dropped) & $-$0.011 [$-$0.021, $-$0.001] \; ($-$0.005 [$-$0.021, 0.011]) & about zero \\
 lagged unrest, 13--26 weeks (dropped) & field diagnostic: corr. $-$0.04 \; ($-$0.08), placebo $\approx 0$ & no signal \\
-shared static effect & log-ML $+778$ \; ($+156$); range 44\,km (one cell) & supported; interval to do \\
+shared cell-level component ($\rho_e$) & log-ML $+778$ \; ($+156$); range 44\,km (one cell) & supported; interval to do \\
+$\sigma_{e,\C}$ with the shared component & 0.16 (0.99 without) & conflict's cell variation is shared \\
 $\lambda$ & 0.52 [0.46, 0.58] \; (0.58 [0.45, 0.71]); 0.35 with shared static & supported \\
 $\varphi_{\C}$, $\rho_{\C}$ & 0.95 [0.945, 0.963], 453--551\,km & supported \\
 $\sigma_{\U}$, $\varphi_{\U}$ (unrest only) & [0.40, 0.50], [0.54, 0.73] & supported \\
-$\sigma_{w,\U}$ (static unrest field) & [0.29, 0.62] \; ([0.10, 1.23]) & weak \\
+$\sigma_{w,\U}$ (static unrest field) & [0.29, 0.62] \; ([0.10, 1.23]) & weak: dropped \\
 $\gamma(s)$, $\lambda(s)$ & --- & not yet tested \\
 \bottomrule
 \end{tabular}}
