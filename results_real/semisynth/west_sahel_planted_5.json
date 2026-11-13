@@ -1,0 +1,45 @@
+{
+ "seed": 5,
+ "gamma_sd_true": 0.06072929494530199,
+ "kappa_true": 0.06072929494530199,
+ "region": "west_sahel",
+ "kappa0_hat": 0.18074975462673268,
+ "kappa0_se": 0.06377783783646875,
+ "hyper_gamma": {
+  "kappa_field_conflict": {
+   "kappa_field_conflict.range_km": 777.8862851951067,
+   "kappa_field_conflict.sd": 0.12603023007807657
+  },
+  "kappa_field_unrest": {
+   "kappa_field_unrest.range_km": 297.827083973852,
+   "kappa_field_unrest.sd": 0.046387578456208944
+  }
+ },
+ "spread_q90_q10": 0.1517540675796571,
+ "spread_true_q90_q10": 0.17864523713534647,
+ "share_cells_interval_excl_kappa0": 0.01220865704772475,
+ "share_cells_sign_opposite": 0.0,
+ "corr_with_truth": 0.43732961017963706,
+ "rmse": 0.10714190578325868,
+ "cover95": 0.978912319644839,
+ "cells_with_unrest": 901,
+ "prev_conflict": 0.025111018273530458,
+ "prev_unrest": 0.01269553915424964,
+ "truth_coef": {
+  "conflict:lag_own": 0.44635598355524797,
+  "conflict:lag_other": 0.06072929494530199,
+  "conflict:lag_own_nb": 0.05215786470300897,
+  "conflict:lag_other_nb": -0.0021446919768675974,
+  "unrest:lag_own": 0.26881544004663444,
+  "unrest:lag_other": 0.07587636139997268,
+  "unrest:lag_own_nb": -0.0044194152424019304,
+  "unrest:lag_other_nb": -0.005901373924756436
+ },
+ "opt_nit": 7,
+ "opt_success": true,
+ "seconds": {
+  "simulate": 399.4670178890228,
+  "fit": 5735.464404821396,
+  "total": 6654.957084655762
+ }
+}
