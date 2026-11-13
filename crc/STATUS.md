@@ -2619,3 +2619,49 @@ variation being picked up by the lagged cross terms. Same SEs.
 **biv3 (step 1)** gave no intervals: the Hessian at its saved theta is not positive definite (19:00 entry). So lambda for biv3 has
 no Hessian interval yet; the evidence for channel 3 here is the log_ml difference of 19.8.
 **ame:** step 1 (biv3 Hessian) is still running.
+
+## 2026-11-12 23:58 EST: Task 42 complete: semi-synthetic check of a spatially varying kappa (West Africa design)
+
+20 replicates (job 1735748 plus replicate 1 in 1735173), all `opt_success` true. JSONs in results_real/semisynth/ (pushed).
+Truth: the fitted biv3 with kappa_true = 0.0607 (conflict:lag_other).
+- Null: gamma = 0 (constant kappa).
+- Planted: Matern gamma field, 500 km range, SD = |fitted kappa_U->C|.
+- Refit: biv3 + gamma fields, only the 4 gamma hyperparameters free, on the case-control subsample (r = 0.25).
+
+**Null (tasks 1-10): constant kappa**
+
+| Quantity | Mean | Range |
+|---|---|---|
+| gamma (conflict) sd | 0.096 | 0.049 to 0.247 |
+| gamma (conflict) range (km) | 319 | 251 to 582 |
+| spread_q90_q10 (fitted kappa(s)) vs spread_true_q90_q10 | 0.069 vs 0 | 0.018 to 0.243 vs 0 |
+| share_cells_interval_excl_kappa0 | 0.0007 | 0 to 0.0065 |
+| share_cells_sign_opposite | 0.098 | 0 to 0.51 |
+| corr_with_truth | n/a (truth constant) | |
+| cover95 | 0.999 | 0.989 to 1 |
+| kappa0_hat vs kappa_true | 0.049 vs 0.061 | -0.007 to 0.094 |
+| prevalence conflict / unrest | 0.0255 / 0.0128 | |
+| seconds | 4,119 | 3,155 to 5,752 |
+
+**Planted (tasks 11-20): Matern gamma, 500 km, SD = |kappa|**
+
+| Quantity | Mean | Range |
+|---|---|---|
+| gamma (conflict) sd | 0.073 | 0.050 to 0.126 |
+| gamma (conflict) range (km) | 342 | 223 to 778 |
+| spread_q90_q10 vs spread_true_q90_q10 | **0.041 vs 0.152** | 0.018 to 0.152 vs 0.133 to 0.179 |
+| share_cells_interval_excl_kappa0 | 0.0012 | 0 to 0.012 |
+| share_cells_sign_opposite | 0.040 | 0 to 0.40 |
+| corr_with_truth | **0.17** | 0.01 to 0.44 |
+| cover95 | 0.936 | 0.749 to 0.999 |
+| kappa0_hat vs kappa_true | 0.063 vs 0.061 | -0.043 to 0.181 |
+| prevalence conflict / unrest | 0.0253 / 0.0128 | |
+| seconds | 4,189 | 3,278 to 6,655 |
+
+**Reading:**
+- Under the null, the fitted gamma field invents spread (mean 0.069, up to 0.24) and, in some replicates, sign reversals in up to
+  half of the cells. Under the planted truth, it recovers little: spread 0.041 against 0.152, correlation with the truth 0.17.
+- So on this design, the spread of a fitted kappa(s) does not distinguish a constant kappa from one varying at the planted
+  scale: the null spread is larger on average than the recovered planted spread.
+- Cell-level intervals almost never exclude kappa0 in either scenario, and coverage is close to nominal (0.94-1.0).
+- kappa0 itself is recovered without visible bias in both scenarios, but with wide replicate spread (-0.04 to 0.18).
