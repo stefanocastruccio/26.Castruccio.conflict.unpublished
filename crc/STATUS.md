@@ -2586,3 +2586,36 @@ The per-scenario tables come here when all 20 are in, about 5 h.
   confounded with the cell effects (cell_conflict.sd 0.136 is small). Its direction is a likely source of the negative eigenvalue.
   The eigenvector is not saved, so this is not confirmed.
 - Step 2 (biv3_nolam, warm-started from this theta) continues; ame step 1 is still running. Nothing else started.
+
+## 2026-11-12 23:00 EST: Task 41, west_sahel complete (biv3_nolam)
+
+results_real/bivariate/west_sahel/summary_biv3_nolam.json (pushed 22:19). biv3_nolam = biv3 with lambda = 0: separate conflict and
+unrest space-time fields, shared static field kept; warm-started from biv3; all rows; Hessian intervals.
+
+**log_ml:** biv3 -76,305.23, biv3_nolam -76,324.99, a difference of **19.8 in favour of biv3** (with the shared space-time loading).
+
+**kappa = <outcome>:lag_other (estimate, SE), with Wald 95% intervals:**
+
+| Coefficient | biv3 | biv3_nolam |
+|---|---|---|
+| conflict:lag_other | 0.0607 (0.0316) [-0.001, 0.123] | **0.0916 (0.0317)** [0.029, 0.154] |
+| unrest:lag_other | 0.0759 (0.0312) [0.015, 0.137] | **0.1102 (0.0313)** [0.049, 0.172] |
+
+Without the shared episodes (lambda = 0), both cross effects grow by about 50%, consistent with part of the shared space-time
+variation being picked up by the lagged cross terms. Same SEs.
+
+**biv3_nolam hyper_ci95** (estimate [95%]; the Hessian is positive definite here, unlike biv3's at its saved theta):
+- **shared_field: loading 1.680 [1.277, 2.084]; sd 1.017 [0.851, 1.217]; range 45 km [31, 65]**. The shared static field is
+  clearly supported: the loading and SD intervals are far from 0. Its range is below one 0.5-degree cell, though, so it acts as a
+  shared cell-level effect rather than a smooth field.
+- st_conflict: sd 0.648 [0.552, 0.761], range 426 km [356, 510], rho 0.890 [0.840, 0.925].
+- st_unrest: sd 0.545 [0.460, 0.647], range 729 km [583, 912], rho 0.702 [0.552, 0.809].
+- field_conflict: sd 1.580 [1.282, 1.949], range 553 km [416, 733]. field_unrest: sd 0.496 [0.250, 0.985], range 980 km
+  [397, 2419].
+- cell: conflict 0.157 [0.025, 1.004], unrest 0.687 [0.462, 1.023]. country: conflict 0.592 [0.292, 1.199], unrest 0.468
+  [0.243, 0.900].
+- **cell_conflict.sd** has a wide interval, reaching 0.025 at the low end. **field_unrest.range** is weakly identified.
+
+**biv3 (step 1)** gave no intervals: the Hessian at its saved theta is not positive definite (19:00 entry). So lambda for biv3 has
+no Hessian interval yet; the evidence for channel 3 here is the log_ml difference of 19.8.
+**ame:** step 1 (biv3 Hessian) is still running.
