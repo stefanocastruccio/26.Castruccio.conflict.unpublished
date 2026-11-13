@@ -2682,3 +2682,37 @@ subsample rows, zero-frac 0.25; 6.2 h). biv3 hyper_ci95 (estimate [95%]):
 
 **Step 2 (biv3_nolam):** the fit finished (hyperparameters 15,836 s on the subsample); its Hessian is running.
 summary_biv3_nolam.json is expected today, about 14:00-20:00 EST. I will report log_ml and kappa against biv3 then.
+
+## 2026-11-13 09:20 EST: Task 41 complete: ame biv3_nolam
+
+results_real/bivariate/ame/summary_biv3_nolam.json (pushed 09:10). Same settings as the saved biv3: zero-frac 0.25 (default zero
+seed), 26-week space-time steps, 1.0-degree space-time grid.
+
+**log_ml:** biv3 -315,168.02, biv3_nolam -315,228.73, a difference of **60.7 in favour of biv3** (with lambda).
+
+**kappa (estimate, SE):**
+
+| Coefficient | biv3 | biv3_nolam |
+|---|---|---|
+| conflict:lag_other | 0.0568 (0.0148) | **0.0781 (0.0148)** |
+| unrest:lag_other | 0.0473 (0.0141) | **0.0715 (0.0142)** |
+
+Without lambda, both grow by 40-50%, as in west_sahel.
+
+**biv3_nolam hyper_ci95** (Hessian positive definite):
+- shared_field: loading 1.143 [1.062, 1.225]; sd 1.421 [1.306, 1.546]; range 47 km [39, 56].
+- st_conflict: sd 0.770 [0.704, 0.841], range 501 km [454, 553], rho 0.834 [0.798, 0.865].
+- st_unrest: sd 0.490 [0.440, 0.546], range 731 km [643, 832], rho 0.663 [0.567, 0.741].
+- field_conflict: sd 1.552 [1.368, 1.760], range 763 km [635, 917]. field_unrest: sd 0.680 [0.546, 0.847], range 801 km
+  [553, 1160].
+- cell: conflict 0.149 [0.053, 0.420], unrest 0.841 [0.775, 0.914]. country: conflict 0.500 [0.361, 0.692], unrest 1.010
+  [0.816, 1.251].
+
+**Task 41 summary across the two regions:**
+- **Channel 3 (shared episodes, lambda) still matters once channel 2 is in:**
+  - log_ml favours biv3 over biv3_nolam by 60.7 (ame) and 19.8 (west_sahel).
+  - In ame, lambda = 0.352 [0.284, 0.421] (biv3 Hessian intervals, 08:45 entry).
+  - In west_sahel, biv3 has no intervals (Hessian not positive definite at the saved theta).
+- **Without lambda, kappa grows by 40-50%** in both regions: the shared episodes otherwise load onto the lagged cross terms.
+- **The shared static field (channel 2)** is well determined in both regions (loading about 1.1-1.7, intervals far from 0), with a
+  range of about 45 km, below one 0.5-degree cell.
