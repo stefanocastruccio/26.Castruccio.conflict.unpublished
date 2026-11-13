@@ -2665,3 +2665,20 @@ Truth: the fitted biv3 with kappa_true = 0.0607 (conflict:lag_other).
   scale: the null spread is larger on average than the recovered planted spread.
 - Cell-level intervals almost never exclude kappa0 in either scenario, and coverage is close to nominal (0.94-1.0).
 - kappa0 itself is recovered without visible bias in both scenarios, but with wide replicate spread (-0.04 to 0.18).
+
+## 2026-11-13 08:45 EST: Task 41, ame step 1 (ci_biv3.json): intervals OK (pushed 2026-11-12 23:05; report was late)
+
+Hessian of the Laplace log posterior at the saved biv3 theta: **positive definite** (smallest eigenvalue 3.47; 1,778,323
+subsample rows, zero-frac 0.25; 6.2 h). biv3 hyper_ci95 (estimate [95%]):
+- **shared_field: loading 1.141 [1.054, 1.227]; sd 1.458 [1.323, 1.607]; range 44 km [36, 53].** Far from 0, but again shorter
+  than one cell (as in west_sahel), so it acts as a shared cell-level effect.
+- **shared_st (lambda): loading 0.352 [0.284, 0.421]; sd 0.915 [0.815, 1.028]; range 504 km [455, 557]; rho 0.888 [0.854, 0.914].**
+  lambda is clearly away from 0.
+- st_unrest: sd 0.453 [0.404, 0.507], range 786 km [681, 907], rho 0.640 [0.532, 0.727].
+- field_conflict: sd 1.433 [1.246, 1.649], range 735 km [600, 900]. field_unrest: sd 0.619 [0.478, 0.800], range 813 km [521, 1269].
+- cell: conflict 0.159 [0.056, 0.454], unrest 0.853 [0.784, 0.928]. country: conflict 0.489 [0.352, 0.680], unrest 1.012 [0.819, 1.251].
+- Lag coefficients (estimate, SE): **conflict:lag_other 0.0568 (0.0148)**, **unrest:lag_other 0.0473 (0.0141)**,
+  conflict:lag_own 0.611 (0.009), unrest:lag_own 0.540 (0.010).
+
+**Step 2 (biv3_nolam):** the fit finished (hyperparameters 15,836 s on the subsample); its Hessian is running.
+summary_biv3_nolam.json is expected today, about 14:00-20:00 EST. I will report log_ml and kappa against biv3 then.
