@@ -128,22 +128,41 @@ $u_{\U,c(s)} + e_{\U,s}$. Dropped: the separate shared cell effect (now the corr
 the static unrest field (weak in both regions).
 
 \section*{Evidence so far (Africa and the Middle East; West Africa in brackets)}
-{\small\begin{tabular}{@{}lll@{}}
+{\footnotesize\setlength{\tabcolsep}{4pt}\begin{tabular}{@{}lll@{}}
 \toprule
 component & estimate, 95\% interval & reading \\
 \midrule
 $\delta_{\C}$ & 0.61 [0.59, 0.63] \; (0.45 [0.41, 0.48]) & supported \\
 $\kappa_{\U\to\C}$, no shared cell effect & 0.094 [0.065, 0.123] \; (0.095 [0.032, 0.158]) & supported \\
-$\kappa_{\U\to\C}$, with shared cell component & 0.057 [0.028, 0.086] \; (0.061 [$-$0.002, 0.124]) & modest \\
+$\kappa_{\U\to\C}$, with shared cell component & 0.057 [0.028, 0.086] \; (0.061 [$-$0.001, 0.123]) & modest \\
+$\kappa_{\U\to\C}$, shared cell component, $\lambda = 0$ & (0.092 [0.029, 0.154]) & inflated by 50\% \\
 neighbours' unrest (dropped) & $-$0.011 [$-$0.021, $-$0.001] \; ($-$0.005 [$-$0.021, 0.011]) & about zero \\
 lagged unrest, 13--26 weeks (dropped) & field diagnostic: corr. $-$0.04 \; ($-$0.08), placebo $\approx 0$ & no signal \\
-shared cell-level component ($\rho_e$) & log-ML $+778$ \; ($+156$); range 44\,km (one cell) & supported; interval to do \\
-$\sigma_{e,\C}$ with the shared component & 0.16 (0.99 without) & conflict's cell variation is shared \\
-$\lambda$ & 0.52 [0.46, 0.58] \; (0.58 [0.45, 0.71]); 0.35 with shared static & supported \\
-$\varphi_{\C}$, $\rho_{\C}$ & 0.95 [0.945, 0.963], 453--551\,km & supported \\
-$\sigma_{\U}$, $\varphi_{\U}$ (unrest only) & [0.40, 0.50], [0.54, 0.73] & supported \\
-$\sigma_{w,\U}$ (static unrest field) & [0.29, 0.62] \; ([0.10, 1.23]) & weak: dropped \\
-$\gamma(s)$, $\lambda(s)$ & --- & not yet tested \\
+$\lambda$ (shared episodes) & 0.52 [0.46, 0.58] \; (0.58 [0.45, 0.71]); log-ML vs $\lambda = 0$: (+19.8) & supported \\
+shared cell component & (loading 1.68 [1.28, 2.08], SD 1.02 [0.85, 1.22], range 45 [31, 65]\,km) & supported; implied $\rho_e \approx 0.92$ \\
+$\sigma_{e,\C}$ next to it & (0.16 [0.03, 1.00]) & not identified: use $\rho_e$ \\
+$\varphi_{\C}$ per block, range $\rho_{\C}$ & 0.95 [0.945, 0.963], 453--551\,km \; (0.89 [0.84, 0.93], 426 [356, 510]\,km) & supported \\
+$\sigma_{\U}$, $\varphi_{\U}$ (unrest only) & [0.40, 0.50], [0.54, 0.73] \; (0.55 [0.46, 0.65], 0.70 [0.55, 0.81]) & supported \\
+$\sigma_{w,\U}$ (static unrest field) & [0.29, 0.62] \; ([0.25, 0.99]) & weak: dropped \\
+$\gamma(s)$, smooth & semi-synthetic (West Africa): see below & not detectable \\
+$\lambda(s)$ & --- & not yet tested \\
 \bottomrule
 \end{tabular}}
+
+\textbf{Reading of the new evidence} (West Africa; Africa and the Middle East pending).
+\begin{itemize}
+\item \emph{Shared episodes} ($\lambda$). Setting $\lambda = 0$ lowers the log marginal likelihood by 19.8 and raises
+$\hat\kappa_{\U\to\C}$ from 0.061 to 0.092 (and $\hat\kappa_{\C\to\U}$ from 0.076 to 0.110): without the channel, shared
+episodes are read as escalation. Channel 3 stays.
+\item \emph{Shared places.} The shared static field has range 45\,km, below one cell, so it acts as a shared cell effect,
+and it leaves $\sigma_{e,\C}$ unidentified (interval 0.03--1.00); the Hessian of the full model at its saved estimate is not
+positive definite. It is replaced by the correlated cell effects $(e_{\C,s}, e_{\U,s})$, three parameters for the three
+identifiable quantities; the saved fit implies $\rho_e \approx 0.92$.
+\item \emph{Spatially varying escalation.} Outcomes regenerated from the fitted model on the West Africa design, with
+$\gamma_{\U\to\C}$ a Mat\'ern field. With $\gamma \equiv 0$ (10 replicates) no cell's 95\% interval excludes $\hat\kappa$
+(at most 0.7\% of cells), but the posterior-mean spread of $\kappa(s)$ (q90$-$q10) reaches 0.24. With $\sigma_\gamma = 0.061
+= \hat\kappa$ (8 replicates; true spread 0.15) the fitted spread is 0.03 (median), at most 1.2\% of cells are flagged, and the
+correlation with the truth is 0.01--0.44. A smooth $\gamma(s)$ of the size of $\kappa$ is not detectable in one region:
+we use the piecewise version, one $\gamma_r$ per region, and read regional differences from intervals, never from maps.
+\end{itemize}
 \end{document}
