@@ -2716,3 +2716,27 @@ Without lambda, both grow by 40-50%, as in west_sahel.
 - **Without lambda, kappa grows by 40-50%** in both regions: the shared episodes otherwise load onto the lagged cross terms.
 - **The shared static field (channel 2)** is well determined in both regions (loading about 1.1-1.7, intervals far from 0), with a
   range of about 45 km, below one 0.5-degree cell.
+
+## 2026-11-14 13:25 EST: Task 35, ERA5 precipitation: preliminary consistency check (2000, 2015)
+
+realdata/covariates/era5_check.py, job 1750155; results_real/era5_check_2000_2015.json. ERA5 daily totals (daily mean of
+hourly tp x 24 x 1000) on the 0.5-degree cells, exact area weights.
+- **Plausibility:**
+  - No negative values; daily maximum 134 mm.
+  - Annual totals north of 50N, with the 2000 and 2015 values: GBR 1,234/1,165; IRL 1,223/1,304; NOR 1,353/1,498; SWE 945/888;
+    FIN 752/835; DEU 819/781; POL 739/591; BLR 728/593; UKR 713/582; RUS 557/580; CAN 586/608; KAZ 471/448 mm. These are
+    in line with the known climatologies of those countries.
+  - Band means: 50-60N 730/722, 60-72N 530/568, 60-50S 1,358/1,466 mm (Southern Ocean islands, Patagonia tip).
+- **Against CHIRPS in the 40-50N overlap** (7,213 cells):
+  - Correlation: daily Pearson 0.59/0.61 (Spearman 0.48/0.47); **weekly (7-day sums) Pearson 0.75/0.77** (Spearman 0.72/0.72).
+  - **ERA5 is wetter:** annual 620/614 against 531/539 mm, a ratio of **1.17/1.14**.
+  - **ERA5 has more wet days (> 1 mm): 28%/27% against 18%/19%**, ERA5's known drizzle bias.
+  - Part of the daily mismatch is day boundaries: ERA5 uses UTC days, CHIRPS its own daily accumulation.
+- **Implications for the fill north of 50N:**
+  - SPI-3 is standardised per cell against each cell's own 1991-2020 ERA5 climatology, so the level difference largely cancels
+    there.
+  - Weekly precipitation itself would step up by about 15% across 50N, with more frequent small amounts.
+  - Option, not done: rescale ERA5 by calendar month to CHIRPS using the 45-50N overlap before the fill. The current plan
+    leaves ERA5 unscaled and flagged (ppt_source).
+- **Download status:** 626 of 866 files. Missing: 2007 (May-Dec), 2008-2011, 2020 (Jul-Dec), 2021-2025, January 2026. Expected
+  tonight or 15 Nov.
