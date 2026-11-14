@@ -2755,3 +2755,19 @@ hourly tp x 24 x 1000) on the 0.5-degree cells, exact area weights.
   precipitation. The strong winter factors may partly correct ERA5 towards a CHIRPS low bias rather than remove an ERA5 wet
   bias. Options: apply as is, apply only in the warm season, or not scale.
 - Also done: daily/ppt_era5_<y>.npz for 1990-2006 and 2012-2019 (job 1750400). The final merge only needs the remaining years.
+
+## 2026-11-14 16:10 EST: Task 35, ERA5 adjustment settled: warm-season level factor (owner agreed)
+
+- Tested on 2015, May-October, cells north of 50N (19,027):
+
+  | Method | North total vs raw | North wet-day share (>= 1 mm) | Overlap 45-50N mm/day (CHIRPS 1.80, ERA5 raw 1.94) |
+  |---|---|---|---|
+  | relative quantile mapping | 0.76 | 40% -> 22% | - |
+  | LOCI (threshold 2-4 mm + intensity scaling) | 0.81 | 40% -> 25% | 1.67 |
+
+  Both impose the 45-50N wet-day frequency (CHIRPS about 19%) on the north, removing real light-to-moderate rain in maritime and
+  boreal summers. The overlap informs ERA5's level bias, not the northern rain-day frequency.
+- **Adopted:** north of 50N, May-October ERA5 daily values multiplied by the monthly factor per 30-degree sector (CHIRPS/ERA5 sums
+  at 45-50N, 1991-2020; mostly 0.8-1.1). November-April left as ERA5 (CHIRPS underestimates cold-season and solid precipitation;
+  winter factors 0.5-0.8). Source flag era5_scaled. South of 50S: ERA5 unadjusted (era5). Applied in era5_precip.py merge once the
+  download is complete (643 of 866 files).

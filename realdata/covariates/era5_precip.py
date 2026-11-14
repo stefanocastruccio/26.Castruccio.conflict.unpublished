@@ -15,11 +15,13 @@ point stands for the 0.25 x 0.25 box around it, so a cell is the cos(lat)-weight
 1/2, 1, 1/2 in each direction (exact area overlap).
 Merge: cells where CHIRPS has no data (no finite daily value in 2000) take ERA5 for all years; grid/ppt_source.parquet
 (grid_id, source in {chirps, era5_scaled, era5, none}) records the source. Weekly totals as for CHIRPS (NaN if any day is missing).
-Scaling (owner, 2026-11-14): ERA5 is about 15% wetter than CHIRPS where both exist (era5_check.py). North of 50N, ERA5 daily values
-are multiplied by a factor per calendar month and 30-degree longitude sector, f = sum CHIRPS / sum ERA5 over the cells at 45-50N
-with both, days of that month, years 1991-2020 (clipped to [0.5, 2]; grid/ppt_era5_scaling.csv). This matches the monthly totals
-at the seam; it does not change ERA5's larger share of light-rain days. South of 50S (no overlap downloaded) ERA5 stays unscaled
-(source 'era5').
+Adjustment (owner, 2026-11-14): warm-season level scaling only. ERA5 is about 15% wetter than CHIRPS where both exist and has more
+light-rain days (era5_check.py). North of 50N, for May-October, ERA5 daily values are multiplied by f(month, 30-degree longitude
+sector) = sum CHIRPS / sum ERA5 over the cells at 45-50N with both, 1991-2020 (clipped to [0.5, 2]; grid/ppt_era5_scaling.csv;
+warm-season factors mostly 0.8-1.1). November-April is left as ERA5, because CHIRPS (satellite IR) underestimates cold-season and
+solid precipitation (winter factors 0.5-0.8 there). The number of rain days is not changed: quantile mapping and LOCI calibrated at
+45-50N were tested (2015) and impose that band's wet-day frequency on the north, removing 19-24% of northern May-October rain
+(qm_setup kept for reference, not used). Source flags: era5_scaled (north of 50N), era5 (south of 50S, no overlap, unadjusted).
 """
 from __future__ import annotations
 
@@ -183,6 +185,43 @@ def scaling_factors(cl, years=range(1991, 2021)):
     return f
 
 
+QM_MONTHS = (5, 6, 7, 8, 9, 10)
+QM_P = np.r_[np.linspace(0.01, 0.99, 99), 0.995, 0.999]
+
+
+def qm_setup(cl, sel, years=range(1991, 2021)):
+    """Quantile-mapping tables: R[m, k, :] (CHIRPS/ERA5 quantile ratios at 45-50N per month and sector) and, for each ERA5 cell
+    north of 50N, its own 1991-2020 ERA5 quantiles per month Qc[m][cell] (at QM_P)."""
+    gid = cl.grid_id.to_numpy(); lat = cl.lat.to_numpy(); sec = ((cl.lon.to_numpy() + 180) // 30).astype(int)
+    ov = gid[(lat > 45) & (lat < 50)]; secov = sec[(lat > 45) & (lat < 50)]
+    yrs = [y for y in years if os.path.exists(os.path.join(DAILY, f"ppt_era5_{y}.npz"))]
+    pe = {(m, k): [] for m in QM_MONTHS for k in range(12)}; pc = {(m, k): [] for m in QM_MONTHS for k in range(12)}
+    nb = {m: [] for m in QM_MONTHS}
+    for y in yrs:
+        ch = load_daily("ppt", y, ov); er = load_daily("ppt_era5", y, ov).reindex(ch.index)
+        en = load_daily("ppt_era5", y, sel)
+        for m in QM_MONTHS:
+            a = ch[ch.index.month == m].to_numpy(); b = er[er.index.month == m].to_numpy(); ok = np.isfinite(a) & np.isfinite(b)
+            for k in range(12):
+                kk = ok & (secov[None, :] == k)
+                pc[(m, k)].append(a[kk]); pe[(m, k)].append(b[kk])
+            nb[m].append(en[en.index.month == m].to_numpy("float32"))
+    R = np.ones((13, 12, len(QM_P))); have = np.zeros((13, 12), bool)
+    for (m, k), v in pe.items():
+        e_ = np.concatenate(v) if v else np.array([]); c_ = np.concatenate(pc[(m, k)]) if pc[(m, k)] else np.array([])
+        if len(e_) < 1000:
+            continue
+        QE, QC = np.quantile(e_, QM_P), np.quantile(c_, QM_P)
+        R[m, k] = np.clip(np.where(QE > 0, QC / np.where(QE > 0, QE, 1), np.where(QC > 0, 1.0, 0.0)), 0, 3); have[m, k] = True
+    Qc = {m: np.nanquantile(np.concatenate(nb[m]), QM_P, axis=0).T for m in QM_MONTHS}   # cells x len(QM_P)
+    pd.DataFrame([dict(month=m, sector_lon=-180 + 30 * k, **{f"R_p{int(p * 1000):03d}": R[m, k, i] for i, p in enumerate(QM_P)
+                  if p in (0.1, 0.25, 0.5, 0.75, 0.9, 0.99)}) for m in QM_MONTHS for k in range(12) if have[m, k]]).to_csv(
+        os.path.join(C.GRID, "ppt_era5_qm_ratios.csv"), index=False)
+    print(f"QM tables from {len(yrs)} years; sectors with overlap per month: {have[5].sum()}; "
+          f"median R at p=0.5 {np.median(R[list(QM_MONTHS)][:, :, 49][have[list(QM_MONTHS)]]):.2f}", flush=True)
+    return R, have, Qc
+
+
 def merge():
     cl = C.cells(); gid = cl.grid_id.to_numpy(); wd = C.weekday()
     sf = os.path.join(C.GRID, "ppt_source.parquet")
@@ -201,13 +240,15 @@ def merge():
     src.loc[north, "source"] = "era5_scaled"; src.loc[use & ~north, "source"] = "era5"
     src.to_parquet(sf, index=False)
     print("cells by source:", src.source.value_counts().to_dict(), flush=True)
-    F = scaling_factors(cl)
+    F = scaling_factors(cl)   # (12 months, 12 sectors)
     sel = gid[use]
     secsel = ((cl.lon.to_numpy()[use] + 180) // 30).astype(int); nsel = north[use]
+    warm = np.isin(np.arange(1, 13), QM_MONTHS)
 
-    def scale(df):   # df: days x sel cells (ERA5, mm/day) -> scaled north of 50N
-        fac = F[df.index.month.to_numpy() - 1][:, secsel]
-        return df * np.where(nsel[None, :], fac, 1.0)
+    def scale(df):   # df: days x sel cells (ERA5, mm/day) -> May-October scaled north of 50N; November-April unchanged
+        mo = df.index.month.to_numpy() - 1
+        fac = np.where(warm[mo][:, None] & nsel[None, :], F[mo][:, secsel], 1.0)
+        return df * fac
     comp = []
     for y in C.YEARS:
         e = load_daily("ppt_era5", y, gid)
