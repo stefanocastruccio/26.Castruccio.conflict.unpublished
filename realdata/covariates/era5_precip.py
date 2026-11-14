@@ -14,7 +14,12 @@ Aggregation to the 0.5-degree cells: ERA5 points sit on multiples of 0.25 deg, i
 point stands for the 0.25 x 0.25 box around it, so a cell is the cos(lat)-weighted mean of its 3 x 3 points with weights
 1/2, 1, 1/2 in each direction (exact area overlap).
 Merge: cells where CHIRPS has no data (no finite daily value in 2000) take ERA5 for all years; grid/ppt_source.parquet
-(grid_id, source in {chirps, era5}) records the source. Weekly totals as for CHIRPS (NaN if any day is missing).
+(grid_id, source in {chirps, era5_scaled, era5, none}) records the source. Weekly totals as for CHIRPS (NaN if any day is missing).
+Scaling (owner, 2026-11-14): ERA5 is about 15% wetter than CHIRPS where both exist (era5_check.py). North of 50N, ERA5 daily values
+are multiplied by a factor per calendar month and 30-degree longitude sector, f = sum CHIRPS / sum ERA5 over the cells at 45-50N
+with both, days of that month, years 1991-2020 (clipped to [0.5, 2]; grid/ppt_era5_scaling.csv). This matches the monthly totals
+at the seam; it does not change ERA5's larger share of light-rain days. South of 50S (no overlap downloaded) ERA5 stays unscaled
+(source 'era5').
 """
 from __future__ import annotations
 
@@ -156,25 +161,60 @@ def load_daily(name, y, grid_id):
     return v.reindex(columns=grid_id)
 
 
+def scaling_factors(cl, years=range(1991, 2021)):
+    """(12, 12) factors [calendar month, 30-degree longitude sector]: sum CHIRPS / sum ERA5 over cells 45-50N with both."""
+    gid = cl.grid_id.to_numpy(); lat = cl.lat.to_numpy(); sec = ((cl.lon.to_numpy() + 180) // 30).astype(int)
+    ov = (lat > 45) & (lat < 50); sc, se = np.zeros((12, 12)), np.zeros((12, 12)); used = []
+    for y in years:
+        if not os.path.exists(os.path.join(DAILY, f"ppt_era5_{y}.npz")):
+            continue
+        ch = load_daily("ppt", y, gid[ov]); er = load_daily("ppt_era5", y, gid[ov]).reindex(ch.index)
+        a, b = ch.to_numpy(), er.to_numpy(); ok = np.isfinite(a) & np.isfinite(b)
+        mon = ch.index.month.to_numpy() - 1
+        for k in range(12):
+            m = ok & (sec[ov][None, :] == k)
+            np.add.at(sc, (mon, k), np.where(m, a, 0).sum(1)); np.add.at(se, (mon, k), np.where(m, b, 0).sum(1))
+        used.append(y)
+    f = np.clip(np.where(se > 0, sc / np.maximum(se, 1e-9), 1.0), 0.5, 2.0)
+    pd.DataFrame(f, index=pd.Index(range(1, 13), name="month"), columns=[f"{-180 + 30 * k}E" for k in range(12)]).to_csv(
+        os.path.join(C.GRID, "ppt_era5_scaling.csv"))
+    print(f"ERA5 scaling factors from {len(used)} years ({used[:1]}..{used[-1:]}); range {f.min():.2f}-{f.max():.2f}, "
+          f"median {np.median(f):.2f}", flush=True)
+    return f
+
+
 def merge():
     cl = C.cells(); gid = cl.grid_id.to_numpy(); wd = C.weekday()
-    ch = load_daily("ppt", 2000, gid)
-    use = ~np.isfinite(ch.to_numpy()).any(0)                        # cells with no CHIRPS data
-    e0 = load_daily("ppt_era5", 2000, gid)
-    use &= np.isfinite(e0.to_numpy()).any(0)
-    src = pd.DataFrame({"grid_id": gid.astype("int32"), "source": np.where(use, "era5", "chirps")})
-    no = ~np.isfinite(ch.to_numpy()).any(0) & ~use
-    src.loc[no, "source"] = "none"
-    src.to_parquet(os.path.join(C.GRID, "ppt_source.parquet"), index=False)
+    sf = os.path.join(C.GRID, "ppt_source.parquet")
+    if os.path.exists(sf):   # rerun: the daily ppt cache already holds the filled cells, so keep the first classification
+        src = pd.read_parquet(sf).set_index("grid_id").reindex(gid).reset_index()
+        use = src.source.str.startswith("era5").to_numpy()
+    else:
+        ch = load_daily("ppt", 2000, gid)
+        use = ~np.isfinite(ch.to_numpy()).any(0)                    # cells with no CHIRPS data
+        e0 = load_daily("ppt_era5", 2000, gid)
+        use &= np.isfinite(e0.to_numpy()).any(0)
+        src = pd.DataFrame({"grid_id": gid.astype("int32"), "source": np.where(use, "era5", "chirps")})
+        no = ~np.isfinite(ch.to_numpy()).any(0) & ~use
+        src.loc[no, "source"] = "none"
+    north = use & (cl.lat.to_numpy() > 50)
+    src.loc[north, "source"] = "era5_scaled"; src.loc[use & ~north, "source"] = "era5"
+    src.to_parquet(sf, index=False)
     print("cells by source:", src.source.value_counts().to_dict(), flush=True)
+    F = scaling_factors(cl)
     sel = gid[use]
+    secsel = ((cl.lon.to_numpy()[use] + 180) // 30).astype(int); nsel = north[use]
+
+    def scale(df):   # df: days x sel cells (ERA5, mm/day) -> scaled north of 50N
+        fac = F[df.index.month.to_numpy() - 1][:, secsel]
+        return df * np.where(nsel[None, :], fac, 1.0)
     comp = []
     for y in C.YEARS:
         e = load_daily("ppt_era5", y, gid)
         nx = os.path.join(DAILY, f"ppt_era5_{y + 1}.npz")
         if os.path.exists(nx):
             e = pd.concat([e, load_daily("ppt_era5", y + 1, gid).iloc[:6]])
-        E = e[sel]
+        E = scale(e[sel])
         W = C.weeks(y, wd); rows = []
         for w in W:
             days = pd.date_range(w, periods=7, freq="D")
@@ -200,9 +240,9 @@ def merge():
         # daily ppt cache: fill the ERA5 cells (CHIRPS values untouched)
         fd = os.path.join(DAILY, f"ppt_{y}.npz")
         z = dict(np.load(fd, allow_pickle=True)); d = pd.DatetimeIndex(z["dates"])
-        ev = load_daily("ppt_era5", y, z["grid_id"]).reindex(d).to_numpy("float32")
         col = np.isin(z["grid_id"], sel)
-        z["values"][:, col] = ev[:, col]
+        ev = scale(load_daily("ppt_era5", y, sel).reindex(d)).reindex(columns=z["grid_id"][col]).to_numpy("float32")
+        z["values"][:, col] = ev
         np.savez(fd + ".tmp.npz", **z); os.replace(fd + ".tmp.npz", fd)
         # comparison where both exist (40N-50N), weekly totals
         if y >= 2000:

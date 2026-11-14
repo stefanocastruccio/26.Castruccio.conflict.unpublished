@@ -2740,3 +2740,18 @@ hourly tp x 24 x 1000) on the 0.5-degree cells, exact area weights.
     leaves ERA5 unscaled and flagged (ppt_source).
 - **Download status:** 626 of 866 files. Missing: 2007 (May-Dec), 2008-2011, 2020 (Jul-Dec), 2021-2025, January 2026. Expected
   tonight or 15 Nov.
+
+## 2026-11-14 15:30 EST: Task 35, ERA5 scaling to CHIRPS (owner: "do the adjustment"): factors computed, not yet applied
+
+- era5_precip.py merge now multiplies ERA5 daily values north of 50N by a factor per calendar month and 30-degree longitude
+  sector, f = sum CHIRPS / sum ERA5 over cells at 45-50N with both datasets, 1991-2020 (24 years processed so far), clipped to
+  [0.5, 2]; source flag era5_scaled. Cells south of 50S stay unscaled (era5).
+- Factors (grid/ppt_era5_scaling.csv): range 0.50-1.20, median 0.90.
+  - **Winter (Nov-Apr) 0.65-0.80** over Europe and Asia (sectors 0-30E, 30-60E, 60-90E) and 0.66-0.72 at 120-150W.
+  - **Summer (Jun-Aug) 0.88-1.08.**
+  - **Sector 90-120E (Mongolia, northern China): the 0.5 lower clip binds in 6 months**; ERA5 is more than twice CHIRPS there.
+  - Sectors 180-150W and 150-180E have no overlap cells (Chukotka, Kamchatka, western Alaska), so their factor is 1 (unscaled).
+- **Caveat raised to the owner before merging:** CHIRPS is satellite-IR based and known to underestimate cold-season and solid
+  precipitation. The strong winter factors may partly correct ERA5 towards a CHIRPS low bias rather than remove an ERA5 wet
+  bias. Options: apply as is, apply only in the warm season, or not scale.
+- Also done: daily/ppt_era5_<y>.npz for 1990-2006 and 2012-2019 (job 1750400). The final merge only needs the remaining years.
