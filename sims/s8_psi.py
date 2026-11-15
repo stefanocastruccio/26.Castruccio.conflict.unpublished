@@ -6,8 +6,8 @@ will run on the CRC is the code tested here. Two binary outcomes per cell-week:
   logit P(c_st) = b_c + d_c Lc + (kappa + psi' z_st) Lu + beta' x_st + w_c(s) + e(s,t)
   logit P(u_st) = b_u + d_u Lu + k_cu Lc               + beta' x_st + w_u(s) + lam e(s,t) + eu(s,t)
 
-L = log(1 + events of that outcome in the previous 4 weeks). Conditions on a 28 x 16 lattice of
-0.5-degree cells split into 16 "countries" (4 x 4 blocks of 7 x 4 cells), 104 weeks:
+L = log(1 + events of that outcome in the previous 4 weeks). Conditions on a 20 x 12 lattice of
+0.5-degree cells split into 16 "countries" (4 x 4 blocks of 5 x 3 cells), 104 weeks:
   governance  country-year, N(0,1) per country and year (v2x_libdem column)
   drought     -SPI anomaly: smooth AR(1) field (range 400 km, 0.9 per week)
   heat        tmax anomaly: AR(1) field (range 300 km, 0.7 per week)
@@ -16,8 +16,8 @@ L = log(1 + events of that outcome in the previous 4 weeks). Conditions on a 28 
 Each condition also has a direct effect on both outcomes (beta, fixed). The shared space-time field
 e is the confounder that the model must separate from escalation.
 
-Scenarios: null (all psi = 0) and planted (psi_gov 0.15, psi_gov2 -0.10, psi_drought 0.10,
-psi_drought_ipc 0.10; heat and remote 0). C->U has no psi in either scenario. kappa = 0.3, larger than
+Scenarios: null (all psi = 0) and planted (psi_gov 0.30, psi_gov2 -0.20, psi_drought 0.20,
+psi_drought_ipc 0.20; heat and remote 0). C->U has no psi in either scenario. kappa = 0.3, larger than
 the real 0.06, because the toy has about 100 times fewer cell-weeks than Africa-Middle East: this is a
 check of the code and of calibration, not a power study.
 
@@ -37,11 +37,11 @@ from fit_bivariate import PSI_TERMS, add_psi_terms  # noqa: E402
 
 CKPT = os.environ.get("S8_CKPT", "s8_ckpt.jsonl")
 N_REPS = int(os.environ.get("N_REPS", 10))
-NX, NY, BURN, T_TR, STEP = 28, 16, 12, 104, 4
-PAR = dict(b_c=-3.6, b_u=-3.4, d_c=0.3, d_u=0.3, k_cu=0.2, kappa=0.3, lam=0.8, e_sd=0.7, u_sd=0.5, phi=0.95)
+NX, NY, BURN, T_TR, STEP = 20, 12, 12, 104, 8
+PAR = dict(b_c=-3.0, b_u=-2.8, d_c=0.3, d_u=0.3, k_cu=0.2, kappa=0.3, lam=0.8, e_sd=0.7, u_sd=0.5, phi=0.95)
 BETA = dict(gov=-0.2, drought=0.1, heat=0.05, ipc=0.15, remote=-0.2)
 PSI = {"null": dict(gov=0.0, gov2=0.0, drought=0.0, heat=0.0, drought_ipc=0.0, remote=0.0),
-       "planted": dict(gov=0.15, gov2=-0.10, drought=0.10, heat=0.0, drought_ipc=0.10, remote=0.0)}
+       "planted": dict(gov=0.30, gov2=-0.20, drought=0.20, heat=0.0, drought_ipc=0.20, remote=0.0)}
 TERMS = list(PSI_TERMS)
 
 
@@ -64,7 +64,7 @@ def simulate8(scen, seed):
     rng = np.random.default_rng(seed)
     L = lattice(); n = L.n
     ix, iy = np.arange(n) % NX, np.arange(n) // NX          # SphereLattice orders lon fastest
-    country = (ix // 7) + 4 * (iy // 4)
+    country = (ix // 5) + 4 * (iy // 3)
     Ttot = BURN + T_TR
     year = np.arange(Ttot) // 52
     gov = rng.normal(size=(year.max() + 1, 16))[year][:, country]               # T x n
