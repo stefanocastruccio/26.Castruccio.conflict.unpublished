@@ -444,3 +444,17 @@ Expected 8-12 h on 16 cores (24 hyperparameters).
 - Commit `results_real/bivariate/south_asia/summary_tri3.json`. In STATUS: log_ml, every `lag_other`, `lag_other_x_*`,
   `lag_repr`, `lag_armed` coefficient with its 95% interval for the three outcomes; the hyperparameters with intervals;
   hessian_eig_min.
+
+## Task 47 (UCDP GED on the same cells and weeks): READY, authorized by the PI on 2026-11-15. Data only, no analysis.
+1. **Download** the latest global UCDP Georeferenced Event Dataset (GED, all years from 1989) as csv from
+   https://ucdp.uu.se/downloads/ (public, no form) into `$WORK/ucdp/raw/` (not committed). Record the version (e.g. 25.1),
+   file name, date and checksum in STATUS. If a newer "candidate" release covers 2025, note it but use the stable release.
+2. **Regrid** with `qsub -v GED_CSV=<file name> crc/jobs/47_ucdp.sh` (4 cores, minutes). `realdata/table/ucdp.py` puts
+   events on core.py's 0.5-degree cells (same nearest-cell rule for coastal events) and weeks (same weekday, extended back
+   to 1989; an event goes to the week of `date_start`). Events with `where_prec` 6-7 (country only / international) are
+   dropped and counted; events spanning several weeks or known only to the month are kept and flagged. Output
+   `$WORK/table_global/ucdp/year=<y>.parquet`, report `$WORK/table_global/ucdp_report.json`.
+3. **STATUS:** from the report: events raw / used / dropped by reason (precision 6-7, no cell, outside weeks), unmatched
+   country names, the where_prec and date_prec distributions, share of multi-week events, events by type of violence,
+   and events per year for Africa / Middle East / Asia. If the column names differ from those in ucdp.py's docstring,
+   adapt the script and say so. Do not compare with ACLED and do not fit anything.
