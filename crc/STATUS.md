@@ -2838,3 +2838,33 @@ hourly tp x 24 x 1000) on the 0.5-degree cells, exact area weights.
   Both are the V-Dem v16 values as published.
 - Code committed: vdem_download.sh, national.py, join_cov.py and assemble.py (lists), realdata/table/vdem_check.py.
 - **Task 44** (psi test): task 2 (west_sahel) running since 16:37 EST (1755982.2); tasks 1 and 3 follow after its check.
+
+## 2026-11-15 17:35 EST: Task 45 DONE: conflict split by actor (job 1756217, rc=0, 15 s of compute)
+
+- **Pre-check:** all 29 raw ACLED parquet files (acled_1997 ... acled_2025) have `inter1` and `sub_event_type`. `inter1` is
+  **text**: Protesters 1,144,137; State forces 446,144; External/Other forces 384,261; Political militia 378,006; Rebel group
+  238,321; Rioters 180,762; Identity militia 54,393; Civilians 7,671. `is_state()` already accepts "state forces", so
+  actors.py was not changed. core.py was not rerun.
+- Output: `$WORK/table_global/actors/year=<y>.parquet` (1,051,757 rows), report `$WORK/table_global/actors_report.json`.
+- **check_repr_plus_armed_equals_conflict: true.** Events used 2,804,500 (raw 2,833,695; 22,074 dropped with no cell, 7,121
+  outside the week range, as in core.py).
+- **Event counts:** Repression 55,013; Armed 1,239,756 (sum 1,294,769 = the core definition of conflict); excessive force
+  against protesters 6,056 (counted separately, stays in Unrest).
+- **inter1 among violence against civilians:** Political militia 188,505; State forces 55,013; Rebel group 48,195; Identity
+  militia 23,729; External/Other forces 9,819. So repression is 17% of violence against civilians overall.
+- **Repression share of violence against civilians by ACLED region:**
+
+  | Region | Share | Region | Share |
+  |---|---|---|---|
+  | East Asia | 0.904 | Southern Africa | 0.277 |
+  | Caucasus and Central Asia | 0.608 | South Asia | 0.226 |
+  | Southeast Asia | 0.519 | Eastern Africa | 0.222 |
+  | Oceania | 0.500 | Middle East | 0.197 |
+  | Europe | 0.288 | Northern Africa | 0.181 |
+  | Middle Africa | 0.126 | **Western Africa** | **0.103** |
+  | Caribbean | 0.095 | South America | 0.055 |
+  | Central America | 0.029 | North America | 0.015 |
+
+  Note for Task 46 (West Africa): only about 10% of violence against civilians there is by state forces, so the Repression
+  outcome will be sparse in that region.
+- Task 46 not started (ON HOLD in TASKS.md).
