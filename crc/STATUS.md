@@ -2789,7 +2789,7 @@ hourly tp x 24 x 1000) on the 0.5-degree cells, exact area weights.
 - **Raw ERA5 deleted** ($WORK/covariates/raw/era5, 6.8 GB) after confirming the outputs. The daily per-cell ERA5 files
   (covariates/daily/ppt_era5_<y>.npz) are kept.
 
-## 2026-11-15 17:45 EST: Task 43 DONE: V-Dem state capacity in the national covariates and the global table
+## 2026-11-15 16:40 EST: Task 43 DONE: V-Dem state capacity in the national covariates and the global table
 
 - **Source:** V-Dem Country-Year Full+Others **v16.0**, from the V-Dem Institute's R data package `vdeminstitute/vdemdata`
   (GitHub, "v16 release", commit f4dd269, 2026-03-17; v-dem.net needs the form). `realdata/covariates/vdem_download.sh` downloads
@@ -2837,4 +2837,4 @@ hourly tp x 24 x 1000) on the 0.5-degree cells, exact area weights.
   Two oddities in V-Dem itself: Germany's territorial authority is 90-92% before 2023, and Mali's rises to 83% in 2023.
   Both are the V-Dem v16 values as published.
 - Code committed: vdem_download.sh, national.py, join_cov.py and assemble.py (lists), realdata/table/vdem_check.py.
-- **Task 44** (psi test): task 2 (west_sahel) submitted as 1755982.2, held on 1755981; tasks 1 and 3 follow after its check.
+- **Task 44** (psi test): task 2 (west_sahel) running since 16:37 EST (1755982.2); tasks 1 and 3 follow after its check.
