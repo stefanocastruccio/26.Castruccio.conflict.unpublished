@@ -356,6 +356,57 @@ class CopyBlock(Block):
         return d
 
 
+class MultiCopyBlock(Block):
+    """Shared latent component entering k + 1 linear predictors: [a; b_1; ...; b_k] with a ~ base
+    GMRF and b_i = lam_i * a + e_i, e_i ~ N(0, I / tau). Outcome 0 receives a, outcome i receives
+    lam_i a. As for CopyBlock,
+
+        R = [[R_a, 0, ..., 0], [-lam_1 sqrt(tau) I, sqrt(tau) I, 0, ...], ..., [-lam_k sqrt(tau) I, 0, ..., sqrt(tau) I]],
+
+    log|Q| = log|Q_a| + k m log tau, so the loadings do not enter the determinant.
+    theta = [theta_base..., lam_1, ..., lam_k], each N(0, 2^2), bounded to [-5, 5]. k = 1 is CopyBlock."""
+
+    def __init__(self, base: Block, k=2, name="shared", tau=1e4, lam_init=1.0, copy_names=None):
+        self.base, self.name, self.tau, self.k = base, name, float(tau), int(k)
+        self.m = base.size
+        self.size = (self.k + 1) * base.size
+        self.n_theta = base.n_theta + self.k
+        self._lam0 = np.broadcast_to(np.asarray(lam_init, float), (self.k,)).copy()
+        self.copy_names = list(copy_names) if copy_names is not None else [str(i + 1) for i in range(self.k)]
+
+    def theta0(self):
+        return np.r_[self.base.theta0(), self._lam0]
+
+    def R(self, th):
+        nb = self.base.n_theta
+        Ra = self.base.R(th[:nb])
+        st = np.sqrt(self.tau)
+        I = sp.identity(self.m, format="csc")
+        rows = [[Ra] + [None] * self.k]
+        for i in range(self.k):
+            r = [-th[nb + i] * st * I] + [None] * self.k
+            r[i + 1] = st * I
+            rows.append(r)
+        return sp.bmat(rows, format="csc")
+
+    def logdet(self, th):
+        return self.base.logdet(th[:self.base.n_theta]) + self.k * self.m * np.log(self.tau)
+
+    def log_prior(self, th):
+        lam = th[self.base.n_theta:]
+        return self.base.log_prior(th[:self.base.n_theta]) - 0.5 * float(np.sum((lam / 2.0) ** 2))
+
+    def bounds(self):
+        return list(self.base.bounds()) + [(-5.0, 5.0)] * self.k
+
+    def describe(self, th):
+        nb = self.base.n_theta
+        d = {k.replace(self.base.name, self.name, 1): v for k, v in self.base.describe(th[:nb]).items()}
+        for i, cn in enumerate(self.copy_names):
+            d[f"{self.name}.loading[{cn}]"] = float(th[nb + i])
+        return d
+
+
 class RegionCopyBlock(Block):
     """CopyBlock with a loading per region: b = diag(lam[group]) a + e, e ~ N(0, I / tau).
 
