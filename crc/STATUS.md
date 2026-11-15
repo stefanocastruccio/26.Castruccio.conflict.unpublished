@@ -2868,3 +2868,70 @@ hourly tp x 24 x 1000) on the 0.5-degree cells, exact area weights.
   Note for Task 46 (West Africa): only about 10% of violence against civilians there is by state forces, so the Repression
   outcome will be sparse in that region.
 - Task 46 not started (ON HOLD in TASKS.md).
+
+## 2026-11-15 18:25 EST: Task 47 DONE: UCDP GED on the ACLED table's cells and weeks (job 1756345, rc=0, 45 s)
+
+- **Source:** UCDP Georeferenced Event Dataset **GED 26.1** (stable global release), https://ucdp.uu.se/downloads/ged/ged261-csv.zip,
+  downloaded 2026-11-15 18:19 EST; zip sha256 8c941d84954e555ee2e54f40fa04d9203bf1e2f962203d0a9930966c4947c667; inside it
+  `GEDEvent_v26_1.csv` (dated 2026-03-30, 273,992,720 bytes, sha256 61c3bf0a86374778343ba30c28a18b1fe739e2c33a76055504427eded4f8be27).
+  Kept in $WORK/ucdp/raw/, not committed. Years 1989-2025.
+- **Newer candidate releases** listed on the page (not used): GEDEvent_v26_0_9 and GEDEvent_v26_01_26_09 (UCDP Candidate,
+  January-September 2026), plus a VPP extract GEDEvent_v26_1_4_1101_2512.
+- **Columns** are those in ucdp.py's docstring (id, year, type_of_violence, date_start, date_end, date_prec, latitude, longitude,
+  where_prec, country, best, high, low, ...); ucdp.py was not changed.
+- **Events:** raw 417,968; **used 408,676** (97.8%). Dropped: where_prec 6-7 (country only / international) **5,575**;
+  outside the week range **3,225** (the ACLED table's weeks run 1988-12-06 ... 2025-10-28, 1,926 weeks, so UCDP events after
+  the start of November 2025 fall outside); no cell **492** (Philippines 418, Bahrain 37, Papua New Guinea 8, Tanzania 6,
+  Comoros 5, Ukraine 5, others <= 4). 15,405 events were moved to a neighbouring cell (coast/sea).
+- **Unmatched country names:** "Bosnia-Herzegovina" and "DR Congo (Zaire)". The name map is only used to skip the
+  neighbour-cell rule for countries without cells; an unmatched name is treated as having cells, so **no event was dropped**
+  because of it.
+- **where_prec:** 1 exact 194,544; 2 within 25 km 101,236; 3 second-order admin 59,437; 4 first-order admin 38,531;
+  5 linear/larger area 18,645; 6 country 5,309; 7 international 266.
+- **date_prec:** 1 exact day 358,130; 2 2-6 days 45,066; 3 week 2,566; 4 month 8,595; 5 longer 3,611.
+- **Share of events spanning more than one week: 5.7%**; date_prec 4-5 (month or coarser): 2.8%. Kept and flagged
+  (ucdp_n_multiweek, ucdp_n_tp_coarse).
+- **By type of violence (used):** state-based 284,686; non-state 60,743; one-sided 63,247.
+- **Output:** $WORK/table_global/ucdp/year=<y>.parquet, 601,563 cell-week rows (sparse, events or non-zero histories),
+  197,986 cell-weeks with at least one event; report $WORK/table_global/ucdp_report.json.
+- **Events used per year, by UCDP region** (Syria makes the Middle East peak in 2012-2017):
+
+  | Year | Africa | Middle East | Asia |
+  |---|---|---|---|
+  | 1989 | 911 | 466 | 689 |
+  | 1990 | 1,271 | 374 | 935 |
+  | 1991 | 895 | 332 | 829 |
+  | 1992 | 1,108 | 513 | 693 |
+  | 1993 | 1,897 | 743 | 758 |
+  | 1994 | 3,527 | 941 | 820 |
+  | 1995 | 1,091 | 1,122 | 982 |
+  | 1996 | 1,043 | 882 | 868 |
+  | 1997 | 1,113 | 693 | 900 |
+  | 1998 | 1,624 | 416 | 1,234 |
+  | 1999 | 1,437 | 339 | 1,677 |
+  | 2000 | 1,238 | 163 | 2,629 |
+  | 2001 | 829 | 277 | 1,520 |
+  | 2002 | 1,307 | 446 | 3,313 |
+  | 2003 | 1,130 | 312 | 2,545 |
+  | 2004 | 1,147 | 822 | 3,422 |
+  | 2005 | 832 | 812 | 2,814 |
+  | 2006 | 790 | 1,206 | 2,963 |
+  | 2007 | 1,010 | 928 | 3,072 |
+  | 2008 | 990 | 774 | 3,955 |
+  | 2009 | 1,387 | 726 | 3,966 |
+  | 2010 | 929 | 630 | 3,894 |
+  | 2011 | 1,617 | 1,646 | 3,767 |
+  | 2012 | 1,617 | 12,557 | 3,629 |
+  | 2013 | 1,621 | 18,896 | 3,003 |
+  | 2014 | 2,229 | 18,593 | 3,107 |
+  | 2015 | 2,166 | 12,960 | 3,199 |
+  | 2016 | 2,176 | 10,824 | 3,203 |
+  | 2017 | 2,353 | 9,215 | 3,381 |
+  | 2018 | 2,845 | 4,541 | 4,524 |
+  | 2019 | 2,920 | 3,386 | 5,446 |
+  | 2020 | 3,651 | 2,359 | 4,116 |
+  | 2021 | 3,962 | 2,257 | 6,053 |
+  | 2022 | 4,477 | 1,968 | 2,796 |
+  | 2023 | 4,392 | 3,112 | 3,079 |
+  | 2024 | 4,562 | 5,839 | 2,539 |
+  | 2025 | 5,290 | 4,087 | 2,063 |
