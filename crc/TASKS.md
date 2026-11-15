@@ -409,3 +409,16 @@ Purpose: Drew's hypothesis H1 is about state capacity, not regime type (v2x_libd
 - **Checks for STATUS:** share of cell-weeks with each indicator missing, by ACLED region; correlation with v2x_libdem;
   five example countries (e.g. China, Mali, Myanmar, Colombia, Germany) in 2000, 2015 and 2023.
 - Commit the code changes (no data). Report in STATUS. Nothing else.
+
+## Task 44 (escalation x conditions, the psi test): READY after Task 43, authorized by the PI on 2026-11-15
+`crc/jobs/44_psi.sh`, array 1-3, held on Task 43's last job. Purpose: test Drew's hypotheses before the global model:
+kappa(s,t) = kappa + psi' z_st with z = governance (V-Dem), its square, drought (-SPI-3), heat, drought x IPC 3+, remoteness.
+- No optimisation: the saved biv3 hyperparameters (`--fixed-theta`), one Laplace mode on all training rows, fixed-effect
+  intervals (`--psi-only`). Expected about 1 h for ame, 30 min for west_sahel, 16 cores each.
+- Input: the global table restricted to 2018-2024 (`--years`), so the saved hyperparameters apply.
+- First run task 2 (west_sahel, the fastest) and check that the log prints the psi terms and the JSON has `fixed_ci95`
+  with `conflict:lag_other_x_*` and `unrest:lag_other_x_*`; then tasks 1 and 3.
+- Commit `results_real/bivariate/<region>/psi_<gov>.json` (summaries only). In STATUS, a table per task: each
+  `lag_other_x_*` and `lag_other` with estimate and 95% interval, both directions, and whether it excludes 0.
+- If the fixed-theta conditioning fails because the fixed block changed size, report the error; do not refit the
+  hyperparameters.

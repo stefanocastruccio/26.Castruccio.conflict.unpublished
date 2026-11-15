@@ -528,7 +528,11 @@ def main():
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
-    raw = pd.read_parquet(a.table)
+    if os.path.isdir(a.table) and a.years:   # the global table: one file per year, year=<y>.parquet
+        raw = pd.concat([pd.read_parquet(os.path.join(a.table, f"year={y}.parquet"))
+                         for y in range(a.years[0], a.years[1] + 1)], ignore_index=True)
+    else:
+        raw = pd.read_parquet(a.table)
     raw["week_start"] = pd.to_datetime(raw["week_start"])
     if a.years:
         yr = raw["week_start"].dt.year
