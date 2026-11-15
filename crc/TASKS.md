@@ -394,3 +394,18 @@ J=$(qsub -terse crc/jobs/15_s5.sh | cut -d. -f1)   # S5 v3: new checkpoint s5v3,
 - **S5 v3.** Each replicate adds a univariate unrest model and the joint and conditional scores.
   - Commit `results/s5_raw.csv`, `s5_summary.csv` and the new `s5_prediction.csv`.
 - **biv2 jobs.** Leave the running jobs (1701825, 1705023) as they are; nothing here changes them.
+
+## Task 43 (V-Dem state capacity in the global table): READY, authorized by the PI on 2026-11-15
+Purpose: Drew's hypothesis H1 is about state capacity, not regime type (v2x_libdem). Add two V-Dem country-year indicators,
+1990-2025, to the national covariates and the global table. Light job; no model fits.
+- **Indicators:** `v2stfisccap` (state fiscal capacity) and `v2svstterr` (state authority over territory, % of territory).
+  Use the V-Dem Country-Year Full+Others dataset (latest version). If v-dem.net needs the form, use the copy in the
+  `vdeminstitute/vdemdata` GitHub package, or Our World in Data's republication if it carries these two; record the source
+  and version in STATUS.
+- **Join:** like v2x_libdem in `realdata/covariates/national.py` (same ISO3 matching and the same handling of unmatched
+  countries, e.g. Palestine/Gaza, Somaliland), as columns `v2stfisccap` and `v2svstterr`; then `join_cov.py --var national`
+  and `assemble.py`. Add both names to the national list in `assemble.py` and to `NATIONAL` in `realdata/load_partitions.py`
+  only if needed for the table; do NOT change `NATIONAL` in `realdata/fit_glmm.py` (the fits add them through a new option).
+- **Checks for STATUS:** share of cell-weeks with each indicator missing, by ACLED region; correlation with v2x_libdem;
+  five example countries (e.g. China, Mali, Myanmar, Colombia, Germany) in 2000, 2015 and 2023.
+- Commit the code changes (no data). Report in STATUS. Nothing else.
