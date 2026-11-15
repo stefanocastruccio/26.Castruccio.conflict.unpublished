@@ -422,3 +422,24 @@ kappa(s,t) = kappa + psi' z_st with z = governance (V-Dem), its square, drought 
   `lag_other_x_*` and `lag_other` with estimate and 95% interval, both directions, and whether it excludes 0.
 - If the fixed-theta conditioning fails because the fixed block changed size, report the error; do not refit the
   hyperparameters.
+
+## Task 45 (conflict split by actor): READY, authorized by the PI on 2026-11-15
+`crc/jobs/45_actors.sh` (4 cores, about 1 h). `realdata/table/actors.py` uses core.py's event-to-cell mapping (now the function
+`core.load_events`; core.py's output is unchanged, do not rerun it) and writes `$WORK/table_global/actors/year=<y>.parquet`:
+Repression = violence against civilians by state forces (inter1), Armed = battles + explosions/remote violence + violence
+against civilians by any other actor; "excessive force against protesters" counted separately (stays in Unrest).
+- **Before submitting:** check that the raw ACLED parquet files have the columns `inter1` and `sub_event_type`, and how
+  `inter1` is coded (numeric 1 or text "State forces"; `is_state()` accepts both). If the names differ, adapt `actors.py`
+  and say so in STATUS.
+- **Report in STATUS** (from actors_report.json): `check_repr_plus_armed_equals_conflict` (must be true), event counts,
+  the `inter1` values among violence against civilians, the repression share of violence against civilians by region.
+
+## Task 46 (three-outcome model, West Africa): ON HOLD until this line says READY (the coordinator flips it after the toy check)
+`crc/jobs/46_tri3.sh`, after Task 45. Armed violence, repression and unrest, psi per type of conflict, full fit plus Hessian.
+Expected 8-12 h on 16 cores (24 hyperparameters).
+- **Smoke test first** (interactive or a short job): the same command with `--box -6 4 9 16 --years 2018 2019`, without
+  `--hessian`; it must print "tri3: actor split merged" with 0 mismatching cell-weeks, start the optimisation, and write
+  summary_tri3.json. Then submit the job.
+- Commit `results_real/bivariate/west_sahel/summary_tri3.json`. In STATUS: log_ml, every `lag_other`, `lag_other_x_*`,
+  `lag_repr`, `lag_armed` coefficient with its 95% interval for the three outcomes; the hyperparameters with intervals;
+  hessian_eig_min.

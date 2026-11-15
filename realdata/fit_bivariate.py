@@ -480,6 +480,88 @@ def semisynth(a, saved, dfs, covs, base, tr, wk, L, cell, barrier, Lv, T, parts,
         json.dump(out, open(a.sim_out, "w"), indent=1, default=float)
 
 
+def run_tri(a, P, nC, L, barrier, Lv, T, x0, x1, y0, y1, base, observed):
+    """Three outcomes, rows stacked [armed; repr; unrest]. Per outcome: fixed effects (histories of all three, psi
+    terms for the two conflict types), country and cell effects, a static Matern field. Shared: a static field and a
+    space-time field (episodes), each entering armed violence with weight 1 and repression and unrest with loadings
+    (MultiCopyBlock); plus an unrest-only space-time field. Reports hyperparameters, log ML, every fixed effect with
+    its 95% interval, and with --hessian the hyperparameter intervals."""
+    import time
+    from sc.gmrf import MultiCopyBlock
+    outs = ("armed", "repr", "unrest")
+    ns = [len(P[o]["y"]) for o in outs]
+
+    def rows(k, D, ns_):      # D on outcome k's rows, zero elsewhere
+        D = sp.csr_matrix(D)
+        return sp.vstack([D if i == k else sp.csr_matrix((ns_[i], D.shape[1])) for i in range(3)], format="csr")
+
+    def diag3(Ds):            # outcome i's rows -> part i of a MultiCopyBlock (base = armed, copies = repr, unrest)
+        return sp.block_diag([sp.csr_matrix(D) for D in Ds], format="csr")
+
+    names = [n for o in outs for n in P[o]["names"]]
+
+    def make():
+        b = [FixedBlock(len(names), names)]
+        b += [IIDBlock(nC, name=f"country_{o}") for o in outs]
+        b += [IIDBlock(L.n, name=f"cell_{o}", sd_init=0.5) for o in outs]
+        b += [MaternBlock(L, name=f"field_{o}", range_init=300.0, barrier=barrier) for o in outs]
+        b.append(MultiCopyBlock(MaternBlock(L, name="sfield", range_init=300.0, barrier=barrier), k=2,
+                                name="shared_field", lam_init=0.5, copy_names=["repr", "unrest"]))
+        b.append(MultiCopyBlock(SpaceTimeAR1Block(Lv, T, name="st", sd_init=0.5, rho_init=0.8), k=2,
+                                name="shared_st", lam_init=0.5, copy_names=["repr", "unrest"]))
+        b.append(SpaceTimeAR1Block(Lv, T, name="st_unrest", sd_init=0.3, rho_init=0.8))
+        return b
+
+    def designs(Q):
+        ns_ = [len(Q[o]["y"]) for o in outs]
+        D = [sp.block_diag([sp.csr_matrix(Q[o]["X"]) for o in outs], format="csr")]
+        D += [rows(k, Q[o]["C"], ns_) for k, o in enumerate(outs)]
+        D += [rows(k, Q[o]["E"], ns_) for k, o in enumerate(outs)]
+        D += [rows(k, Q[o]["W"], ns_) for k, o in enumerate(outs)]
+        D.append(diag3([Q[o]["W"] for o in outs]))
+        D.append(diag3([Q[o]["V"] for o in outs]))
+        D.append(rows(2, Q["unrest"]["V"], ns_))
+        return D
+
+    y = np.concatenate([P[o]["y"] for o in outs])
+    t0 = time.time()
+    if a.zero_frac:
+        rng_s = np.random.default_rng(a.zero_seed)
+        S = {o: subsample(P[o], a.zero_frac, rng_s) for o in outs}
+        m = fit_subsampled(make, np.concatenate([S[o]["y"] for o in outs]), designs(S),
+                           np.concatenate([S[o]["off"] for o in outs]), y, designs(P), "tri3", None, None)
+    else:
+        m = LatentGaussianModel(y, make(), designs(P)).fit()
+    fs = m.fixed_summary()
+    res = {"region": a.region, "box": [x0, x1, y0, y1], "rows_per_outcome": int(len(base)), "cells": int(observed.sum()),
+           "countries": nC, "st_res_deg": a.st_res, "st_step_weeks": a.st_step, "zero_frac": a.zero_frac,
+           "train_rows_per_outcome": ns, "events_train": {o: int(P[o]["y"].sum()) for o in outs},
+           "psi_terms": a.psi.split(",") if a.psi else [], "psi_gov": a.psi_gov,
+           "models": {"tri3": {"hyper": m.hyper(), "log_ml": float(m.log_ml), "seconds": float(time.time() - t0),
+                               "fixed_ci95": {k: {"est": float(v[0]), "se": float(v[1]), "lo": float(v[0] - 1.96 * v[1]),
+                                                  "hi": float(v[0] + 1.96 * v[1]), "excludes_0": bool(abs(v[0]) > 1.96 * v[1])}
+                                              for k, v in fs.items()}}}}
+    if hasattr(m, "sub_info"):
+        res["models"]["tri3"]["subsample"] = dict(m.sub_info, zero_frac=a.zero_frac)
+    out = os.path.join(a.out, a.summary_name)
+    json.dump(res, open(out, "w"), indent=1, default=float)
+    print("tri3", json.dumps({"hyper": res["models"]["tri3"]["hyper"], "log_ml": res["models"]["tri3"]["log_ml"]}, default=float), flush=True)
+    if a.hessian:
+        t1 = time.time()
+        mh = getattr(m, "sub_model", m)
+        H, se = mh.hessian_theta()
+        lo_, hi_, k_ = {}, {}, 0
+        for b, t in zip(mh.blocks, mh._split(mh.theta)):
+            n_ = len(t)
+            lo_.update(b.describe(t - 1.96 * se[k_:k_ + n_])); hi_.update(b.describe(t + 1.96 * se[k_:k_ + n_]))
+            k_ += n_
+        res["models"]["tri3"].update({"hyper_ci95": {nm: [lo_[nm], hi_[nm]] for nm in lo_}, "theta_se": list(map(float, se)),
+                                      "hessian_eig_min": float(np.linalg.eigvalsh(H).min()),
+                                      "hessian_seconds": time.time() - t1})
+        json.dump(res, open(out, "w"), indent=1, default=float)
+        print("tri3 hyper_ci95", json.dumps(res["models"]["tri3"]["hyper_ci95"], default=float), flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("table"); ap.add_argument("--region", default="west_sahel")
@@ -522,6 +604,8 @@ def main():
     ap.add_argument("--psi-only", action="store_true",
                     help="with --fixed-theta: condition on all training rows, report the fixed effects and stop "
                          "(no test predictions, no exports)")
+    ap.add_argument("--actors", default=None,
+                    help="directory of the actor split (realdata/table/actors.py, year=<y>.parquet); needed by tri3")
     ap.add_argument("--hessian", action="store_true",
                     help="approximate 95%% intervals for the hyperparameters from the Hessian of the "
                          "Laplace log posterior of theta at the estimate (on the subsample with --zero-frac)")
@@ -539,13 +623,33 @@ def main():
         raw = raw[(yr >= a.years[0]) & (yr <= a.years[1])].reset_index(drop=True)
     x0, x1, y0, y1 = a.box if a.box else REGIONS[a.region]
     raw = region_rows(raw, a.region, (x0, x1, y0, y1), a.land)
+    tri = "tri3" in a.models
+    if tri:   # three outcomes: armed violence, state repression, unrest (conflict split by actor, task 45)
+        if not a.actors:
+            raise SystemExit("tri3 needs --actors")
+        yrs = sorted(set(raw["week_start"].dt.year))
+        act = pd.concat([pd.read_parquet(os.path.join(a.actors, f"year={y}.parquet")) for y in yrs
+                         if os.path.exists(os.path.join(a.actors, f"year={y}.parquet"))], ignore_index=True)
+        act["week_start"] = pd.to_datetime(act["week_start"])
+        raw = raw.merge(act, on=["grid_id", "week_start"], how="left")
+        for c in ("n_repr", "n_armed", "n_excess_force", "Repression", "Armed", "Repression_rollsum_4", "Armed_rollsum_4"):
+            raw[c] = raw[c].fillna(0)
+        nohist = raw["Battles_rollsum_4"].isna().to_numpy()   # first 4 covered weeks: no history, as in core.py
+        raw.loc[nohist, ["Repression_rollsum_4", "Armed_rollsum_4"]] = np.nan
+        chk = (raw["n_repr"] + raw["n_armed"] != raw[["Battles", "ExplosionsRemote_violence", "Violence_against_civilians"]].sum(1))
+        print(f"tri3: actor split merged; cell-weeks where repr + armed != conflict events: {int(chk.sum())}", flush=True)
+        spec = {"armed": dict(other="unrest", extra=("repr",)), "repr": dict(other="unrest", extra=("armed",)),
+                "unrest": dict(other="repr", extra=("armed",))}
+    else:
+        spec = {o: {} for o in OUTS}
+    outs = tuple(spec)
     dfs, covs = {}, {}
-    for o in OUTS:
-        dfo, cov, _ = prepare(raw, o)
+    for o in outs:
+        dfo, cov, _ = prepare(raw, o, **spec[o])
         dfs[o], covs[o] = dfo.reset_index(drop=True), cov
     if a.validation:   # 2023-2024 never enter: train 2018-2021, score 2022
-        keep = dfs["conflict"]["train"].to_numpy().copy()
-        for o in OUTS:
+        keep = dfs[outs[0]]["train"].to_numpy().copy()
+        for o in outs:
             d_ = dfs[o][keep].reset_index(drop=True)
             d_["train"] = (d_["week_start"] < pd.Timestamp("2022-01-01")).to_numpy()
             # the validation year takes the last training year's effect (as the test years
@@ -556,21 +660,21 @@ def main():
                     d_.loc[v22, "year_2021"] = 1
                 d_["year_2022"] = 0
             dfs[o] = d_
-    for o in OUTS:   # guard: drop fixed effects that are constant zero on the training rows
+    for o in outs:   # guard: drop fixed effects that are constant zero on the training rows
         tr_o = dfs[o]["train"].to_numpy()
         dead = [c for c in covs[o] if c in dfs[o] and not np.any(dfs[o].loc[tr_o, c].to_numpy() != 0)]
         if dead:
             print(f"{o}: dropping covariates that are zero on all training rows: {dead}", flush=True)
             covs[o] = [c for c in covs[o] if c not in dead]
     key = ["grid_id", "week_start"]
-    assert dfs["conflict"][key].equals(dfs["unrest"][key]), "prepare() rows differ between outcomes"
-    base = dfs["conflict"]
+    assert all(dfs[outs[0]][key].equals(dfs[o][key]) for o in outs), "prepare() rows differ between outcomes"
+    base = dfs[outs[0]]
     L, cell, observed = build_lattice(base.lon.to_numpy(), base.lat.to_numpy())
     barrier = sea_cells(L, a.land)
-    for o in OUTS:
+    for o in outs:
         dfs[o]["cell"] = cell
         dfs[o]["country_id"] = pd.factorize(base["ISO_A3"])[0]
-    for o in OUTS:                     # neighbour (spillover) histories, standardised on training rows
+    for o in outs:                     # neighbour (spillover) histories, standardised on training rows
         dd = dfs[o]
         for c in ("lag_own", "lag_other"):
             v = neighbour_mean(dd, L, c)
@@ -597,9 +701,13 @@ def main():
     print(f"regions {grp_names}: rows {np.bincount(grp_row).tolist()}, st cells {np.bincount(grp_v, minlength=len(present)).tolist()}",
           flush=True)
     if a.psi:   # escalation that depends on conditions: kappa(s,t) = kappa + sum_m psi_m z_m,st (Drew's hypotheses)
-        add_psi_terms(dfs, covs, a.psi.split(","), a.psi_gov)
+        if tri:   # psi on the escalation into each type of conflict (lag_other = unrest's history)
+            sub = {o: dfs[o] for o in ("armed", "repr")}; csub = {o: covs[o] for o in sub}
+            add_psi_terms(sub, csub, a.psi.split(","), a.psi_gov); covs.update(csub)
+        else:
+            add_psi_terms(dfs, covs, a.psi.split(","), a.psi_gov)
     if "biv2_rlk" in a.models:   # region-specific short-run cross effects (fixed): baseline + deviations
-        for o in OUTS:
+        for o in outs:
             for gi in range(1, len(grp_names)):
                 c = f"lag_other_x_{grp_names[gi]}"
                 dfs[o][c] = dfs[o]["lag_other"].to_numpy() * (grp_row == gi)
@@ -687,7 +795,10 @@ def main():
 
     saved = json.load(open(a.fixed_theta)) if a.fixed_theta else None
     init = json.load(open(a.init_theta)) if a.init_theta else None
-    parts_tr = {o: parts(o, tr) for o in OUTS}   # before --semisynth: the *_blocks() closures read parts_tr[o]["names"]
+    parts_tr = {o: parts(o, tr) for o in outs}
+    if tri:
+        run_tri(a, parts_tr, nC, L, barrier, Lv, T, x0, x1, y0, y1, base, observed)
+        return   # before --semisynth: the *_blocks() closures read parts_tr[o]["names"]
     if a.semisynth:
         semisynth(a, saved, dfs, covs, base, tr, wk, L, cell, barrier, Lv, T, parts, biv3_blocks, biv3_designs)
         return

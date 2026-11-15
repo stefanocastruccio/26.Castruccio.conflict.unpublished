@@ -67,8 +67,10 @@ from fit_acled import REGIONS, build_lattice, sea_cells  # noqa: E402
 REGIONS = dict(REGIONS, sahel_horn=(-18, 52, 0, 22), central_sahel=(-6, 16, 9, 20))
 OWN = {"conflict": ["Battles_rollsum_4", "ExplosionsRemote_violence_rollsum_4",
                     "Violence_against_civilians_rollsum_4"],
-       "unrest": ["Riots_rollsum_4", "Protests_rollsum_4"]}
-YCOL = {"conflict": "Conflict", "unrest": "Unrest"}
+       "unrest": ["Riots_rollsum_4", "Protests_rollsum_4"],
+       # conflict split by actor (realdata/table/actors.py, task 45): state repression and organised armed violence
+       "repr": ["Repression_rollsum_4"], "armed": ["Armed_rollsum_4"]}
+YCOL = {"conflict": "Conflict", "unrest": "Unrest", "repr": "Repression", "armed": "Armed"}
 NATIONAL = ["log_gdp_pc", "electricity_access", "EPI_index", "GHG_pc_t", "MF_pc_t", "ECO_pc_gha",
             "v2x_libdem"]
 CLIM = {"tmax_z": "tmax_rollmean_4", "tmin_z": "tmin_rollmean_4", "ppt_z": "ppt_rollmean_4",
@@ -100,21 +102,29 @@ def climate_anomaly(df, c, log=False, q=0.10):
     return z, clim, info
 
 
-def prepare(df, outcome):
+def prepare(df, outcome, other=None, extra=()):
     """Covariates of the latent models. Returns (df, cov, info).
 
     Missing values: covariates stay NaN through their construction (a missing IPC
     analysis is NaN, not zero people in phase 3+); after standardisation with the
     training mean and SD they are set to 0, the training mean. Missingness indicators
     (not standardised) are added for each national indicator (identical indicators are
-    merged into one column, recorded in info) and one for IPC."""
-    other = "unrest" if outcome == "conflict" else "conflict"
+    merged into one column, recorded in info) and one for IPC.
+
+    `other` is the outcome whose history is lag_other (default: the other of conflict/unrest);
+    `extra` are further outcomes whose histories enter as lag_<name> (the three-outcome model).
+    Rows need a complete 4-week history of all of them, so every outcome keeps the same rows."""
+    if other is None:
+        other = "unrest" if outcome == "conflict" else "conflict"
+    hist_cols = OWN[outcome] + OWN[other] + [c for x in extra for c in OWN[x]]
     info = {}
     df = df.copy()
     df["y"] = df[YCOL[outcome]].astype(int)
-    df = df[df[OWN[outcome] + OWN[other]].notna().all(axis=1)].copy()   # complete 4-week history
+    df = df[df[hist_cols].notna().all(axis=1)].copy()   # complete 4-week history
     df["lag_own"] = np.log1p(df[OWN[outcome]].sum(axis=1))
     df["lag_other"] = np.log1p(df[OWN[other]].sum(axis=1))
+    for x in extra:
+        df[f"lag_{x}"] = np.log1p(df[OWN[x]].sum(axis=1))
     df["log_pop"] = np.log1p(df["population"])
     if "gdp_pc" in df.columns:       # national GDP per capita (load_partitions)
         df["log_gdp_pc"] = np.log(df["gdp_pc"].where(df["gdp_pc"] > 0))
@@ -153,6 +163,9 @@ def prepare(df, outcome):
         mu, sd = df.loc[tr, c].mean(), df.loc[tr, c].std()
         df[c] = ((df[c] - mu) / (sd if sd > 0 else 1)).fillna(0.0)
     df["lag_own"] = df["lag_own"].fillna(0); df["lag_other"] = df["lag_other"].fillna(0)
+    for x in extra:   # further histories (three-outcome model): natural log scale, like the lags
+        df[f"lag_{x}"] = df[f"lag_{x}"].fillna(0)
+    cov = cov[:2] + [f"lag_{x}" for x in extra] + cov[2:]
     # missingness indicators (0/1, not standardised); constant or duplicated columns dropped
     ind, kept, aliases = {"ipc_missing": ipc_missing}, [], {}
     ind.update({f"{v}_missing": m for v, m in nat_missing.items()})

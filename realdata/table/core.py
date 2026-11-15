@@ -72,17 +72,12 @@ def iso_map(cell_codes):
     return m, names
 
 
-def main():
-    t0 = time.time(); rep = {}
-    os.makedirs(OUT, exist_ok=True)
-    cells = C.cells()[["grid_id", "lon", "lat", "ISO_A3", "row", "col"]].copy()
-    cr = pd.read_parquet(os.path.join(C.GRID, "cell_region.parquet"))[["grid_id", "region"]]
-    cells = cells.merge(cr, on="grid_id", how="left")
-    lut = np.full(360 * 720, -1, np.int64); lut[cells.row * 720 + cells.col] = np.arange(len(cells))
-    W = week_grid(); W0 = W[0]; nW = len(W)
-    rep["weeks"] = [str(W[0].date()), str(W[-1].date()), nW]
-    # ---- events
-    cols = ["event_date", "event_type", "latitude", "longitude", "geo_precision", "time_precision", "fatalities", "iso", "country", "region"]
+def load_events(cells, lut, W, rep, extra_cols=()):
+    """Raw ACLED events of the account -> cell (index into `cells`) and week index; drops events outside the
+    week range, without a cell, or of unknown type (counts in `rep`). Shared by core.py and actors.py."""
+    W0, nW = W[0], len(W)
+    cols = ["event_date", "event_type", "latitude", "longitude", "geo_precision", "time_precision", "fatalities", "iso", "country",
+            "region"] + list(extra_cols)
     ev = pd.concat([pd.read_parquet(f, columns=cols) for f in sorted(glob.glob(os.path.join(WORK, "acled", "raw", "acled_*.parquet")))],
                    ignore_index=True)
     ev["event_date"] = pd.to_datetime(ev.event_date)
@@ -135,6 +130,20 @@ def main():
     rep["events_unknown_type"] = int(ev.type.isna().sum())
     ev = ev[ev.type.notna()]
     rep["events_used"] = int(len(ev))
+    return ev
+
+
+def main():
+    t0 = time.time(); rep = {}
+    os.makedirs(OUT, exist_ok=True)
+    cells = C.cells()[["grid_id", "lon", "lat", "ISO_A3", "row", "col"]].copy()
+    cr = pd.read_parquet(os.path.join(C.GRID, "cell_region.parquet"))[["grid_id", "region"]]
+    cells = cells.merge(cr, on="grid_id", how="left")
+    lut = np.full(360 * 720, -1, np.int64); lut[cells.row * 720 + cells.col] = np.arange(len(cells))
+    W = week_grid(); W0 = W[0]; nW = len(W)
+    rep["weeks"] = [str(W[0].date()), str(W[-1].date()), nW]
+    ev = load_events(cells, lut, W, rep)
+    iso_arr = cells.ISO_A3.to_numpy(); clon = cells.lon.to_numpy(); clat = cells.lat.to_numpy()
     rep["geo_precision1_share_by_cell_region"] = (ev.assign(g=ev.geo_precision == 1, reg=cells.region.to_numpy()[ev.cell])
                                                   .groupby("reg", dropna=False).g.mean().round(4).rename(index=lambda x: str(x)).to_dict())
     # ---- coverage per country
