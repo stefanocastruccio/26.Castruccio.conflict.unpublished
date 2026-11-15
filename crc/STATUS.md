@@ -2935,3 +2935,57 @@ hourly tp x 24 x 1000) on the 0.5-degree cells, exact area weights.
   | 2023 | 4,392 | 3,112 | 3,079 |
   | 2024 | 4,562 | 5,839 | 2,539 |
   | 2025 | 5,290 | 4,087 | 2,063 |
+
+## 2026-11-15 18:35 EST: Task 44 DONE: psi test at the saved biv3 hyperparameters (ame and west_sahel, 2018-2024)
+
+- Jobs: 1755982.2 west_sahel / v2svstterr (16 min of fitting); 1756061.1 ame / v2svstterr and 1756062.3 ame / v2stfisccap
+  (81-91 min each, about 81 GB peak memory). All rc=0. No fixed-theta size error; no hyperparameters refitted.
+- Check after task 2: the log prints the psi terms for both outcomes and the JSON has `fixed_ci95` with
+  `conflict:lag_other_x_*` and `unrest:lag_other_x_*` (12 terms). Tasks 1 and 3 were then submitted.
+- Committed: results_real/bivariate/west_sahel/psi_v2svstterr.json, results_real/bivariate/ame/psi_v2svstterr.json,
+  results_real/bivariate/ame/psi_v2stfisccap.json (summaries only).
+- psi per SD of each condition (z standardised); `lag_other` = kappa at average conditions. "Unrest -> conflict" is the
+  conflict equation (lag of unrest), "Conflict -> unrest" the unrest equation. 95% intervals from the fixed-effect posterior.
+
+  **Task 2: west_sahel, governance = v2svstterr**
+
+  | Term | Unrest -> conflict (conflict eq.) | excl. 0 | Conflict -> unrest (unrest eq.) | excl. 0 |
+  |---|---|---|---|---|
+  | lag_other | 0.447 (0.177, 0.716) | **yes** | 0.224 (-0.055, 0.502) | no |
+  | lag_other_x_gov | 0.108 (0.017, 0.199) | **yes** | -0.041 (-0.139, 0.057) | no |
+  | lag_other_x_gov2 | 0.167 (0.011, 0.323) | **yes** | -0.116 (-0.292, 0.059) | no |
+  | lag_other_x_drought | 0.017 (-0.036, 0.070) | no | -0.022 (-0.078, 0.034) | no |
+  | lag_other_x_heat | -0.011 (-0.052, 0.029) | no | 0.004 (-0.036, 0.043) | no |
+  | lag_other_x_drought_ipc | -0.008 (-0.042, 0.026) | no | 0.027 (-0.009, 0.064) | no |
+  | lag_other_x_remote | 0.245 (0.018, 0.473) | **yes** | 0.152 (-0.080, 0.383) | no |
+
+  **Task 1: ame, governance = v2svstterr**
+
+  | Term | Unrest -> conflict (conflict eq.) | excl. 0 | Conflict -> unrest (unrest eq.) | excl. 0 |
+  |---|---|---|---|---|
+  | lag_other | 0.072 (-0.035, 0.179) | no | -0.002 (-0.101, 0.096) | no |
+  | lag_other_x_gov | 0.038 (-0.005, 0.081) | no | -0.081 (-0.122, -0.041) | **yes** |
+  | lag_other_x_gov2 | 0.002 (-0.043, 0.047) | no | -0.078 (-0.116, -0.040) | **yes** |
+  | lag_other_x_drought | 0.011 (-0.008, 0.029) | no | -0.001 (-0.016, 0.015) | no |
+  | lag_other_x_heat | -0.010 (-0.025, 0.005) | no | -0.003 (-0.015, 0.010) | no |
+  | lag_other_x_drought_ipc | -0.011 (-0.024, 0.003) | no | -0.002 (-0.012, 0.008) | no |
+  | lag_other_x_remote | -0.008 (-0.091, 0.076) | no | -0.013 (-0.092, 0.065) | no |
+
+  **Task 3: ame, governance = v2stfisccap (sensitivity)**
+
+  | Term | Unrest -> conflict (conflict eq.) | excl. 0 | Conflict -> unrest (unrest eq.) | excl. 0 |
+  |---|---|---|---|---|
+  | lag_other | 0.047 (-0.061, 0.155) | no | 0.019 (-0.080, 0.119) | no |
+  | lag_other_x_gov | -0.006 (-0.026, 0.014) | no | -0.007 (-0.024, 0.010) | no |
+  | lag_other_x_gov2 | -0.007 (-0.024, 0.011) | no | -0.010 (-0.024, 0.004) | no |
+  | lag_other_x_drought | 0.010 (-0.008, 0.029) | no | -0.001 (-0.016, 0.015) | no |
+  | lag_other_x_heat | -0.010 (-0.025, 0.005) | no | -0.003 (-0.016, 0.010) | no |
+  | lag_other_x_drought_ipc | -0.011 (-0.025, 0.003) | no | -0.002 (-0.012, 0.008) | no |
+  | lag_other_x_remote | -0.027 (-0.112, 0.057) | no | -0.017 (-0.096, 0.062) | no |
+- **Summary of which intervals exclude 0** (no interpretation):
+  - west_sahel: unrest -> conflict: kappa, gov, gov^2 and remoteness; conflict -> unrest: none.
+  - ame, v2svstterr: unrest -> conflict: none (gov 0.038, interval -0.005 to 0.081); conflict -> unrest: gov (-0.081) and
+    gov^2 (-0.078). kappa itself does not exclude 0 in either direction once the psi terms are in.
+  - ame, v2stfisccap: none, in either direction.
+  - Drought, heat, drought x IPC 3+: no interval excludes 0 in any of the three runs.
+- The psi_main_* coefficients (main effects of the conditions added with the psi terms) are in the JSON files.
