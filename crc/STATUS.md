@@ -2771,3 +2771,20 @@ hourly tp x 24 x 1000) on the 0.5-degree cells, exact area weights.
   at 45-50N, 1991-2020; mostly 0.8-1.1). November-April left as ERA5 (CHIRPS underestimates cold-season and solid precipitation;
   winter factors 0.5-0.8). Source flag era5_scaled. South of 50S: ERA5 unadjusted (era5). Applied in era5_precip.py merge once the
   download is complete (643 of 866 files).
+
+## 2026-11-15 15:55 EST: Task 35, ERA5 precipitation fill DONE (warm-season scaling applied); global table refreshed
+
+- **Download complete:** 866 monthly files (daily statistics, 1990-01 to 2026-01, bands 39.5-72.5N and 50-60S). The CRC Sunday
+  maintenance stopped the downloaders at 807 files; restarted at 10:10 EST, finished 14:40 EST.
+- **Jobs** (each held on the previous): 1755474 process 2007-2011 and 2020-2026 (all 37 years of daily/ppt_era5_<y>.npz now
+  exist; the log's final "rc=1" is the skipped FACTORS step, not a failure), 1755475 merge + spi3.py (new
+  crc/jobs/35_era5_merge.sh), 1755476 join_cov.py --var ppt / --var spi3, 1755477 assemble.py: all rc=0. Checks: 1755669.
+- **Cells by source** (grid/ppt_source.parquet): chirps 37,683; **era5_scaled 19,027** (north of 50N; May-October daily ERA5
+  times the month x 30-degree-sector factor, November-April raw ERA5); **era5 174** (south of 50S, raw); none 10.
+- **SPI-3** recomputed from the merged monthly totals: 432 months x 56,894 cells; missing 1.7% (1991-2025); baseline mean 0.003,
+  sd 0.996.
+- **Global table** ($WORK/table_global/clean_global, 8.5 GB): north of 50N and south of 50S, ppt and drought have no NaN
+  (2022: 989,404 and 5,200 rows; 2025: 818,161 and 4,300); ppt_pending_era5 and drought_pending_era5 are now False everywhere.
+  50S-50N unchanged (ppt NaN 0.03%).
+- **Raw ERA5 deleted** ($WORK/covariates/raw/era5, 6.8 GB) after confirming the outputs. The daily per-cell ERA5 files
+  (covariates/daily/ppt_era5_<y>.npz) are kept.
