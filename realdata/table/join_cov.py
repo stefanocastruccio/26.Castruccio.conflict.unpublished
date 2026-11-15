@@ -11,7 +11,7 @@ Each variable is stored at its natural resolution (assemble.py expands it onto t
   ppt and spi3 add ppt_pending_era5 / drought_pending_era5 = True for cells outside the CHIRPS domain (|lat| > 50) awaiting the ERA5 fill
   (their values are NaN until era5_precip.py merge has run; then rerun this script for ppt and spi3).
 - yearly per cell, keyed (grid_id, year), all.parquet: pop -> population; malaria -> malaria (PfPR, 2000-2025).
-- yearly per country, keyed (ISO_A3, year), all.parquet: national -> gdp, gdp_pc, electricity_access, v2x_libdem, GHG_pc_t, EPI_index,
+- yearly per country, keyed (ISO_A3, year), all.parquet: national -> gdp, gdp_pc, electricity_access, v2x_libdem, v2stfisccap, v2svstterr, GHG_pc_t, EPI_index,
   ECO_pc_gha and their flags (national_source_iso3, epi_extrapolated, epi_edition, eco_flag, eco_source_iso3, eco_pc_carried).
 - static per cell, keyed grid_id, all.parquet: static -> river_length, lake_area, BIOME_NAME (taken from $CLEAN, one value per cell).
 """

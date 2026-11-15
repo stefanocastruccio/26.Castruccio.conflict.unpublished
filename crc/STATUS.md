@@ -2788,3 +2788,53 @@ hourly tp x 24 x 1000) on the 0.5-degree cells, exact area weights.
   50S-50N unchanged (ppt NaN 0.03%).
 - **Raw ERA5 deleted** ($WORK/covariates/raw/era5, 6.8 GB) after confirming the outputs. The daily per-cell ERA5 files
   (covariates/daily/ppt_era5_<y>.npz) are kept.
+
+## 2026-11-15 17:45 EST: Task 43 DONE: V-Dem state capacity in the national covariates and the global table
+
+- **Source:** V-Dem Country-Year Full+Others **v16.0**, from the V-Dem Institute's R data package `vdeminstitute/vdemdata`
+  (GitHub, "v16 release", commit f4dd269, 2026-03-17; v-dem.net needs the form). `realdata/covariates/vdem_download.sh` downloads
+  data/vdem.RData (34 MB) to $WORK/covariates/raw/vdem/ and extracts country_text_id, year >= 1990, v2x_libdem, v2stfisccap,
+  v2svstterr (6,383 country-years, 1990-2025). Not committed.
+- **Join:** `national.py` merges both on the same source codes as the World Bank data (MAP: KOS->XKX, SOL->SOM, CYN->CYP,
+  ESH->MAR, BRT->EGY), columns `v2stfisccap`, `v2svstterr` in national_1990_2025.parquet; then `join_cov.py --var national`
+  (1755980) and `assemble.py` (1755981), both rc=0. Both names added to the national list in assemble.py; `NATIONAL` in
+  load_partitions.py and fit_glmm.py unchanged (the global table does not need them).
+- **Existing national columns unchanged** after the rebuild (gdp, gdp_pc, elec_access, libdem, ghg_pc: 0 values changed, 0 gained,
+  0 lost). The file gained rows for three cell codes with no data at all (ATF, FLK, SGS).
+- **Codes with no V-Dem data** are the same as for v2x_libdem (ALA, BHS, BLZ, BRN, COK, CYM, GRL, KAB, KAS, NCL, PRI, PYF, VCT, VIR,
+  WSM, plus ATF, FLK, SGS), with two differences to note:
+  - **Palestine (PSE):** v2x_libdem has no value (OWID), but V-Dem's "Palestine/West Bank" series gives v2stfisccap;
+    v2svstterr is missing for it. V-Dem's separate "Palestine/Gaza" series (PSG) is not used.
+  - **Somaliland (SOL):** kept on Somalia's values like the other national covariates, although V-Dem has a separate
+    Somaliland series (SML).
+- **Missing share of cell-weeks**, 1990-2025 (results_real/vdem_state_capacity_check.json):
+
+  | ACLED region | cell-weeks | v2stfisccap missing | v2svstterr missing |
+  |---|---|---|---|
+  | africa | 15,142,420 | 2.71% | 0.00% |
+  | europe | 870,799 | 0.03% | 0.03% |
+  | latam | 2,896,129 | 0.30% | 0.30% |
+  | middle_east | 1,177,146 | 0.00% | 0.09% |
+  | south_asia | 2,035,917 | 0.06% | 0.06% |
+  | no ACLED region (rest of the world) | 10,962,564 | 0.62% | 0.62% |
+  | **all** | 33.08 M | **1.48%** | **0.24%** |
+
+  The Africa gap in v2stfisccap is V-Dem's own: no fiscal-capacity values for **Sudan, Tanzania and Uganda before 2005**
+  (1997-2004 in the table). Nothing is missing for either indicator in 2018-2024 apart from the small territories above.
+- **Correlation with v2x_libdem:** v2stfisccap 0.60 (Spearman 0.53) over 2,446 country-years, 0.70 over cell-weeks;
+  **v2svstterr 0.30** (Spearman 0.27), 0.26 over cell-weeks. The two indicators correlate 0.46. So fiscal capacity is fairly
+  close to regime type, territorial authority much less so.
+- **Examples** (country-year values; v2stfisccap is a latent scale, v2svstterr a % of territory):
+
+  | Country | Year | v2x_libdem | v2stfisccap | v2svstterr |
+  |---|---|---|---|---|
+  | China | 2000 / 2015 / 2023 | 0.07 / 0.05 / 0.04 | 1.86 / 1.86 / 1.86 | 97.8 / 97.1 / 97.6 |
+  | Colombia | 2000 / 2015 / 2023 | 0.43 / 0.55 / 0.57 | 2.12 / 2.12 / 1.94 | 64.0 / 81.0 / 85.8 |
+  | Germany | 2000 / 2015 / 2023 | 0.86 / 0.85 / 0.81 | 2.84 / 2.84 / 2.84 | 90.0 / 91.7 / 99.7 |
+  | Mali | 2000 / 2015 / 2023 | 0.37 / 0.35 / 0.15 | -0.30 / -0.02 / 0.78 | 76.9 / 76.4 / 83.3 |
+  | Myanmar | 2000 / 2015 / 2023 | 0.02 / 0.18 / 0.02 | -0.14 / 0.59 / -0.15 | 79.0 / 77.9 / 60.3 |
+
+  Two oddities in V-Dem itself: Germany's territorial authority is 90-92% before 2023, and Mali's rises to 83% in 2023.
+  Both are the V-Dem v16 values as published.
+- Code committed: vdem_download.sh, national.py, join_cov.py and assemble.py (lists), realdata/table/vdem_check.py.
+- **Task 44** (psi test): task 2 (west_sahel) submitted as 1755982.2, held on 1755981; tasks 1 and 3 follow after its check.

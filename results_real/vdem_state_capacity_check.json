@@ -1,0 +1,215 @@
+{
+ "missing_share_by_region": {
+  "v2stfisccap": {
+   "africa": 0.0271,
+   "europe": 0.0003,
+   "latam": 0.003,
+   "middle_east": 0.0,
+   "nan": 0.0062,
+   "south_asia": 0.0006
+  },
+  "v2svstterr": {
+   "africa": 0.0,
+   "europe": 0.0003,
+   "latam": 0.003,
+   "middle_east": 0.0009,
+   "nan": 0.0062,
+   "south_asia": 0.0006
+  }
+ },
+ "cell_weeks_by_region": {
+  "africa": 15142420,
+  "europe": 870799,
+  "latam": 2896129,
+  "middle_east": 1177146,
+  "nan": 10962564,
+  "south_asia": 2035917
+ },
+ "missing_share_all": {
+  "v2stfisccap": 0.0148,
+  "v2svstterr": 0.0024
+ },
+ "corr_with_libdem": {
+  "v2stfisccap": {
+   "cell_weeks_pearson_5pct_sample": 0.702,
+   "cell_weeks_spearman_5pct_sample": 0.578,
+   "country_years_pearson": 0.602,
+   "country_years_spearman": 0.527,
+   "country_years_n": 2446
+  },
+  "v2svstterr": {
+   "cell_weeks_pearson_5pct_sample": 0.257,
+   "cell_weeks_spearman_5pct_sample": 0.096,
+   "country_years_pearson": 0.302,
+   "country_years_spearman": 0.272,
+   "country_years_n": 2446
+  }
+ },
+ "corr_fisccap_terr_country_years": 0.458,
+ "examples": [
+  {
+   "ISO_A3": "CHN",
+   "year": 2023,
+   "v2x_libdem": 0.037,
+   "v2stfisccap": 1.863,
+   "v2svstterr": 97.636
+  },
+  {
+   "ISO_A3": "COL",
+   "year": 2023,
+   "v2x_libdem": 0.57,
+   "v2stfisccap": 1.939,
+   "v2svstterr": 85.8
+  },
+  {
+   "ISO_A3": "DEU",
+   "year": 2023,
+   "v2x_libdem": 0.812,
+   "v2stfisccap": 2.844,
+   "v2svstterr": 99.667
+  },
+  {
+   "ISO_A3": "MLI",
+   "year": 2000,
+   "v2x_libdem": 0.37,
+   "v2stfisccap": -0.302,
+   "v2svstterr": 76.857
+  },
+  {
+   "ISO_A3": "MLI",
+   "year": 2015,
+   "v2x_libdem": 0.349,
+   "v2stfisccap": -0.022,
+   "v2svstterr": 76.417
+  },
+  {
+   "ISO_A3": "MLI",
+   "year": 2023,
+   "v2x_libdem": 0.145,
+   "v2stfisccap": 0.782,
+   "v2svstterr": 83.333
+  },
+  {
+   "ISO_A3": "MMR",
+   "year": 2015,
+   "v2x_libdem": 0.181,
+   "v2stfisccap": 0.591,
+   "v2svstterr": 77.917
+  },
+  {
+   "ISO_A3": "MMR",
+   "year": 2023,
+   "v2x_libdem": 0.015,
+   "v2stfisccap": -0.145,
+   "v2svstterr": 60.286
+  }
+ ],
+ "examples_country_year_source": [
+  {
+   "ISO_A3": "CHN",
+   "year": 2000,
+   "v2x_libdem": 0.07,
+   "v2stfisccap": 1.863,
+   "v2svstterr": 97.8
+  },
+  {
+   "ISO_A3": "CHN",
+   "year": 2015,
+   "v2x_libdem": 0.052,
+   "v2stfisccap": 1.863,
+   "v2svstterr": 97.125
+  },
+  {
+   "ISO_A3": "CHN",
+   "year": 2023,
+   "v2x_libdem": 0.037,
+   "v2stfisccap": 1.863,
+   "v2svstterr": 97.636
+  },
+  {
+   "ISO_A3": "COL",
+   "year": 2000,
+   "v2x_libdem": 0.426,
+   "v2stfisccap": 2.122,
+   "v2svstterr": 64.0
+  },
+  {
+   "ISO_A3": "COL",
+   "year": 2015,
+   "v2x_libdem": 0.551,
+   "v2stfisccap": 2.122,
+   "v2svstterr": 81.0
+  },
+  {
+   "ISO_A3": "COL",
+   "year": 2023,
+   "v2x_libdem": 0.57,
+   "v2stfisccap": 1.939,
+   "v2svstterr": 85.8
+  },
+  {
+   "ISO_A3": "DEU",
+   "year": 2000,
+   "v2x_libdem": 0.86,
+   "v2stfisccap": 2.844,
+   "v2svstterr": 90.0
+  },
+  {
+   "ISO_A3": "DEU",
+   "year": 2015,
+   "v2x_libdem": 0.845,
+   "v2stfisccap": 2.844,
+   "v2svstterr": 91.667
+  },
+  {
+   "ISO_A3": "DEU",
+   "year": 2023,
+   "v2x_libdem": 0.812,
+   "v2stfisccap": 2.844,
+   "v2svstterr": 99.667
+  },
+  {
+   "ISO_A3": "MLI",
+   "year": 2000,
+   "v2x_libdem": 0.37,
+   "v2stfisccap": -0.302,
+   "v2svstterr": 76.857
+  },
+  {
+   "ISO_A3": "MLI",
+   "year": 2015,
+   "v2x_libdem": 0.349,
+   "v2stfisccap": -0.022,
+   "v2svstterr": 76.417
+  },
+  {
+   "ISO_A3": "MLI",
+   "year": 2023,
+   "v2x_libdem": 0.145,
+   "v2stfisccap": 0.782,
+   "v2svstterr": 83.333
+  },
+  {
+   "ISO_A3": "MMR",
+   "year": 2000,
+   "v2x_libdem": 0.018,
+   "v2stfisccap": -0.139,
+   "v2svstterr": 79.0
+  },
+  {
+   "ISO_A3": "MMR",
+   "year": 2015,
+   "v2x_libdem": 0.181,
+   "v2stfisccap": 0.591,
+   "v2svstterr": 77.917
+  },
+  {
+   "ISO_A3": "MMR",
+   "year": 2023,
+   "v2x_libdem": 0.015,
+   "v2stfisccap": -0.145,
+   "v2svstterr": 60.286
+  }
+ ],
+ "examples_note": "'examples' = country-years present in the global table (ACLED coverage starts later for some countries); 'examples_country_year_source' = all 15 from the national covariate file"
+}

@@ -28,7 +28,7 @@ EXPECTED = {
     "ipc": [f"phase_{k}" for k in range(1, 6)] + [f"phase{k}_share" for k in range(1, 6)] + ["phase3p_share", "ipc_carried"],
     "pop": ["population"], "malaria": ["malaria"],
     "national": ["gdp", "gdp_pc", "electricity_access", "v2x_libdem", "GHG_pc_t", "EPI_index", "ECO_pc_gha",
-                 "MF_pc_t"],   # MF_pc_t (material footprint): no open source found in task 35; all NaN so that prepare() runs
+                 "MF_pc_t", "v2stfisccap", "v2svstterr"],   # MF_pc_t (material footprint): no open source found in task 35; all NaN so that prepare() runs
     "static": ["river_length", "lake_area", "BIOME_NAME"],
 }
 ALLYEAR = {}

@@ -8,8 +8,12 @@ Sources (no login):
   V-Dem v2x_libdem (liberal democracy index): v-dem.net requires a form, so it is taken from Our World in Data's
                      republication of the V-Dem estimate (grapher "liberal-democracy-index", column libdem_vdem__estimate_best)
   OWID CO2 and GHG data (github owid/co2-data): ghg_per_capita (t CO2-eq per person, incl. land use)
+  V-Dem v16.0 state capacity (task 43): v2stfisccap (state fiscal capacity) and v2svstterr (state authority over territory,
+                     % of territory), from the V-Dem Institute's vdemdata package (vdem_download.sh -> raw/vdem/vdem_v16_subset.csv);
+                     matched on the same source codes as the World Bank data (MAP below)
 Cell codes that are not ISO countries are mapped to a source country (MAP below); codes still unmatched are logged.
-Output: national_1990_2025.parquet (iso3 = cell code, source_iso3, year, gdp, gdp_pc, elec_access, libdem, ghg_pc)
+Output: national_1990_2025.parquet (iso3 = cell code, source_iso3, year, gdp, gdp_pc, elec_access, libdem, ghg_pc,
+        v2stfisccap, v2svstterr)
         and national_unmatched.csv.
 """
 from __future__ import annotations
@@ -29,6 +33,7 @@ WB = "https://api.worldbank.org/v2/country/all/indicator/{ind}?date=1990:2025&fo
 IND = {"gdp": "NY.GDP.MKTP.CD", "gdp_pc": "NY.GDP.PCAP.CD", "elec_access": "EG.ELC.ACCS.ZS"}
 LIBDEM = "https://ourworldindata.org/grapher/liberal-democracy-index.csv?v=1&csvType=full&useColumnShortNames=true"
 OWID = "https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv"
+VDEM = os.path.join(C.RAW, "vdem", "vdem_v16_subset.csv")
 # cell code -> source code (World Bank / OWID use XKX for Kosovo; disputed territories take their administering country)
 MAP = {"KOS": "XKX", "SOL": "SOM", "CYN": "CYP", "ESH": "MAR", "BRT": "EGY"}
 MAP_OWID = {"XKX": "OWID_KOS"}
@@ -63,8 +68,10 @@ def main():
     df = grid.merge(wb.reset_index(), on=["source_iso3", "year"], how="left")
     df = df.merge(lib.rename(columns={"source_iso3": "owid_iso3"}), on=["owid_iso3", "year"], how="left")
     df = df.merge(ow.rename(columns={"source_iso3": "owid_iso3"}), on=["owid_iso3", "year"], how="left")
+    vd = pd.read_csv(VDEM, usecols=["country_text_id", "year", "v2stfisccap", "v2svstterr"])
+    df = df.merge(vd.rename(columns={"country_text_id": "source_iso3"}), on=["source_iso3", "year"], how="left")
     df.drop(columns="owid_iso3").to_parquet(os.path.join(outd, "national_1990_2025.parquet"), index=False)
-    vars_ = ["gdp", "gdp_pc", "elec_access", "libdem", "ghg_pc"]
+    vars_ = ["gdp", "gdp_pc", "elec_access", "libdem", "ghg_pc", "v2stfisccap", "v2svstterr"]
     um = df.groupby("iso3")[vars_].apply(lambda g: g.notna().any()).reset_index()
     um = um[~um[vars_].all(axis=1)]
     um.to_csv(os.path.join(outd, "national_unmatched.csv"), index=False)
