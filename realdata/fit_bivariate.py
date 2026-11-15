@@ -153,6 +153,59 @@ def theta0_from_init(blocks, hyper):
     return np.clip(th, np.array(lo) + 1e-6, np.array(hi) - 1e-6)
 
 
+PSI_TERMS = ("gov", "gov2", "drought", "heat", "drought_ipc", "remote")
+
+
+def psi_conditions(d, terms, gov_col):
+    """Conditions z (before centring) for the escalation interactions, oriented so that a positive
+    value means more of the stress: gov = governance (country-year, raw column gov_col), gov2 =
+    its square, drought = -SPI-3 anomaly, heat = tmax anomaly, drought_ipc = drought x people in
+    IPC phase 3+, remote = -log population. Standardised covariates of prepare() are reused."""
+    out = {}
+    g = d[gov_col].astype(float).to_numpy() if gov_col in d else None
+    for t in terms:
+        if t in ("gov", "gov2"):
+            if g is None:
+                raise SystemExit(f"--psi {t}: column {gov_col} not in the table")
+            out[t] = g if t == "gov" else None
+        elif t == "drought":
+            out[t] = -d["drought_z"].to_numpy(float)
+        elif t == "heat":
+            out[t] = d["tmax_z"].to_numpy(float)
+        elif t == "drought_ipc":
+            out[t] = -d["drought_z"].to_numpy(float) * d["log_ipc3p"].to_numpy(float)
+        elif t == "remote":
+            out[t] = -d["log_pop"].to_numpy(float)
+        else:
+            raise SystemExit(f"unknown --psi term {t}; choose from {PSI_TERMS}")
+    return out
+
+
+def add_psi_terms(dfs, covs, terms, gov_col):
+    """kappa(s,t) = kappa + sum_m psi_m z_m,st: for each outcome, add lag_other x z_m (the other
+    outcome's history times the condition, z standardised on the training rows, missing -> 0), so
+    psi_m is the change in escalation per SD of z_m and kappa stays the escalation at average
+    conditions. Conditions without a linear main effect among the covariates (gov2, drought_ipc, and
+    gov unless it is v2x_libdem, which enters as between/within parts) get one, psi_main_<term>,
+    so that psi measures only the change in escalation."""
+    for o in dfs:
+        d = dfs[o]; tr_o = d["train"].to_numpy()
+        z = psi_conditions(d, terms, gov_col)
+        if "gov2" in terms:
+            gz = d[gov_col].astype(float).to_numpy()
+            mu, sd = np.nanmean(gz[tr_o]), np.nanstd(gz[tr_o])
+            z["gov2"] = ((gz - mu) / (sd if sd > 0 else 1)) ** 2
+        for t in terms:
+            v = z[t]; mu, sd = np.nanmean(v[tr_o]), np.nanstd(v[tr_o])
+            v = np.nan_to_num((v - mu) / (sd if sd > 0 else 1), nan=0.0)
+            d[f"lag_other_x_{t}"] = d["lag_other"].to_numpy(float) * v
+            covs[o] = covs[o] + [f"lag_other_x_{t}"]
+            if t in ("gov2", "drought_ipc") or (t == "gov" and gov_col != "v2x_libdem"):
+                d[f"psi_main_{t}"] = v
+                covs[o] = covs[o] + [f"psi_main_{t}"]
+        print(f"{o}: psi terms {terms} (governance column {gov_col})", flush=True)
+
+
 def fit_or_condition(m, saved, model, init=None):
     """Full empirical-Bayes fit, or (with --fixed-theta) the posterior at the saved
     hyperparameters of the same model: one Laplace mode instead of the optimisation.
@@ -461,6 +514,14 @@ def main():
     ap.add_argument("--sim-out", default=None, help="JSON file for one replicate's results")
     ap.add_argument("--hessian-only", action="store_true",
                     help="with --fixed-theta: only the hyperparameter intervals (no predictions, no exports)")
+    ap.add_argument("--years", type=int, nargs=2, default=None, metavar=("Y0", "Y1"),
+                    help="keep weeks of these calendar years only (e.g. 2018 2024 on the global table, to match the saved fits)")
+    ap.add_argument("--psi", default=None,
+                    help="comma list of conditions that modify escalation (lag_other x z): " + ",".join(PSI_TERMS))
+    ap.add_argument("--psi-gov", default="v2x_libdem", help="country-year governance column for the gov/gov2 terms")
+    ap.add_argument("--psi-only", action="store_true",
+                    help="with --fixed-theta: condition on all training rows, report the fixed effects and stop "
+                         "(no test predictions, no exports)")
     ap.add_argument("--hessian", action="store_true",
                     help="approximate 95%% intervals for the hyperparameters from the Hessian of the "
                          "Laplace log posterior of theta at the estimate (on the subsample with --zero-frac)")
@@ -469,6 +530,9 @@ def main():
 
     raw = pd.read_parquet(a.table)
     raw["week_start"] = pd.to_datetime(raw["week_start"])
+    if a.years:
+        yr = raw["week_start"].dt.year
+        raw = raw[(yr >= a.years[0]) & (yr <= a.years[1])].reset_index(drop=True)
     x0, x1, y0, y1 = a.box if a.box else REGIONS[a.region]
     raw = region_rows(raw, a.region, (x0, x1, y0, y1), a.land)
     dfs, covs = {}, {}
@@ -528,6 +592,8 @@ def main():
     grp_v = np.zeros(Lv.n, int); grp_v[gv.index.to_numpy()] = gv.to_numpy()
     print(f"regions {grp_names}: rows {np.bincount(grp_row).tolist()}, st cells {np.bincount(grp_v, minlength=len(present)).tolist()}",
           flush=True)
+    if a.psi:   # escalation that depends on conditions: kappa(s,t) = kappa + sum_m psi_m z_m,st (Drew's hypotheses)
+        add_psi_terms(dfs, covs, a.psi.split(","), a.psi_gov)
     if "biv2_rlk" in a.models:   # region-specific short-run cross effects (fixed): baseline + deviations
         for o in OUTS:
             for gi in range(1, len(grp_names)):
@@ -662,6 +728,18 @@ def main():
                                    y, dz(parts_tr["conflict"], parts_tr["unrest"]), model, saved, init)
             else:
                 m = fit_or_condition(LatentGaussianModel(y, bl(), dz(parts_tr["conflict"], parts_tr["unrest"])), saved, model, init)
+            if a.psi_only:
+                fs = m.fixed_summary()
+                pk = [k for k in fs if k in keys or "lag_other_x_" in k or "psi_main_" in k]
+                res["models"][model] = {"hyper_source": "fixed from " + str(a.fixed_theta), "seconds": float(m.fit_seconds),
+                                        "psi_terms": a.psi.split(",") if a.psi else [], "psi_gov": a.psi_gov,
+                                        "fixed_ci95": {k: {"est": float(fs[k][0]), "se": float(fs[k][1]),
+                                                           "lo": float(fs[k][0] - 1.96 * fs[k][1]),
+                                                           "hi": float(fs[k][0] + 1.96 * fs[k][1]),
+                                                           "excludes_0": bool(abs(fs[k][0]) > 1.96 * fs[k][1])} for k in pk}}
+                print(model, json.dumps(res["models"][model], default=float), flush=True)
+                json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
+                continue
             if a.hessian_only:
                 import time
                 t0 = time.time()
@@ -725,7 +803,7 @@ def main():
         print(model, json.dumps({k: res["models"][model][k] for k in ("hyper", "lag_coefficients", "test_scores")},
                                 default=float), flush=True)
         json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
-    if a.hessian_only:
+    if a.hessian_only or a.psi_only:
         return
     # joint and conditional prediction (Section 5.x): per cell-week, both outcomes together
     yc, yu = parts_te["conflict"]["y"], parts_te["unrest"]["y"]
