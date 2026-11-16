@@ -3093,8 +3093,8 @@ ValueError: operands could not be broadcast together with shapes (11,) (19,) (19
 - Task 49 smoke (1758293) is still running. When it ends I check that `random` moved away from its starting values (sd 0.1,
   phi 0.5). If it did, I pull 8002003 and then submit the rest. If it did not, I report and stop.
 
-## Task 49: CANCELLED (2026-11-16 07:35 EST)
+## Task 49: CANCELLED (2026-11-16 07:16 EST)
 - PI decision, passed on by the coordinator: Task 49 is replaced by a faster two-stage fit. **qdel 1758293** (west_sahel smoke)
-  at 07:35 EST, after about 6 h 15 min. It had not written ce_main.json, and the log stopped at the data-loading lines.
+  at 07:16 EST, after about 6 h. It had not written ce_main.json, and the log stopped at the data-loading lines.
   task 1 (ame), the 49_ce_tau.sh array and the merge were never submitted.
 - S10 large (1757282) keeps running; its merge 1757283 is held.
