@@ -341,7 +341,7 @@ class LatentGaussianModel:
             self.theta, self.opt = res.x, res
             print(f"L-BFGS-B: {res.message}; nit={res.nit}, evaluations={self.n_evals}, "
                   f"failed evaluations={self.fail_log or 0}", flush=True)
-            if res.nit == 0:
+            if res.nit == 0 or np.allclose(res.x, theta0, rtol=0, atol=1e-6):
                 raise RuntimeError(f"the optimiser did not move from the start ({res.message}); "
                                    f"failed evaluations: {self.fail_log}")
         self.x_hat, self.f_hat, self.lu = self.mode(self.theta)
