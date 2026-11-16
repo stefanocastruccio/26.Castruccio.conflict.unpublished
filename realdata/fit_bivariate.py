@@ -501,7 +501,7 @@ def country_adjacency(base, nC):
 
 
 def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, terms=("u",), bym2=(), delta=None,
-                       tau_test=False, n_draws=500, pc_u=0.2, tau_drop=None):
+                       tau_test=False, n_draws=500, pc_u=0.2, tau_drop=None, two_stage=False):
     """Country effects on escalation, in both directions (o = conflict: unrest -> conflict; o = unrest: conflict -> unrest):
 
         kappa_o(c, s, t) = kappa_o + psi_o' z_st + u_o,c + sum_m v_o,m,c z_m,st,
@@ -517,7 +517,14 @@ def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, t
         p-value 0.5 P(chi2_1 > 2 diff) (tau = 0 lies on the boundary);
       - per country and term, the sensitivity (kappa + u_c, or psi_m + v_m,c) from n_draws joint posterior draws: mean,
         95% interval, local false sign rate lfsr, P(|.| < delta), and the class amplifies / suppresses (lfsr < 0.05),
-        no_effect (P(|.| < delta) > 0.95) or inconclusive. delta defaults to |kappa_o| / 3."""
+        no_effect (P(|.| < delta) > 0.95) or inconclusive. delta defaults to |kappa_o| / 3.
+
+    two_stage=True (fast screening): stage 1 solves the saved biv3 model once (one Laplace mode at the saved
+    hyperparameters, no optimisation); its latent effects (fields, cell and space-time effects, shared episodes) and its
+    non-escalation fixed effects become a per-row offset. Stage 2 fits the escalation terms (kappa, psi) and the country
+    effects on the rows with history of the other outcome (the only rows that inform them given the offset). Stage 2
+    has no latent field, so each evaluation takes seconds. The intervals ignore the uncertainty of stage 1 (somewhat
+    too narrow)."""
     import time
     from scipy.optimize import minimize
     from scipy.stats import chi2
@@ -566,6 +573,43 @@ def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, t
         ysub, off = np.r_[Sc["y"], Su["y"]], np.r_[Sc["off"], Su["off"]]
     else:
         Sc, Su, ysub, off = Pc, Pu, np.r_[Pc["y"], Pu["y"]], None
+    off_full = None
+    if two_stage:
+        # stage 1: the saved biv3 at its hyperparameters, one mode (on the subsample if --zero-frac)
+        m1 = LatentGaussianModel(ysub, biv3_blocks(), biv3_designs(Sc, Su), offset=off)
+        th1 = theta_from_hyper(m1.blocks, saved["models"]["biv3"]["hyper"])
+        if th1 is None or len(th1) != m1.n_theta:
+            raise SystemExit("two-stage: the saved biv3 hyperparameters do not match the biv3 blocks")
+        x1, _, _ = m1.mode(np.asarray(th1, float))
+        if not m1._converged:
+            raise RuntimeError("two-stage: stage-1 mode did not converge")
+        Dfull = biv3_designs(Pc, Pu)
+        eta1 = sum(D @ x1[sl] for D, sl in zip(Dfull[1:], m1.slices[1:]))         # latent effects
+        beta1 = x1[m1.slices[0]]
+        names1 = m1.blocks[0].names
+        # stage 2 keeps only the escalation fixed effects (lag_other and its interactions); every other fixed effect and
+        # the latent effects enter as an offset. Rows with lag_other = 0 have zero design in stage 2, so they add only a
+        # constant to the likelihood and are dropped (exact given the offset).
+        R2, nrows = {}, {}
+        start = 0
+        for o, Q in (("conflict", Pc), ("unrest", Pu)):
+            n_o = len(Q["y"]); X = sp.csr_matrix(Q["X"])
+            esc = [k for k, nm in enumerate(Q["names"]) if nm == f"{o}:lag_other" or nm.startswith(f"{o}:lag_other_x_")]
+            rest = [k for k in range(len(Q["names"])) if k not in esc]
+            b_o = np.array([beta1[names1.index(Q["names"][k])] for k in rest])
+            keep = np.flatnonzero(np.asarray(X[:, Q["names"].index(f"{o}:lag_other")].toarray()).ravel() != 0)
+            offs = eta1[start:start + n_o] + X[:, rest] @ b_o
+            R2[o] = dict(X=X[keep][:, esc], names=[Q["names"][k] for k in esc], y=Q["y"][keep],
+                         C=sp.csr_matrix(Q["C"])[keep], off=offs[keep])
+            nrows[o] = (int(len(keep)), int(n_o))
+            start += n_o
+        print(f"two-stage: stage 1 done in {time.time() - t0:.0f} s; stage-2 rows {nrows}", flush=True)
+        Pc, Pu = R2["conflict"], R2["unrest"]
+        P = R2
+        biv3_blocks = lambda: [FixedBlock(len(Pc["names"]) + len(Pu["names"]), Pc["names"] + Pu["names"])]  # noqa: E731
+        biv3_designs = lambda Qc, Qu: [sp.block_diag([Qc["X"], Qu["X"]], format="csr")]               # noqa: E731
+        off_full = np.r_[Pc["off"], Pu["off"]]
+        Sc, Su, ysub, off = Pc, Pu, np.r_[Pc["y"], Pu["y"]], off_full
 
     def optimise(drop=None):
         ms = LatentGaussianModel(ysub, make(drop), designs(Sc, Su, drop), offset=off)
@@ -615,7 +659,8 @@ def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, t
     except np.linalg.LinAlgError:
         se = np.full(p_, np.nan)
     t_hyper = time.time() - t0
-    out = {"hyper_source": "biv3 fixed from " + str(a.fixed_theta) + "; country effects optimised",
+    out = {"hyper_source": "biv3 fixed from " + str(a.fixed_theta) + "; country effects optimised"
+                           + ("; two-stage (latent effects as offset)" if two_stage else ""), "two_stage": bool(two_stage),
            "log_ml_full": float(ms.log_marginal(th)),
            "terms": list(terms), "bym2": list(bym2), "opt_success": bool(opt.success), "opt_nit": int(opt.nit),
            "seconds_hyper": t_hyper, "hessian_eig_min": float(np.linalg.eigvalsh(H).min()), "random": {}, "tau_test": {},
@@ -637,7 +682,7 @@ def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, t
             out["tau_test"][f"k_{o}_{t}"] = {"log_ml_full": lml_full, "log_ml_without": lml0, "two_diff": d2,
                                              "p_boundary": float(0.5 * chi2.sf(max(d2, 0.0), 1))}
     # posterior on all training rows; sensitivities per country from joint draws
-    m = LatentGaussianModel(np.r_[Pc["y"], Pu["y"]], make(), designs(Pc, Pu))
+    m = LatentGaussianModel(np.r_[Pc["y"], Pu["y"]], make(), designs(Pc, Pu), offset=off_full)
     m.theta = th
     m.x_hat, m.f_hat, m.lu = m.mode(th)
     fs = m.fixed_summary()
@@ -799,6 +844,10 @@ def main():
     ap.add_argument("--ce-pc-u", type=float, default=0.2, help="PC prior of the country-effect SDs: P(tau > u) = 0.05")
     ap.add_argument("--tau-drop", default=None, help="one reduced fit for the tau test, e.g. conflict:drought (array task)")
     ap.add_argument("--tau-test", action="store_true", help="boundary likelihood-ratio test of each country effect (refits)")
+    ap.add_argument("--two-stage", action="store_true",
+                    help="country effects in two stages: the saved biv3 solved once, its latent effects and non-escalation "
+                         "fixed effects as an offset; escalation terms and country effects fitted on rows with history of "
+                         "the other outcome")
     ap.add_argument("--actors", default=None,
                     help="directory of the actor split (realdata/table/actors.py, year=<y>.parquet); needed by tri3")
     ap.add_argument("--hessian", action="store_true",
@@ -1017,7 +1066,8 @@ def main():
             res["models"][model] = fit_country_slopes(a, saved, biv3_blocks, biv3_designs, parts_tr, nC, base, keys,
                                                       terms=tuple(a.ce_terms.split(",")),
                                                       bym2=tuple(t for t in a.ce_bym2.split(",") if t), delta=a.delta,
-                                                      tau_test=a.tau_test, pc_u=a.ce_pc_u, tau_drop=a.tau_drop)
+                                                      tau_test=a.tau_test, pc_u=a.ce_pc_u, tau_drop=a.tau_drop,
+                                                      two_stage=a.two_stage)
             json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
             continue
         if model in ("uni_static", "uni_st", "uni_static_u", "uni_st_u"):

@@ -43,7 +43,9 @@ def lattice():
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "realdata"))
 from fit_bivariate import add_psi_terms, fit_country_slopes, stack  # noqa: E402
 
-CKPT = os.environ.get("S10_CKPT", "s10b_ckpt.jsonl" if SIZE == "small" else "s10L_ckpt.jsonl")
+TWO = os.environ.get("S10_TWO_STAGE", "") == "1"     # two-stage fit (latent effects as offset) instead of the joint one
+TAG = ("s10b" if SIZE == "small" else "s10L") + ("_2s" if TWO else "")
+CKPT = os.environ.get("S10_CKPT", f"{TAG}_ckpt.jsonl")
 N_REPS = int(os.environ.get("N_REPS", 5))
 PAR = dict(b_c=-3.0, b_u=-2.8, d=0.3, k_cu=0.2, kappa=0.3, lam=0.8, e_sd=0.7, u_sd=0.5, phi=0.95, beta_dr=0.1)
 CX, CY = np.arange(NC) % NCX, np.arange(NC) // NCX            # country column (west -> east), row (south -> north)
@@ -116,11 +118,17 @@ def one(arg):
                          "lon": d["lon"], "lat": d["lat"], "train": True})
     out = fit_country_slopes(a, saved, base_blocks, base_designs, P, nC, base, ["conflict:lag_other", "unrest:lag_other"],
                              terms=("u", "drought"), bym2=("u", "drought"), tau_test=True, n_draws=400,
-                             pc_u=0.5)   # planted tau 0.2-0.3: P(tau > 0.5) = 0.05 does not rule them out
+                             pc_u=0.5,   # planted tau 0.2-0.3: P(tau > 0.5) = 0.05 does not rule them out
+                             two_stage=TWO)
     iso = pd.factorize(base["ISO_A3"])[1]
     cid = np.array([int(c[1:]) for c in iso])
     tr = TRUTH[scen]
-    r = dict(scenario=scen, seed=seed, size=SIZE, seconds=float(out["seconds"]) + float(m0.fit_seconds), adjacency_edges=out.get("adjacency_edges"))
+    r = dict(scenario=scen, seed=seed, size=SIZE, two_stage=TWO, seconds=float(out["seconds"]) + float(m0.fit_seconds),
+             seconds_country_effects=float(out["seconds"]), adjacency_edges=out.get("adjacency_edges"))
+    for o in ("conflict", "unrest"):
+        for t in ("u", "drought"):
+            nm = f"k_{o}_{t}"
+            r[f"{o}_{t}_tau_lo"] = out["random"][nm][f"{nm}.sd"]["lo"]; r[f"{o}_{t}_tau_hi"] = out["random"][nm][f"{nm}.sd"]["hi"]
     for o in ("conflict", "unrest"):
         for t in ("u", "drought"):
             nm = f"k_{o}_{t}"
@@ -147,5 +155,5 @@ if __name__ == "__main__":
     res = pd.DataFrame([r for rows in run_parallel(one, args, checkpoint=os.path.join(RESULTS, CKPT)) for r in rows])
     if os.environ.get("SHARD"):
         sys.exit(0)
-    res.to_csv(os.path.join(RESULTS, "s10_raw.csv" if SIZE == "small" else "s10L_raw.csv"), index=False)
+    res.to_csv(os.path.join(RESULTS, ("s10" if SIZE == "small" else "s10L") + ("_2s" if TWO else "") + "_raw.csv"), index=False)
     print(res.groupby("scenario").mean(numeric_only=True).round(3).T.to_string())
