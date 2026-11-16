@@ -3041,3 +3041,14 @@ ValueError: operands could not be broadcast together with shapes (11,) (19,) (19
 - **S10 small:** 1757281 (cs_s10, 10 tasks x 4 cores). **S10 large:** 1757282 (cs_s10L, 10 tasks x 16 cores, h_rt 48 h).
   **Merge:** 1757283, held on both. All 20 tasks started at once. I report if the large tasks pass 24 h.
 - Task 46 (1757051) is running, about 20 min in.
+
+## Status for the coordinator (2026-11-16 01:15 EST / 06:15 UTC)
+- **1757281 (S10 small): done.** All 10 tasks rc=0, no errors. They started at 21:32 EST and finished between 21:47 and 21:53 EST
+  (15-21 min each; each replicate reports about 1,190 s). The 10 shard checkpoints `results/s10b_ckpt.shard0-9.jsonl` (one
+  replicate each, synthetic) are committed with this entry.
+- **1757282 (S10 large): running**, all 10 tasks since 21:32 EST (3 h 43 min so far), no errors. The logs are at the fitting stage
+  ("unrest: psi terms ['drought']"). The `results/s10L_ckpt.shard*.jsonl` files are still empty (no replicate finished yet), so
+  there is nothing to commit. h_rt is 48 h; I report if they pass 24 h (21:32 EST today).
+- **1757283 (merge):** held on both.
+- **1757051 (Task 46, south_asia tri3): running** since 20:51 EST (4 h 24 min), no errors. The data are loaded: 1,250,789 rows per
+  outcome, 3,434 cells, 17 countries, v on 906 cells x 29 steps. The optimisation is in progress (expected 8-12 h in total).
