@@ -3078,3 +3078,17 @@ ValueError: operands could not be broadcast together with shapes (11,) (19,) (19
   (host/start, `conflict: psi terms ['drought']`, `unrest: psi terms ['drought']`), unchanged since 21:32. All
   results/s10L_ckpt.shard*.jsonl are still empty, so there is nothing to push. Their 24 h mark is 21:32 EST today.
 - Merge 1757283: held.
+
+## Task 46: job 1757051 deleted; diagnostics (2026-11-16 07:10 EST)
+- **qdel 1757051** at about 07:05 EST, as you asked, after about 10 h 15 min (the Hessian stage). Kept: $WORK/bivariate/tri3_south_asia/summary_tri3.json and
+  logs/cs_tri3.o1757051 (and .po). No relaunch.
+- **summary_tri3.json, models.tri3.subsample:** `{"rows": 746089, "rows_full": 2670657, "seconds_hyper": 13760.9,
+  "log_ml_subsample": -122714.5466, "n_evals": 75, "nit": 1, "zero_frac": 0.25}`. So there was 1 iteration and 75 evaluations
+  (about 183 s each), and theta came back as the start. That fits a line search that failed every step.
+- **qacct -j 1757051:** returns nothing. The SGE accounting on this cluster has been empty since the 15 Nov maintenance, so
+  maxvmem, failed and exit_status are not available.
+- **Logs:** the job wrote stdout and stderr together (-j y). The only matches for MemoryError, Killed, "did not converge",
+  converg, error or warn are the pandas FutureWarning at fit_bivariate.py:814. There is no OOM, Killed or convergence message.
+  The .po file is empty.
+- Task 49 smoke (1758293) is still running. When it ends I check that `random` moved away from its starting values (sd 0.1,
+  phi 0.5). If it did, I pull 8002003 and then submit the rest. If it did not, I report and stop.
