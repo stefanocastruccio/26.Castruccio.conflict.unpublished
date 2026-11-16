@@ -501,13 +501,14 @@ def country_adjacency(base, nC):
 
 
 def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, terms=("u",), bym2=(), delta=None,
-                       tau_test=False, n_draws=500):
+                       tau_test=False, n_draws=500, pc_u=0.2):
     """Country effects on escalation, in both directions (o = conflict: unrest -> conflict; o = unrest: conflict -> unrest):
 
         kappa_o(c, s, t) = kappa_o + psi_o' z_st + u_o,c + sum_m v_o,m,c z_m,st,
 
     u_o,c on lag_other (term "u"), v_o,m,c on lag_other x z_m (term m, needs --psi with m). Each term is iid N(0, tau^2)
     over countries, or BYM2 on the country adjacency (terms listed in `bym2`; tau = marginal SD, phi = spatial share).
+    PC prior on each tau: P(tau > pc_u) = 0.05 (default pc_u = 0.2, about three times the kappa of the fitted regions).
     The biv3 hyperparameters stay at the saved estimate; only the new ones are optimised (on the case-control subsample
     with --zero-frac), then the posterior on all training rows. Reported:
       - kappa and psi (fixed_ci95);
@@ -542,8 +543,8 @@ def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, t
             if (o, t) == drop:
                 continue
             nm = f"k_{o}_{t}"
-            b.append(BYM2Block(A_adj, name=nm, sd_init=0.05, pc_u=0.1, pc_alpha=0.05) if t in bym2
-                     else IIDBlock(nC, name=nm, sd_init=0.05, pc_u=0.1, pc_alpha=0.05))
+            b.append(BYM2Block(A_adj, name=nm, sd_init=0.05, pc_u=pc_u, pc_alpha=0.05) if t in bym2
+                     else IIDBlock(nC, name=nm, sd_init=0.05, pc_u=pc_u, pc_alpha=0.05))
         return b
 
     def designs(Qc, Qu, drop=None):
@@ -778,6 +779,7 @@ def main():
                     help="country effects on escalation (model biv3_cs): u (level) and/or psi terms, e.g. u,drought,heat")
     ap.add_argument("--ce-bym2", default="", help="country effects with a BYM2 (spatial) prior instead of iid, e.g. u,drought")
     ap.add_argument("--delta", type=float, default=None, help="relevance threshold for 'no effect' (default |kappa| / 3)")
+    ap.add_argument("--ce-pc-u", type=float, default=0.2, help="PC prior of the country-effect SDs: P(tau > u) = 0.05")
     ap.add_argument("--tau-test", action="store_true", help="boundary likelihood-ratio test of each country effect (refits)")
     ap.add_argument("--actors", default=None,
                     help="directory of the actor split (realdata/table/actors.py, year=<y>.parquet); needed by tri3")
@@ -997,7 +999,7 @@ def main():
             res["models"][model] = fit_country_slopes(a, saved, biv3_blocks, biv3_designs, parts_tr, nC, base, keys,
                                                       terms=tuple(a.ce_terms.split(",")),
                                                       bym2=tuple(t for t in a.ce_bym2.split(",") if t), delta=a.delta,
-                                                      tau_test=a.tau_test)
+                                                      tau_test=a.tau_test, pc_u=a.ce_pc_u)
             json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
             continue
         if model in ("uni_static", "uni_st", "uni_static_u", "uni_st_u"):

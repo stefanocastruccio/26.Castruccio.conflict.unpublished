@@ -102,7 +102,8 @@ def one(arg):
     base = pd.DataFrame({"ISO_A3": [f"C{c:02d}" for c in d["country_id"]], "country_id": d["country_id"],
                          "lon": d["lon"], "lat": d["lat"], "train": True})
     out = fit_country_slopes(a, saved, base_blocks, base_designs, P, nC, base, ["conflict:lag_other", "unrest:lag_other"],
-                             terms=("u", "drought"), bym2=("u", "drought"), tau_test=True, n_draws=400)
+                             terms=("u", "drought"), bym2=("u", "drought"), tau_test=True, n_draws=400,
+                             pc_u=0.5)   # planted tau 0.2-0.3: P(tau > 0.5) = 0.05 does not rule them out
     iso = pd.factorize(base["ISO_A3"])[1]
     cid = np.array([int(c[1:]) for c in iso])
     tr = TRUTH[scen]
