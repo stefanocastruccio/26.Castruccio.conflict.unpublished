@@ -2989,3 +2989,7 @@ hourly tp x 24 x 1000) on the 0.5-degree cells, exact area weights.
   - ame, v2stfisccap: none, in either direction.
   - Drought, heat, drought x IPC 3+: no interval excludes 0 in any of the three runs.
 - The psi_main_* coefficients (main effects of the conditions added with the psi terms) are in the JSON files.
+
+## Task 48 submitted (2026-11-15 20:25 EST)
+- Array **1756938** (cs_toys, tasks 1-30, 4 cores each, EPYC queues): all 30 tasks started at once. Merge **1756939** is held on it.
+- Results and the S9/S10 tables will follow when the merge ends. Task 46 is still on hold.
