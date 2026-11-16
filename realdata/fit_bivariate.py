@@ -636,7 +636,7 @@ def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, t
         dr = D[m.slices[0]][names0.index(fx)][None, :] + D[m.slices[ib]][:nC]           # countries x draws
         pos = (dr > 0).mean(1); lfsr = np.minimum(pos, 1 - pos); pin = (np.abs(dr) < dlt).mean(1)
         lo, hi = np.quantile(dr, [0.025, 0.975], axis=1)
-        nrow = np.asarray((sp.diags(column(P[o], o, t) != 0) @ sp.csr_matrix(P[o]["C"])).sum(0)).ravel()
+        nrow = np.asarray((sp.diags((column(P[o], o, t) != 0).astype(float)) @ sp.csr_matrix(P[o]["C"])).sum(0)).ravel()
         cls = np.where(lfsr < 0.05, np.where(dr.mean(1) > 0, "amplifies", "suppresses"), np.where(pin > 0.95, "no_effect", "inconclusive"))
         out.setdefault("delta", {})[f"{o}_{t}"] = float(dlt)
         for c in range(nC):
