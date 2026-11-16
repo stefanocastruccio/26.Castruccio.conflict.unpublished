@@ -3035,3 +3035,9 @@ ValueError: operands could not be broadcast together with shapes (11,) (19,) (19
   affect this fit. It is only a label in the printout.
 - **Full job 1757051** (crc/jobs/46_tri3.sh, south_asia 2018-2024, with --hessian, 16 cores). Expected 8-12 h.
 - S10 rerun (Task 48 tasks 21-30 + merge): waiting for your go, as asked.
+
+## Task 48b submitted (2026-11-15 21:10 EST)
+- Removed the 10 old shard checkpoints (results/s10b_ckpt.shard0-9.jsonl) from the failed run, as the task says.
+- **S10 small:** 1757281 (cs_s10, 10 tasks x 4 cores). **S10 large:** 1757282 (cs_s10L, 10 tasks x 16 cores, h_rt 48 h).
+  **Merge:** 1757283, held on both. All 20 tasks started at once. I report if the large tasks pass 24 h.
+- Task 46 (1757051) is running, about 20 min in.
