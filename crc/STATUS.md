@@ -2993,3 +2993,35 @@ hourly tp x 24 x 1000) on the 0.5-degree cells, exact area weights.
 ## Task 48 submitted (2026-11-15 20:25 EST)
 - Array **1756938** (cs_toys, tasks 1-30, 4 cores each, EPYC queues): all 30 tasks started at once. Merge **1756939** is held on it.
 - Results and the S9/S10 tables will follow when the merge ends. Task 46 is still on hold.
+
+## Task 48 result (2026-11-15 20:45 EST): S9 done; S10 failed in all 10 tasks (code error, not resources)
+- **S9** (array 1756938 tasks 1-20, all rc=0; merge 1756939): `results/s9_raw.csv`, `results/s9_summary.csv` committed.
+```
+scenario model  outcome    term  truth  mean_est  sd_est  mean_se  cover95  share_excl0  n
+    null   tri     repr     gov    0.0    -0.004   0.074    0.075      1.0          0.0 10
+    null   tri     repr drought    0.0    -0.023   0.076    0.074      0.9          0.1 10
+    null   tri   battle     gov    0.0     0.009   0.097    0.077      0.9          0.1 10
+    null   tri   battle drought    0.0     0.013   0.052    0.076      1.0          0.0 10
+    null   biv conflict     gov    NaN    -0.008   0.082    0.059      NaN          0.2 10
+    null   biv conflict drought    NaN    -0.015   0.038    0.058      NaN          0.0 10
+opposite   tri     repr     gov    0.3     0.315   0.049    0.077      1.0          1.0 10
+opposite   tri     repr drought    0.0    -0.010   0.085    0.075      0.8          0.2 10
+opposite   tri   battle     gov   -0.3    -0.282   0.100    0.076      0.9          0.9 10
+opposite   tri   battle drought    0.2     0.211   0.049    0.074      1.0          0.9 10
+opposite   biv conflict     gov    NaN    -0.019   0.092    0.058      NaN          0.2 10
+opposite   biv conflict drought    NaN     0.105   0.050    0.057      NaN          0.5 10
+```
+- **S10 failed** in all 10 tasks (21-30, rc=1, a few minutes each) with the same error, and again in the merge's S10 step,
+  so there is no `results/s10_raw.csv`. The error is in the code, not in resources:
+```
+sims/s10_slopes.py:104 one -> fit_country_slopes(...)
+realdata/fit_bivariate.py:585 fit_country_slopes -> optimise()
+realdata/fit_bivariate.py:569 optimise -> theta0_from_init(ms.blocks, saved["models"]["biv3"]["hyper"])
+realdata/fit_bivariate.py:153 theta0_from_init -> np.clip(th, lo, hi)
+ValueError: operands could not be broadcast together with shapes (11,) (19,) (19,)
+```
+  The starting vector built from the saved hyperparameters has 11 entries, but the blocks' bounds have 19. Probably one or more
+  of the new country-effect blocks (BYM2 / slopes) gets a short vector from theta_from_hyper instead of a KeyError, so it does
+  not fall back to theta0(). I have not changed the code. After you fix it, the S10 part can be rerun alone (tasks 21-30 and
+  the merge) at about 40 core-hours.
+- Task 46 stays on hold.
