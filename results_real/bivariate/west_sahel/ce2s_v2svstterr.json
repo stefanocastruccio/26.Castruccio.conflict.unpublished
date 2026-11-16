@@ -1,0 +1,2377 @@
+{
+ "region": "west_sahel",
+ "rows_per_outcome": 916830,
+ "box": [
+  -18,
+  16,
+  4,
+  25
+ ],
+ "validation": false,
+ "cells": 2505,
+ "countries": 22,
+ "st_res_deg": 1.0,
+ "st_step_weeks": 13,
+ "st_cells": 641,
+ "time_steps": 29,
+ "zero_frac": null,
+ "models": {
+  "biv3_cs": {
+   "hyper_source": "biv3 fixed from results_real/bivariate/west_sahel/summary_biv3.json; country effects optimised; two-stage (latent effects as offset)",
+   "two_stage": true,
+   "log_ml_full": -15809.689734736348,
+   "terms": [
+    "u",
+    "drought",
+    "heat",
+    "drought_ipc",
+    "remote"
+   ],
+   "bym2": [
+    "u",
+    "drought"
+   ],
+   "opt_success": true,
+   "opt_nit": 7,
+   "seconds_hyper": 469.8999652862549,
+   "hessian_eig_min": 0.44179210324288654,
+   "random": {
+    "k_conflict_u": {
+     "k_conflict_u.sd": {
+      "est": 0.030369795534898762,
+      "lo": 0.006285395799748175,
+      "hi": 0.1467408752315184
+     },
+     "k_conflict_u.phi": {
+      "est": 0.5221307652776195,
+      "lo": 0.05436523155055554,
+      "hi": 0.9540557527355249
+     }
+    },
+    "k_conflict_drought": {
+     "k_conflict_drought.sd": {
+      "est": 0.03777854171537114,
+      "lo": 0.0069552285212445605,
+      "hi": 0.20520076511945468
+     },
+     "k_conflict_drought.phi": {
+      "est": 0.48356585204609764,
+      "lo": 0.04779852705065682,
+      "hi": 0.9458466830345782
+     }
+    },
+    "k_conflict_heat": {
+     "k_conflict_heat.sd": {
+      "est": 0.03126898010101458,
+      "lo": 0.007871797806888018,
+      "hi": 0.12420912484592668
+     }
+    },
+    "k_conflict_drought_ipc": {
+     "k_conflict_drought_ipc.sd": {
+      "est": 0.02682696629668744,
+      "lo": 0.005950573734891409,
+      "hi": 0.12094398838614466
+     }
+    },
+    "k_conflict_remote": {
+     "k_conflict_remote.sd": {
+      "est": 0.030676602657465926,
+      "lo": 0.005828094825659305,
+      "hi": 0.16146853796216132
+     }
+    },
+    "k_unrest_u": {
+     "k_unrest_u.sd": {
+      "est": 0.0338828485844219,
+      "lo": 0.006426668587293019,
+      "hi": 0.17863803191358127
+     },
+     "k_unrest_u.phi": {
+      "est": 0.4870736737083619,
+      "lo": 0.047951339038226196,
+      "hi": 0.9470997203244659
+     }
+    },
+    "k_unrest_drought": {
+     "k_unrest_drought.sd": {
+      "est": 0.030009496015199148,
+      "lo": 0.00520135965066756,
+      "hi": 0.1731412383626792
+     },
+     "k_unrest_drought.phi": {
+      "est": 0.5002637142215938,
+      "lo": 0.04998618412778218,
+      "hi": 0.9501139059898032
+     }
+    },
+    "k_unrest_heat": {
+     "k_unrest_heat.sd": {
+      "est": 0.02498147875438225,
+      "lo": 0.004552096119989679,
+      "hi": 0.1370960244040424
+     }
+    },
+    "k_unrest_drought_ipc": {
+     "k_unrest_drought_ipc.sd": {
+      "est": 0.03302413791243262,
+      "lo": 0.006023274536705711,
+      "hi": 0.1810632535862867
+     }
+    },
+    "k_unrest_remote": {
+     "k_unrest_remote.sd": {
+      "est": 0.03373776237140787,
+      "lo": 0.006704209157920291,
+      "hi": 0.16977940022722626
+     }
+    }
+   },
+   "tau_test": {
+    "k_conflict_u": {
+     "log_ml_full": -15809.689734736348,
+     "log_ml_without": -15809.409400968705,
+     "two_diff": -0.560667535286484,
+     "p_boundary": 0.5
+    },
+    "k_conflict_drought": {
+     "log_ml_full": -15809.689734736348,
+     "log_ml_without": -15809.404601225682,
+     "two_diff": -0.5702670213322563,
+     "p_boundary": 0.5
+    },
+    "k_conflict_heat": {
+     "log_ml_full": -15809.689734736348,
+     "log_ml_without": -15809.558342441924,
+     "two_diff": -0.262784588849172,
+     "p_boundary": 0.5
+    },
+    "k_conflict_drought_ipc": {
+     "log_ml_full": -15809.689734736348,
+     "log_ml_without": -15809.376741459639,
+     "two_diff": -0.6259865534193523,
+     "p_boundary": 0.5
+    },
+    "k_conflict_remote": {
+     "log_ml_full": -15809.689734736348,
+     "log_ml_without": -15809.372732938118,
+     "two_diff": -0.6340035964603885,
+     "p_boundary": 0.5
+    },
+    "k_unrest_u": {
+     "log_ml_full": -15809.689734736348,
+     "log_ml_without": -15809.44318908457,
+     "two_diff": -0.4930913035568665,
+     "p_boundary": 0.5
+    },
+    "k_unrest_drought": {
+     "log_ml_full": -15809.689734736348,
+     "log_ml_without": -15809.251714540891,
+     "two_diff": -0.876040390914568,
+     "p_boundary": 0.5
+    },
+    "k_unrest_heat": {
+     "log_ml_full": -15809.689734736348,
+     "log_ml_without": -15809.322372375396,
+     "two_diff": -0.7347247219040582,
+     "p_boundary": 0.5
+    },
+    "k_unrest_drought_ipc": {
+     "log_ml_full": -15809.689734736348,
+     "log_ml_without": -15809.3080369394,
+     "two_diff": -0.7633955938981671,
+     "p_boundary": 0.5
+    },
+    "k_unrest_remote": {
+     "log_ml_full": -15809.689734736348,
+     "log_ml_without": -15809.472568036099,
+     "two_diff": -0.4343334004988719,
+     "p_boundary": 0.5
+    }
+   },
+   "countries": {
+    "SEN": {
+     "conflict_u": {
+      "mean": 0.15269470114086336,
+      "lo": 0.07206066205585415,
+      "hi": 0.22950696869010317,
+      "lfsr": 0.0,
+      "p_negligible": 0.002,
+      "class": "amplifies",
+      "rows_informing": 1137
+     },
+     "conflict_drought": {
+      "mean": 0.019021039146178538,
+      "lo": -0.0663596204093004,
+      "hi": 0.11360536440259553,
+      "lfsr": 0.344,
+      "p_negligible": 0.706,
+      "class": "inconclusive",
+      "rows_informing": 1137
+     },
+     "conflict_heat": {
+      "mean": 0.008153636971011959,
+      "lo": -0.06983527956968141,
+      "hi": 0.08750079285517323,
+      "lfsr": 0.41400000000000003,
+      "p_negligible": 0.786,
+      "class": "inconclusive",
+      "rows_informing": 1137
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.01903242351045617,
+      "lo": -0.08537049338985248,
+      "hi": 0.04249444439207448,
+      "lfsr": 0.294,
+      "p_negligible": 0.818,
+      "class": "inconclusive",
+      "rows_informing": 1137
+     },
+     "conflict_remote": {
+      "mean": 0.07381159933809625,
+      "lo": 0.001091851659770259,
+      "hi": 0.15120163124391825,
+      "lfsr": 0.026000000000000023,
+      "p_negligible": 0.286,
+      "class": "amplifies",
+      "rows_informing": 1137
+     },
+     "unrest_u": {
+      "mean": 0.12882013993126298,
+      "lo": 0.045842652045164155,
+      "hi": 0.21481300275697102,
+      "lfsr": 0.0,
+      "p_negligible": 0.022,
+      "class": "amplifies",
+      "rows_informing": 175
+     },
+     "unrest_drought": {
+      "mean": -0.015905690170101648,
+      "lo": -0.09609287467710552,
+      "hi": 0.06906851183522049,
+      "lfsr": 0.34,
+      "p_negligible": 0.702,
+      "class": "inconclusive",
+      "rows_informing": 175
+     },
+     "unrest_heat": {
+      "mean": 0.000912450288522526,
+      "lo": -0.060806757240156044,
+      "hi": 0.0644498143621857,
+      "lfsr": 0.488,
+      "p_negligible": 0.834,
+      "class": "inconclusive",
+      "rows_informing": 175
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.01503566714921805,
+      "lo": -0.0636346628594452,
+      "hi": 0.09891001964875257,
+      "lfsr": 0.364,
+      "p_negligible": 0.694,
+      "class": "inconclusive",
+      "rows_informing": 175
+     },
+     "unrest_remote": {
+      "mean": 0.0682119073165603,
+      "lo": -0.020419264959333522,
+      "hi": 0.17117409902477274,
+      "lfsr": 0.08399999999999996,
+      "p_negligible": 0.292,
+      "class": "inconclusive",
+      "rows_informing": 175
+     }
+    },
+    "GMB": {
+     "conflict_u": {
+      "mean": 0.15096396892144828,
+      "lo": 0.045141636884907126,
+      "hi": 0.2526466752385613,
+      "lfsr": 0.0,
+      "p_negligible": 0.03,
+      "class": "amplifies",
+      "rows_informing": 173
+     },
+     "conflict_drought": {
+      "mean": 0.01884847597126636,
+      "lo": -0.09862982813212438,
+      "hi": 0.15225958619868338,
+      "lfsr": 0.38,
+      "p_negligible": 0.544,
+      "class": "inconclusive",
+      "rows_informing": 173
+     },
+     "conflict_heat": {
+      "mean": -0.0017094242208531016,
+      "lo": -0.07441192124684828,
+      "hi": 0.07701427731997007,
+      "lfsr": 0.474,
+      "p_negligible": 0.798,
+      "class": "inconclusive",
+      "rows_informing": 173
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.020471532073722484,
+      "lo": -0.08576051900180422,
+      "hi": 0.05012246312141918,
+      "lfsr": 0.278,
+      "p_negligible": 0.78,
+      "class": "inconclusive",
+      "rows_informing": 173
+     },
+     "conflict_remote": {
+      "mean": 0.07920572695563391,
+      "lo": 0.0027464387309121905,
+      "hi": 0.1584117680269157,
+      "lfsr": 0.02200000000000002,
+      "p_negligible": 0.256,
+      "class": "amplifies",
+      "rows_informing": 173
+     },
+     "unrest_u": {
+      "mean": 0.12879507941215604,
+      "lo": 0.01662903095119339,
+      "hi": 0.24647936873727197,
+      "lfsr": 0.010000000000000009,
+      "p_negligible": 0.07,
+      "class": "amplifies",
+      "rows_informing": 75
+     },
+     "unrest_drought": {
+      "mean": -0.018057536388712436,
+      "lo": -0.11660080843407243,
+      "hi": 0.08503717862306208,
+      "lfsr": 0.358,
+      "p_negligible": 0.614,
+      "class": "inconclusive",
+      "rows_informing": 75
+     },
+     "unrest_heat": {
+      "mean": 0.0007271592450852582,
+      "lo": -0.06104847214842477,
+      "hi": 0.0592942574930099,
+      "lfsr": 0.478,
+      "p_negligible": 0.848,
+      "class": "inconclusive",
+      "rows_informing": 75
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.016856412404065498,
+      "lo": -0.061848237299163694,
+      "hi": 0.08087161649287754,
+      "lfsr": 0.30000000000000004,
+      "p_negligible": 0.67,
+      "class": "inconclusive",
+      "rows_informing": 75
+     },
+     "unrest_remote": {
+      "mean": 0.06334235435308076,
+      "lo": -0.026745809715204887,
+      "hi": 0.15294579367773709,
+      "lfsr": 0.09199999999999997,
+      "p_negligible": 0.33,
+      "class": "inconclusive",
+      "rows_informing": 75
+     }
+    },
+    "MRT": {
+     "conflict_u": {
+      "mean": 0.15316309298056843,
+      "lo": 0.07011980618728317,
+      "hi": 0.23481767138929702,
+      "lfsr": 0.0,
+      "p_negligible": 0.014,
+      "class": "amplifies",
+      "rows_informing": 1177
+     },
+     "conflict_drought": {
+      "mean": 0.024615376843056955,
+      "lo": -0.08019773832184324,
+      "hi": 0.12366204203263093,
+      "lfsr": 0.31200000000000006,
+      "p_negligible": 0.61,
+      "class": "inconclusive",
+      "rows_informing": 1177
+     },
+     "conflict_heat": {
+      "mean": 0.00661233331395375,
+      "lo": -0.06856081695363055,
+      "hi": 0.07571364615863296,
+      "lfsr": 0.42200000000000004,
+      "p_negligible": 0.81,
+      "class": "inconclusive",
+      "rows_informing": 1177
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.01841547397464516,
+      "lo": -0.08752491490785604,
+      "hi": 0.05344672601096369,
+      "lfsr": 0.334,
+      "p_negligible": 0.774,
+      "class": "inconclusive",
+      "rows_informing": 1177
+     },
+     "conflict_remote": {
+      "mean": 0.08304750639041504,
+      "lo": 0.008895095179381552,
+      "hi": 0.16030809326955933,
+      "lfsr": 0.018000000000000016,
+      "p_negligible": 0.182,
+      "class": "amplifies",
+      "rows_informing": 1177
+     },
+     "unrest_u": {
+      "mean": 0.13138010444287762,
+      "lo": 0.03522331225061,
+      "hi": 0.23142256041037892,
+      "lfsr": 0.006000000000000005,
+      "p_negligible": 0.038,
+      "class": "amplifies",
+      "rows_informing": 85
+     },
+     "unrest_drought": {
+      "mean": -0.014451739429080764,
+      "lo": -0.09508675712520485,
+      "hi": 0.07456342242993536,
+      "lfsr": 0.362,
+      "p_negligible": 0.674,
+      "class": "inconclusive",
+      "rows_informing": 85
+     },
+     "unrest_heat": {
+      "mean": -0.00010185148756106655,
+      "lo": -0.06198282993198225,
+      "hi": 0.0667526916425641,
+      "lfsr": 0.49,
+      "p_negligible": 0.84,
+      "class": "inconclusive",
+      "rows_informing": 85
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.017522921040464202,
+      "lo": -0.05792906363940981,
+      "hi": 0.08718164253701921,
+      "lfsr": 0.30600000000000005,
+      "p_negligible": 0.672,
+      "class": "inconclusive",
+      "rows_informing": 85
+     },
+     "unrest_remote": {
+      "mean": 0.059943715276042614,
+      "lo": -0.03962331710536285,
+      "hi": 0.15377933340012476,
+      "lfsr": 0.10599999999999998,
+      "p_negligible": 0.362,
+      "class": "inconclusive",
+      "rows_informing": 85
+     }
+    },
+    "MAR": {
+     "conflict_u": {
+      "mean": 0.15169368456457177,
+      "lo": 0.059001941987203856,
+      "hi": 0.24917658810195722,
+      "lfsr": 0.0020000000000000018,
+      "p_negligible": 0.022,
+      "class": "amplifies",
+      "rows_informing": 71
+     },
+     "conflict_drought": {
+      "mean": 0.020396377527592796,
+      "lo": -0.09313292762291261,
+      "hi": 0.13316931898936915,
+      "lfsr": 0.362,
+      "p_negligible": 0.598,
+      "class": "inconclusive",
+      "rows_informing": 71
+     },
+     "conflict_heat": {
+      "mean": 0.002061189589540385,
+      "lo": -0.07700123448678227,
+      "hi": 0.0735732732383697,
+      "lfsr": 0.484,
+      "p_negligible": 0.81,
+      "class": "inconclusive",
+      "rows_informing": 71
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.02110877330299123,
+      "lo": -0.09135595623002647,
+      "hi": 0.04609506081876716,
+      "lfsr": 0.286,
+      "p_negligible": 0.774,
+      "class": "inconclusive",
+      "rows_informing": 71
+     },
+     "conflict_remote": {
+      "mean": 0.07491786171599027,
+      "lo": -0.005440692111684025,
+      "hi": 0.1575758904189553,
+      "lfsr": 0.03200000000000003,
+      "p_negligible": 0.286,
+      "class": "amplifies",
+      "rows_informing": 71
+     },
+     "unrest_u": {
+      "mean": 0.13191771519708512,
+      "lo": 0.031066248085875867,
+      "hi": 0.24268364403080786,
+      "lfsr": 0.008000000000000007,
+      "p_negligible": 0.052,
+      "class": "amplifies",
+      "rows_informing": 41
+     },
+     "unrest_drought": {
+      "mean": -0.014311152665683587,
+      "lo": -0.1082679761527851,
+      "hi": 0.10076994875255041,
+      "lfsr": 0.364,
+      "p_negligible": 0.58,
+      "class": "inconclusive",
+      "rows_informing": 41
+     },
+     "unrest_heat": {
+      "mean": 0.002490173111825465,
+      "lo": -0.07073524721584096,
+      "hi": 0.06656449625267159,
+      "lfsr": 0.45999999999999996,
+      "p_negligible": 0.826,
+      "class": "inconclusive",
+      "rows_informing": 41
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.01605064319914231,
+      "lo": -0.06202871520649062,
+      "hi": 0.09739497901912511,
+      "lfsr": 0.32599999999999996,
+      "p_negligible": 0.68,
+      "class": "inconclusive",
+      "rows_informing": 41
+     },
+     "unrest_remote": {
+      "mean": 0.0629782448990539,
+      "lo": -0.028932366642841937,
+      "hi": 0.16227536089397077,
+      "lfsr": 0.08599999999999997,
+      "p_negligible": 0.328,
+      "class": "inconclusive",
+      "rows_informing": 41
+     }
+    },
+    "GNB": {
+     "conflict_u": {
+      "mean": 0.15586439143757397,
+      "lo": 0.06578618485591868,
+      "hi": 0.24597089623576715,
+      "lfsr": 0.0,
+      "p_negligible": 0.014,
+      "class": "amplifies",
+      "rows_informing": 154
+     },
+     "conflict_drought": {
+      "mean": 0.00973479694704424,
+      "lo": -0.08798203153805419,
+      "hi": 0.11100871883580701,
+      "lfsr": 0.43600000000000005,
+      "p_negligible": 0.646,
+      "class": "inconclusive",
+      "rows_informing": 154
+     },
+     "conflict_heat": {
+      "mean": 0.008888195706240953,
+      "lo": -0.06588732757734987,
+      "hi": 0.08160985459051696,
+      "lfsr": 0.388,
+      "p_negligible": 0.806,
+      "class": "inconclusive",
+      "rows_informing": 154
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.02125074624228732,
+      "lo": -0.09116705853978178,
+      "hi": 0.04547917795714584,
+      "lfsr": 0.292,
+      "p_negligible": 0.772,
+      "class": "inconclusive",
+      "rows_informing": 154
+     },
+     "conflict_remote": {
+      "mean": 0.07801262288583391,
+      "lo": -0.0023775324178696164,
+      "hi": 0.1635094053486325,
+      "lfsr": 0.028000000000000025,
+      "p_negligible": 0.256,
+      "class": "amplifies",
+      "rows_informing": 154
+     },
+     "unrest_u": {
+      "mean": 0.12864615595167433,
+      "lo": 0.03971808618078622,
+      "hi": 0.22457216800424729,
+      "lfsr": 0.008000000000000007,
+      "p_negligible": 0.036,
+      "class": "amplifies",
+      "rows_informing": 57
+     },
+     "unrest_drought": {
+      "mean": -0.013131775641929164,
+      "lo": -0.10171699500204599,
+      "hi": 0.07594816861309991,
+      "lfsr": 0.39,
+      "p_negligible": 0.668,
+      "class": "inconclusive",
+      "rows_informing": 57
+     },
+     "unrest_heat": {
+      "mean": 0.0006779727835986276,
+      "lo": -0.05883856144242677,
+      "hi": 0.061505177358382436,
+      "lfsr": 0.488,
+      "p_negligible": 0.814,
+      "class": "inconclusive",
+      "rows_informing": 57
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.021695103771390313,
+      "lo": -0.056655251988500625,
+      "hi": 0.09964638287035947,
+      "lfsr": 0.28400000000000003,
+      "p_negligible": 0.67,
+      "class": "inconclusive",
+      "rows_informing": 57
+     },
+     "unrest_remote": {
+      "mean": 0.061457094717773546,
+      "lo": -0.026398789634567855,
+      "hi": 0.14457305283048633,
+      "lfsr": 0.09799999999999998,
+      "p_negligible": 0.342,
+      "class": "inconclusive",
+      "rows_informing": 57
+     }
+    },
+    "GIN": {
+     "conflict_u": {
+      "mean": 0.15727333876004781,
+      "lo": 0.08968937442019377,
+      "hi": 0.22780328475472256,
+      "lfsr": 0.0,
+      "p_negligible": 0.006,
+      "class": "amplifies",
+      "rows_informing": 2126
+     },
+     "conflict_drought": {
+      "mean": -0.007464304834125129,
+      "lo": -0.08117874986322254,
+      "hi": 0.06358704922128551,
+      "lfsr": 0.436,
+      "p_negligible": 0.782,
+      "class": "inconclusive",
+      "rows_informing": 2126
+     },
+     "conflict_heat": {
+      "mean": -0.0012851104549826936,
+      "lo": -0.06668975503093753,
+      "hi": 0.06361235308698929,
+      "lfsr": 0.492,
+      "p_negligible": 0.834,
+      "class": "inconclusive",
+      "rows_informing": 2126
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.024378149460521564,
+      "lo": -0.08816542997683975,
+      "hi": 0.04088338224181906,
+      "lfsr": 0.226,
+      "p_negligible": 0.762,
+      "class": "inconclusive",
+      "rows_informing": 2126
+     },
+     "conflict_remote": {
+      "mean": 0.07811750732136064,
+      "lo": -0.0002325984758880979,
+      "hi": 0.15402726887147114,
+      "lfsr": 0.026000000000000023,
+      "p_negligible": 0.226,
+      "class": "amplifies",
+      "rows_informing": 2126
+     },
+     "unrest_u": {
+      "mean": 0.1328251269643433,
+      "lo": 0.04656139206178102,
+      "hi": 0.2178846387719202,
+      "lfsr": 0.0,
+      "p_negligible": 0.024,
+      "class": "amplifies",
+      "rows_informing": 419
+     },
+     "unrest_drought": {
+      "mean": -0.01651565183526911,
+      "lo": -0.08637408068375846,
+      "hi": 0.06473845699328767,
+      "lfsr": 0.312,
+      "p_negligible": 0.696,
+      "class": "inconclusive",
+      "rows_informing": 419
+     },
+     "unrest_heat": {
+      "mean": -0.0010903056552425253,
+      "lo": -0.06960255900661813,
+      "hi": 0.06123708115742547,
+      "lfsr": 0.498,
+      "p_negligible": 0.818,
+      "class": "inconclusive",
+      "rows_informing": 419
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.014628825157214934,
+      "lo": -0.06813933576038694,
+      "hi": 0.09565069449280444,
+      "lfsr": 0.346,
+      "p_negligible": 0.708,
+      "class": "inconclusive",
+      "rows_informing": 419
+     },
+     "unrest_remote": {
+      "mean": 0.06164893366175918,
+      "lo": -0.03453266912320131,
+      "hi": 0.15409417636106193,
+      "lfsr": 0.10999999999999999,
+      "p_negligible": 0.338,
+      "class": "inconclusive",
+      "rows_informing": 419
+     }
+    },
+    "ESH": {
+     "conflict_u": {
+      "mean": 0.15486468034217302,
+      "lo": 0.052027853831351806,
+      "hi": 0.26308456476649394,
+      "lfsr": 0.008000000000000007,
+      "p_negligible": 0.022,
+      "class": "amplifies",
+      "rows_informing": 11
+     },
+     "conflict_drought": {
+      "mean": 0.02320767307004276,
+      "lo": -0.0855991048783051,
+      "hi": 0.14139294613284034,
+      "lfsr": 0.364,
+      "p_negligible": 0.586,
+      "class": "inconclusive",
+      "rows_informing": 11
+     },
+     "conflict_heat": {
+      "mean": 0.0011580230537652251,
+      "lo": -0.07567372131733624,
+      "hi": 0.07827087326856504,
+      "lfsr": 0.48,
+      "p_negligible": 0.766,
+      "class": "inconclusive",
+      "rows_informing": 11
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.018345789361984062,
+      "lo": -0.09289130812532281,
+      "hi": 0.04265760273075977,
+      "lfsr": 0.336,
+      "p_negligible": 0.808,
+      "class": "inconclusive",
+      "rows_informing": 11
+     },
+     "conflict_remote": {
+      "mean": 0.08250504571339874,
+      "lo": -0.006640396996839195,
+      "hi": 0.15875538425820748,
+      "lfsr": 0.03600000000000003,
+      "p_negligible": 0.212,
+      "class": "amplifies",
+      "rows_informing": 11
+     },
+     "unrest_u": {
+      "mean": 0.13075476027892372,
+      "lo": 0.015095760614441489,
+      "hi": 0.2440970754893368,
+      "lfsr": 0.0040000000000000036,
+      "p_negligible": 0.064,
+      "class": "amplifies",
+      "rows_informing": 38
+     },
+     "unrest_drought": {
+      "mean": -0.013223370187831625,
+      "lo": -0.11051392103149042,
+      "hi": 0.0952519602514174,
+      "lfsr": 0.376,
+      "p_negligible": 0.594,
+      "class": "inconclusive",
+      "rows_informing": 38
+     },
+     "unrest_heat": {
+      "mean": 0.0005527228838090479,
+      "lo": -0.0564742532522166,
+      "hi": 0.06088912958007885,
+      "lfsr": 0.492,
+      "p_negligible": 0.826,
+      "class": "inconclusive",
+      "rows_informing": 38
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.018621572110278897,
+      "lo": -0.06567583300250765,
+      "hi": 0.10053487048452286,
+      "lfsr": 0.31999999999999995,
+      "p_negligible": 0.65,
+      "class": "inconclusive",
+      "rows_informing": 38
+     },
+     "unrest_remote": {
+      "mean": 0.06751362084446091,
+      "lo": -0.025151206099481915,
+      "hi": 0.15228924848689682,
+      "lfsr": 0.07999999999999996,
+      "p_negligible": 0.302,
+      "class": "inconclusive",
+      "rows_informing": 38
+     }
+    },
+    "SLE": {
+     "conflict_u": {
+      "mean": 0.16149651606750226,
+      "lo": 0.08404490474638453,
+      "hi": 0.2461459129773772,
+      "lfsr": 0.0,
+      "p_negligible": 0.002,
+      "class": "amplifies",
+      "rows_informing": 589
+     },
+     "conflict_drought": {
+      "mean": 0.011192570791055751,
+      "lo": -0.09145577506681328,
+      "hi": 0.10691885709345514,
+      "lfsr": 0.41400000000000003,
+      "p_negligible": 0.656,
+      "class": "inconclusive",
+      "rows_informing": 589
+     },
+     "conflict_heat": {
+      "mean": -0.0060227171015614245,
+      "lo": -0.07357262155514366,
+      "hi": 0.0726725091319319,
+      "lfsr": 0.422,
+      "p_negligible": 0.82,
+      "class": "inconclusive",
+      "rows_informing": 589
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.02159667638120923,
+      "lo": -0.08935901870223131,
+      "hi": 0.0461417359588047,
+      "lfsr": 0.27,
+      "p_negligible": 0.806,
+      "class": "inconclusive",
+      "rows_informing": 589
+     },
+     "conflict_remote": {
+      "mean": 0.07978621668180448,
+      "lo": -0.0038771605284285207,
+      "hi": 0.15855724768771245,
+      "lfsr": 0.028000000000000025,
+      "p_negligible": 0.246,
+      "class": "amplifies",
+      "rows_informing": 589
+     },
+     "unrest_u": {
+      "mean": 0.13534571038448262,
+      "lo": 0.02613564568615573,
+      "hi": 0.232351822638962,
+      "lfsr": 0.008000000000000007,
+      "p_negligible": 0.042,
+      "class": "amplifies",
+      "rows_informing": 277
+     },
+     "unrest_drought": {
+      "mean": -0.019801702335970325,
+      "lo": -0.10356381261983147,
+      "hi": 0.06418388536269187,
+      "lfsr": 0.32,
+      "p_negligible": 0.634,
+      "class": "inconclusive",
+      "rows_informing": 277
+     },
+     "unrest_heat": {
+      "mean": 0.00377079732221254,
+      "lo": -0.06434940219120408,
+      "hi": 0.06801699384324845,
+      "lfsr": 0.45199999999999996,
+      "p_negligible": 0.82,
+      "class": "inconclusive",
+      "rows_informing": 277
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.013480506700723371,
+      "lo": -0.0704326426220669,
+      "hi": 0.0932706668515103,
+      "lfsr": 0.354,
+      "p_negligible": 0.674,
+      "class": "inconclusive",
+      "rows_informing": 277
+     },
+     "unrest_remote": {
+      "mean": 0.06396012382458206,
+      "lo": -0.024958412270869316,
+      "hi": 0.15303440211872746,
+      "lfsr": 0.08399999999999996,
+      "p_negligible": 0.36,
+      "class": "inconclusive",
+      "rows_informing": 277
+     }
+    },
+    "MLI": {
+     "conflict_u": {
+      "mean": 0.1494828332123728,
+      "lo": 0.07581176870139036,
+      "hi": 0.21335413442986334,
+      "lfsr": 0.0,
+      "p_negligible": 0.006,
+      "class": "amplifies",
+      "rows_informing": 1844
+     },
+     "conflict_drought": {
+      "mean": 0.017914699642221744,
+      "lo": -0.05674901135060786,
+      "hi": 0.09552729682671314,
+      "lfsr": 0.32199999999999995,
+      "p_negligible": 0.764,
+      "class": "inconclusive",
+      "rows_informing": 1844
+     },
+     "conflict_heat": {
+      "mean": 0.001510822078942155,
+      "lo": -0.06339070623473841,
+      "hi": 0.06363667558356162,
+      "lfsr": 0.486,
+      "p_negligible": 0.892,
+      "class": "inconclusive",
+      "rows_informing": 1844
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.020284989904091038,
+      "lo": -0.09013181526602043,
+      "hi": 0.04931776630941102,
+      "lfsr": 0.286,
+      "p_negligible": 0.78,
+      "class": "inconclusive",
+      "rows_informing": 1844
+     },
+     "conflict_remote": {
+      "mean": 0.06319378268476011,
+      "lo": -0.007742038540607034,
+      "hi": 0.1266328438910575,
+      "lfsr": 0.04400000000000004,
+      "p_negligible": 0.346,
+      "class": "amplifies",
+      "rows_informing": 1844
+     },
+     "unrest_u": {
+      "mean": 0.13852369000155518,
+      "lo": 0.06681320082676973,
+      "hi": 0.20386101337098983,
+      "lfsr": 0.0,
+      "p_negligible": 0.004,
+      "class": "amplifies",
+      "rows_informing": 9395
+     },
+     "unrest_drought": {
+      "mean": -0.008024033405586743,
+      "lo": -0.07888136703047989,
+      "hi": 0.059308049933503026,
+      "lfsr": 0.41,
+      "p_negligible": 0.754,
+      "class": "inconclusive",
+      "rows_informing": 9395
+     },
+     "unrest_heat": {
+      "mean": 0.004884671218877943,
+      "lo": -0.05354814561173447,
+      "hi": 0.06272139270737104,
+      "lfsr": 0.43400000000000005,
+      "p_negligible": 0.896,
+      "class": "inconclusive",
+      "rows_informing": 9395
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.004626251967476903,
+      "lo": -0.06059026169857781,
+      "hi": 0.07671869296128671,
+      "lfsr": 0.45799999999999996,
+      "p_negligible": 0.812,
+      "class": "inconclusive",
+      "rows_informing": 9395
+     },
+     "unrest_remote": {
+      "mean": 0.06840219506896777,
+      "lo": -0.012745235437021479,
+      "hi": 0.15920315384836575,
+      "lfsr": 0.05600000000000005,
+      "p_negligible": 0.29,
+      "class": "inconclusive",
+      "rows_informing": 9395
+     }
+    },
+    "LBR": {
+     "conflict_u": {
+      "mean": 0.15804138912125945,
+      "lo": 0.074057156213853,
+      "hi": 0.24223494943418242,
+      "lfsr": 0.0,
+      "p_negligible": 0.006,
+      "class": "amplifies",
+      "rows_informing": 634
+     },
+     "conflict_drought": {
+      "mean": 0.001774978555266458,
+      "lo": -0.07827653793694288,
+      "hi": 0.08946071583066395,
+      "lfsr": 0.492,
+      "p_negligible": 0.734,
+      "class": "inconclusive",
+      "rows_informing": 634
+     },
+     "conflict_heat": {
+      "mean": 0.0020698647850703367,
+      "lo": -0.0724469410535701,
+      "hi": 0.0724359891779089,
+      "lfsr": 0.476,
+      "p_negligible": 0.8,
+      "class": "inconclusive",
+      "rows_informing": 634
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.024058328062065166,
+      "lo": -0.09066185569365512,
+      "hi": 0.042422174717886514,
+      "lfsr": 0.246,
+      "p_negligible": 0.74,
+      "class": "inconclusive",
+      "rows_informing": 634
+     },
+     "conflict_remote": {
+      "mean": 0.08057025945252465,
+      "lo": 0.009355748213057593,
+      "hi": 0.15184194656586994,
+      "lfsr": 0.018000000000000016,
+      "p_negligible": 0.232,
+      "class": "amplifies",
+      "rows_informing": 634
+     },
+     "unrest_u": {
+      "mean": 0.1253528113866326,
+      "lo": 0.03029969636257546,
+      "hi": 0.21551405105563168,
+      "lfsr": 0.006000000000000005,
+      "p_negligible": 0.042,
+      "class": "amplifies",
+      "rows_informing": 159
+     },
+     "unrest_drought": {
+      "mean": -0.011782968327408256,
+      "lo": -0.09370737873234926,
+      "hi": 0.08124071245845554,
+      "lfsr": 0.392,
+      "p_negligible": 0.69,
+      "class": "inconclusive",
+      "rows_informing": 159
+     },
+     "unrest_heat": {
+      "mean": -0.003776384009214207,
+      "lo": -0.06890723935077181,
+      "hi": 0.05593635778395153,
+      "lfsr": 0.47,
+      "p_negligible": 0.83,
+      "class": "inconclusive",
+      "rows_informing": 159
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.021086032545217008,
+      "lo": -0.06002592851577165,
+      "hi": 0.09376923190967627,
+      "lfsr": 0.30600000000000005,
+      "p_negligible": 0.666,
+      "class": "inconclusive",
+      "rows_informing": 159
+     },
+     "unrest_remote": {
+      "mean": 0.060614028560543105,
+      "lo": -0.02960723362351576,
+      "hi": 0.14741573928624493,
+      "lfsr": 0.10799999999999998,
+      "p_negligible": 0.352,
+      "class": "inconclusive",
+      "rows_informing": 159
+     }
+    },
+    "CIV": {
+     "conflict_u": {
+      "mean": 0.1567911600146742,
+      "lo": 0.08550292320965755,
+      "hi": 0.22552775521853957,
+      "lfsr": 0.0020000000000000018,
+      "p_negligible": 0.008,
+      "class": "amplifies",
+      "rows_informing": 1837
+     },
+     "conflict_drought": {
+      "mean": 0.03337163239652921,
+      "lo": -0.03570053281067037,
+      "hi": 0.11244204926273078,
+      "lfsr": 0.18799999999999994,
+      "p_negligible": 0.678,
+      "class": "inconclusive",
+      "rows_informing": 1837
+     },
+     "conflict_heat": {
+      "mean": 0.002584009611038537,
+      "lo": -0.06650830784559834,
+      "hi": 0.07202050729644795,
+      "lfsr": 0.478,
+      "p_negligible": 0.8,
+      "class": "inconclusive",
+      "rows_informing": 1837
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.027719862737862734,
+      "lo": -0.09425535961936464,
+      "hi": 0.03415207227142138,
+      "lfsr": 0.216,
+      "p_negligible": 0.748,
+      "class": "inconclusive",
+      "rows_informing": 1837
+     },
+     "conflict_remote": {
+      "mean": 0.07494256171999157,
+      "lo": 0.008857019563458936,
+      "hi": 0.15210477487541396,
+      "lfsr": 0.01200000000000001,
+      "p_negligible": 0.272,
+      "class": "amplifies",
+      "rows_informing": 1837
+     },
+     "unrest_u": {
+      "mean": 0.1329243888644821,
+      "lo": 0.04939357856784293,
+      "hi": 0.21611937318631033,
+      "lfsr": 0.0,
+      "p_negligible": 0.016,
+      "class": "amplifies",
+      "rows_informing": 825
+     },
+     "unrest_drought": {
+      "mean": -0.015537950649191832,
+      "lo": -0.09720657975376314,
+      "hi": 0.06915766319941957,
+      "lfsr": 0.326,
+      "p_negligible": 0.706,
+      "class": "inconclusive",
+      "rows_informing": 825
+     },
+     "unrest_heat": {
+      "mean": 0.002142644627953173,
+      "lo": -0.06359998824307671,
+      "hi": 0.05999903031050133,
+      "lfsr": 0.484,
+      "p_negligible": 0.83,
+      "class": "inconclusive",
+      "rows_informing": 825
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.010246738968642269,
+      "lo": -0.06703621243411072,
+      "hi": 0.08352665939037887,
+      "lfsr": 0.398,
+      "p_negligible": 0.746,
+      "class": "inconclusive",
+      "rows_informing": 825
+     },
+     "unrest_remote": {
+      "mean": 0.058156035903184175,
+      "lo": -0.027449601709945967,
+      "hi": 0.14684161997611492,
+      "lfsr": 0.09199999999999997,
+      "p_negligible": 0.372,
+      "class": "inconclusive",
+      "rows_informing": 825
+     }
+    },
+    "BFA": {
+     "conflict_u": {
+      "mean": 0.1543363133928193,
+      "lo": 0.08561284808658645,
+      "hi": 0.22250885608726287,
+      "lfsr": 0.0,
+      "p_negligible": 0.002,
+      "class": "amplifies",
+      "rows_informing": 1739
+     },
+     "conflict_drought": {
+      "mean": 0.014838955024628323,
+      "lo": -0.06479647134726561,
+      "hi": 0.08920408952806465,
+      "lfsr": 0.366,
+      "p_negligible": 0.764,
+      "class": "inconclusive",
+      "rows_informing": 1739
+     },
+     "conflict_heat": {
+      "mean": 0.00574478916934485,
+      "lo": -0.05408514083066995,
+      "hi": 0.07870410209865175,
+      "lfsr": 0.44199999999999995,
+      "p_negligible": 0.868,
+      "class": "inconclusive",
+      "rows_informing": 1739
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.03002991540870123,
+      "lo": -0.0912968867508478,
+      "hi": 0.03453116884703874,
+      "lfsr": 0.162,
+      "p_negligible": 0.732,
+      "class": "inconclusive",
+      "rows_informing": 1739
+     },
+     "conflict_remote": {
+      "mean": 0.08893382516778314,
+      "lo": 0.005953237290987117,
+      "hi": 0.16706189070414895,
+      "lfsr": 0.01200000000000001,
+      "p_negligible": 0.18,
+      "class": "amplifies",
+      "rows_informing": 1739
+     },
+     "unrest_u": {
+      "mean": 0.12223342749108076,
+      "lo": 0.05249757450448283,
+      "hi": 0.1936696958552245,
+      "lfsr": 0.0,
+      "p_negligible": 0.014,
+      "class": "amplifies",
+      "rows_informing": 6396
+     },
+     "unrest_drought": {
+      "mean": -0.011495573312917366,
+      "lo": -0.08509913945090315,
+      "hi": 0.06409003028738869,
+      "lfsr": 0.358,
+      "p_negligible": 0.752,
+      "class": "inconclusive",
+      "rows_informing": 6396
+     },
+     "unrest_heat": {
+      "mean": -0.01048168049911818,
+      "lo": -0.070033679249441,
+      "hi": 0.05371796798091989,
+      "lfsr": 0.362,
+      "p_negligible": 0.828,
+      "class": "inconclusive",
+      "rows_informing": 6396
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.013324542260602461,
+      "lo": -0.05244378959406314,
+      "hi": 0.08218671342322188,
+      "lfsr": 0.352,
+      "p_negligible": 0.768,
+      "class": "inconclusive",
+      "rows_informing": 6396
+     },
+     "unrest_remote": {
+      "mean": 0.05794748427912714,
+      "lo": -0.03919933481523233,
+      "hi": 0.14816144787355304,
+      "lfsr": 0.11199999999999999,
+      "p_negligible": 0.358,
+      "class": "inconclusive",
+      "rows_informing": 6396
+     }
+    },
+    "DZA": {
+     "conflict_u": {
+      "mean": 0.14850438372386982,
+      "lo": 0.06980386889577787,
+      "hi": 0.23089267937738817,
+      "lfsr": 0.0,
+      "p_negligible": 0.01,
+      "class": "amplifies",
+      "rows_informing": 141
+     },
+     "conflict_drought": {
+      "mean": 0.020906328867817937,
+      "lo": -0.07481984743650476,
+      "hi": 0.11210486838378615,
+      "lfsr": 0.33399999999999996,
+      "p_negligible": 0.658,
+      "class": "inconclusive",
+      "rows_informing": 141
+     },
+     "conflict_heat": {
+      "mean": 0.001224628643830084,
+      "lo": -0.06730404886849804,
+      "hi": 0.06612082384511737,
+      "lfsr": 0.486,
+      "p_negligible": 0.846,
+      "class": "inconclusive",
+      "rows_informing": 141
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.020249200540978812,
+      "lo": -0.08884005503404632,
+      "hi": 0.048923290377220756,
+      "lfsr": 0.29,
+      "p_negligible": 0.778,
+      "class": "inconclusive",
+      "rows_informing": 141
+     },
+     "conflict_remote": {
+      "mean": 0.07433220536001892,
+      "lo": -0.01282717909101159,
+      "hi": 0.14952696551109246,
+      "lfsr": 0.04400000000000004,
+      "p_negligible": 0.278,
+      "class": "amplifies",
+      "rows_informing": 141
+     },
+     "unrest_u": {
+      "mean": 0.12602077506940368,
+      "lo": 0.03414834013956124,
+      "hi": 0.2142618177702819,
+      "lfsr": 0.0040000000000000036,
+      "p_negligible": 0.036,
+      "class": "amplifies",
+      "rows_informing": 64
+     },
+     "unrest_drought": {
+      "mean": -0.016116207402767264,
+      "lo": -0.0988587871009513,
+      "hi": 0.05887176227596762,
+      "lfsr": 0.332,
+      "p_negligible": 0.678,
+      "class": "inconclusive",
+      "rows_informing": 64
+     },
+     "unrest_heat": {
+      "mean": 0.001861020486569964,
+      "lo": -0.06038393886095321,
+      "hi": 0.0639122382689247,
+      "lfsr": 0.492,
+      "p_negligible": 0.836,
+      "class": "inconclusive",
+      "rows_informing": 64
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.019259753333012334,
+      "lo": -0.059753457711852274,
+      "hi": 0.09722732890883685,
+      "lfsr": 0.31799999999999995,
+      "p_negligible": 0.656,
+      "class": "inconclusive",
+      "rows_informing": 64
+     },
+     "unrest_remote": {
+      "mean": 0.06031306196251842,
+      "lo": -0.031086349106786676,
+      "hi": 0.151916329911099,
+      "lfsr": 0.09799999999999998,
+      "p_negligible": 0.358,
+      "class": "inconclusive",
+      "rows_informing": 64
+     }
+    },
+    "GHA": {
+     "conflict_u": {
+      "mean": 0.14977897720617722,
+      "lo": 0.07816498796609722,
+      "hi": 0.23044517606554096,
+      "lfsr": 0.0,
+      "p_negligible": 0.004,
+      "class": "amplifies",
+      "rows_informing": 1923
+     },
+     "conflict_drought": {
+      "mean": 0.025930462808192622,
+      "lo": -0.0466411758475229,
+      "hi": 0.10702792356163766,
+      "lfsr": 0.262,
+      "p_negligible": 0.712,
+      "class": "inconclusive",
+      "rows_informing": 1923
+     },
+     "conflict_heat": {
+      "mean": 0.013180586074686949,
+      "lo": -0.05503901585691541,
+      "hi": 0.08289067977076475,
+      "lfsr": 0.352,
+      "p_negligible": 0.826,
+      "class": "inconclusive",
+      "rows_informing": 1923
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.017733159205974458,
+      "lo": -0.09089546633236936,
+      "hi": 0.04006618267508207,
+      "lfsr": 0.302,
+      "p_negligible": 0.812,
+      "class": "inconclusive",
+      "rows_informing": 1923
+     },
+     "conflict_remote": {
+      "mean": 0.07862219422500123,
+      "lo": 0.0026885837625287984,
+      "hi": 0.1496321235542095,
+      "lfsr": 0.02200000000000002,
+      "p_negligible": 0.214,
+      "class": "amplifies",
+      "rows_informing": 1923
+     },
+     "unrest_u": {
+      "mean": 0.13014499319792658,
+      "lo": 0.04070452483501373,
+      "hi": 0.2200404984878405,
+      "lfsr": 0.0,
+      "p_negligible": 0.036,
+      "class": "amplifies",
+      "rows_informing": 866
+     },
+     "unrest_drought": {
+      "mean": -0.02569753820607052,
+      "lo": -0.10613896026658955,
+      "hi": 0.05277003585682189,
+      "lfsr": 0.27,
+      "p_negligible": 0.62,
+      "class": "inconclusive",
+      "rows_informing": 866
+     },
+     "unrest_heat": {
+      "mean": -0.0003948366937728216,
+      "lo": -0.05963992913285382,
+      "hi": 0.06912641674769206,
+      "lfsr": 0.484,
+      "p_negligible": 0.806,
+      "class": "inconclusive",
+      "rows_informing": 866
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.015555019931674656,
+      "lo": -0.06672840505492934,
+      "hi": 0.08899524858433636,
+      "lfsr": 0.368,
+      "p_negligible": 0.712,
+      "class": "inconclusive",
+      "rows_informing": 866
+     },
+     "unrest_remote": {
+      "mean": 0.060029531091642496,
+      "lo": -0.022503818991104464,
+      "hi": 0.14517552887323115,
+      "lfsr": 0.06999999999999995,
+      "p_negligible": 0.35,
+      "class": "inconclusive",
+      "rows_informing": 866
+     }
+    },
+    "TGO": {
+     "conflict_u": {
+      "mean": 0.1537894993556353,
+      "lo": 0.08080144426900339,
+      "hi": 0.22966019995483195,
+      "lfsr": 0.0,
+      "p_negligible": 0.004,
+      "class": "amplifies",
+      "rows_informing": 357
+     },
+     "conflict_drought": {
+      "mean": 0.021073775425497418,
+      "lo": -0.06559924104578024,
+      "hi": 0.10621738948076742,
+      "lfsr": 0.31599999999999995,
+      "p_negligible": 0.672,
+      "class": "inconclusive",
+      "rows_informing": 357
+     },
+     "conflict_heat": {
+      "mean": 0.0089952683759392,
+      "lo": -0.06826222571389365,
+      "hi": 0.08175876438773155,
+      "lfsr": 0.40800000000000003,
+      "p_negligible": 0.814,
+      "class": "inconclusive",
+      "rows_informing": 357
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.020866437261160897,
+      "lo": -0.08975875210946925,
+      "hi": 0.04477469548648619,
+      "lfsr": 0.298,
+      "p_negligible": 0.788,
+      "class": "inconclusive",
+      "rows_informing": 357
+     },
+     "conflict_remote": {
+      "mean": 0.07610676582956255,
+      "lo": -0.004273444332869941,
+      "hi": 0.1516444132637521,
+      "lfsr": 0.03200000000000003,
+      "p_negligible": 0.29,
+      "class": "amplifies",
+      "rows_informing": 357
+     },
+     "unrest_u": {
+      "mean": 0.1296228866362,
+      "lo": 0.04338835171618441,
+      "hi": 0.21922382321262784,
+      "lfsr": 0.0020000000000000018,
+      "p_negligible": 0.026,
+      "class": "amplifies",
+      "rows_informing": 189
+     },
+     "unrest_drought": {
+      "mean": -0.014038262060664565,
+      "lo": -0.09362692076924739,
+      "hi": 0.06692280010780842,
+      "lfsr": 0.36,
+      "p_negligible": 0.722,
+      "class": "inconclusive",
+      "rows_informing": 189
+     },
+     "unrest_heat": {
+      "mean": -0.001259115270102795,
+      "lo": -0.05721558338583299,
+      "hi": 0.06379500254688505,
+      "lfsr": 0.468,
+      "p_negligible": 0.864,
+      "class": "inconclusive",
+      "rows_informing": 189
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.013878612606845748,
+      "lo": -0.07365218075049289,
+      "hi": 0.0967556446376317,
+      "lfsr": 0.366,
+      "p_negligible": 0.702,
+      "class": "inconclusive",
+      "rows_informing": 189
+     },
+     "unrest_remote": {
+      "mean": 0.05654190707917409,
+      "lo": -0.04315824568045273,
+      "hi": 0.15376122796165048,
+      "lfsr": 0.12,
+      "p_negligible": 0.37,
+      "class": "inconclusive",
+      "rows_informing": 189
+     }
+    },
+    "NER": {
+     "conflict_u": {
+      "mean": 0.15049531206887715,
+      "lo": 0.08392809721142294,
+      "hi": 0.23199009302056114,
+      "lfsr": 0.0,
+      "p_negligible": 0.004,
+      "class": "amplifies",
+      "rows_informing": 519
+     },
+     "conflict_drought": {
+      "mean": 0.021323924029719023,
+      "lo": -0.055694677030929576,
+      "hi": 0.09595977988816769,
+      "lfsr": 0.29800000000000004,
+      "p_negligible": 0.734,
+      "class": "inconclusive",
+      "rows_informing": 519
+     },
+     "conflict_heat": {
+      "mean": 0.0008372597301686453,
+      "lo": -0.07171140741701777,
+      "hi": 0.08897517624270791,
+      "lfsr": 0.486,
+      "p_negligible": 0.828,
+      "class": "inconclusive",
+      "rows_informing": 519
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.02053252152008328,
+      "lo": -0.08730134014980243,
+      "hi": 0.043185591472306356,
+      "lfsr": 0.282,
+      "p_negligible": 0.792,
+      "class": "inconclusive",
+      "rows_informing": 519
+     },
+     "conflict_remote": {
+      "mean": 0.07211150673274729,
+      "lo": -0.009198917065661956,
+      "hi": 0.1463940575424534,
+      "lfsr": 0.04200000000000004,
+      "p_negligible": 0.296,
+      "class": "amplifies",
+      "rows_informing": 519
+     },
+     "unrest_u": {
+      "mean": 0.12481460661001859,
+      "lo": 0.04288833843205292,
+      "hi": 0.2093408426440389,
+      "lfsr": 0.0,
+      "p_negligible": 0.03,
+      "class": "amplifies",
+      "rows_informing": 3825
+     },
+     "unrest_drought": {
+      "mean": -0.02388261439394946,
+      "lo": -0.09422951704249766,
+      "hi": 0.04773158140415732,
+      "lfsr": 0.25,
+      "p_negligible": 0.692,
+      "class": "inconclusive",
+      "rows_informing": 3825
+     },
+     "unrest_heat": {
+      "mean": 0.00373032780072909,
+      "lo": -0.06518451381996672,
+      "hi": 0.06736452868948312,
+      "lfsr": 0.44999999999999996,
+      "p_negligible": 0.834,
+      "class": "inconclusive",
+      "rows_informing": 3825
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.004847310391236276,
+      "lo": -0.06938713832227389,
+      "hi": 0.08316417586124795,
+      "lfsr": 0.43200000000000005,
+      "p_negligible": 0.718,
+      "class": "inconclusive",
+      "rows_informing": 3825
+     },
+     "unrest_remote": {
+      "mean": 0.06534282053676606,
+      "lo": -0.024656931328388837,
+      "hi": 0.15937068677173105,
+      "lfsr": 0.08599999999999997,
+      "p_negligible": 0.324,
+      "class": "inconclusive",
+      "rows_informing": 3825
+     }
+    },
+    "BEN": {
+     "conflict_u": {
+      "mean": 0.1486125473372171,
+      "lo": 0.07531409683022319,
+      "hi": 0.21761432981706894,
+      "lfsr": 0.0,
+      "p_negligible": 0.006,
+      "class": "amplifies",
+      "rows_informing": 962
+     },
+     "conflict_drought": {
+      "mean": 0.02966386407686424,
+      "lo": -0.054307711451596824,
+      "hi": 0.11238201586929253,
+      "lfsr": 0.23399999999999999,
+      "p_negligible": 0.652,
+      "class": "inconclusive",
+      "rows_informing": 962
+     },
+     "conflict_heat": {
+      "mean": -0.002136225207776696,
+      "lo": -0.08031899933164066,
+      "hi": 0.06880743483111805,
+      "lfsr": 0.498,
+      "p_negligible": 0.822,
+      "class": "inconclusive",
+      "rows_informing": 962
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.021042975193874665,
+      "lo": -0.09654021226405009,
+      "hi": 0.04944092088329218,
+      "lfsr": 0.268,
+      "p_negligible": 0.792,
+      "class": "inconclusive",
+      "rows_informing": 962
+     },
+     "conflict_remote": {
+      "mean": 0.08338664665104682,
+      "lo": 0.0008280436418210387,
+      "hi": 0.16048392781704593,
+      "lfsr": 0.026000000000000023,
+      "p_negligible": 0.212,
+      "class": "amplifies",
+      "rows_informing": 962
+     },
+     "unrest_u": {
+      "mean": 0.13715891111777403,
+      "lo": 0.054623652656227276,
+      "hi": 0.2152900442259376,
+      "lfsr": 0.0,
+      "p_negligible": 0.016,
+      "class": "amplifies",
+      "rows_informing": 801
+     },
+     "unrest_drought": {
+      "mean": -0.013285976357341628,
+      "lo": -0.09059432422677911,
+      "hi": 0.057230651730238585,
+      "lfsr": 0.376,
+      "p_negligible": 0.732,
+      "class": "inconclusive",
+      "rows_informing": 801
+     },
+     "unrest_heat": {
+      "mean": 0.00026201638789190507,
+      "lo": -0.06655334000772406,
+      "hi": 0.06283164366083706,
+      "lfsr": 0.496,
+      "p_negligible": 0.82,
+      "class": "inconclusive",
+      "rows_informing": 801
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.02090446670613568,
+      "lo": -0.05511763138065354,
+      "hi": 0.09681370044500977,
+      "lfsr": 0.29600000000000004,
+      "p_negligible": 0.644,
+      "class": "inconclusive",
+      "rows_informing": 801
+     },
+     "unrest_remote": {
+      "mean": 0.06650497491104213,
+      "lo": -0.021095318957434057,
+      "hi": 0.15920865127306064,
+      "lfsr": 0.06399999999999995,
+      "p_negligible": 0.32,
+      "class": "inconclusive",
+      "rows_informing": 801
+     }
+    },
+    "NGA": {
+     "conflict_u": {
+      "mean": 0.13760211906653466,
+      "lo": 0.07737132644717006,
+      "hi": 0.19503993481900306,
+      "lfsr": 0.0,
+      "p_negligible": 0.002,
+      "class": "amplifies",
+      "rows_informing": 9564
+     },
+     "conflict_drought": {
+      "mean": 0.02110741937548461,
+      "lo": -0.029290528874686084,
+      "hi": 0.06898496640811597,
+      "lfsr": 0.21199999999999997,
+      "p_negligible": 0.864,
+      "class": "inconclusive",
+      "rows_informing": 9564
+     },
+     "conflict_heat": {
+      "mean": -0.02060328415115046,
+      "lo": -0.06243449309322913,
+      "hi": 0.021586940963617657,
+      "lfsr": 0.174,
+      "p_negligible": 0.918,
+      "class": "inconclusive",
+      "rows_informing": 9564
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.00980684091650187,
+      "lo": -0.04721902012772992,
+      "hi": 0.029248817523772286,
+      "lfsr": 0.286,
+      "p_negligible": 0.984,
+      "class": "no_effect",
+      "rows_informing": 9564
+     },
+     "conflict_remote": {
+      "mean": 0.07208940683280461,
+      "lo": 0.023139882145542065,
+      "hi": 0.12153547063162579,
+      "lfsr": 0.0020000000000000018,
+      "p_negligible": 0.214,
+      "class": "amplifies",
+      "rows_informing": 9564
+     },
+     "unrest_u": {
+      "mean": 0.14254840915982414,
+      "lo": 0.0719972817484588,
+      "hi": 0.20864957230280873,
+      "lfsr": 0.0,
+      "p_negligible": 0.002,
+      "class": "amplifies",
+      "rows_informing": 20716
+     },
+     "unrest_drought": {
+      "mean": -0.027452525322301264,
+      "lo": -0.07805512652336082,
+      "hi": 0.02133240560260715,
+      "lfsr": 0.146,
+      "p_negligible": 0.75,
+      "class": "inconclusive",
+      "rows_informing": 20716
+     },
+     "unrest_heat": {
+      "mean": 0.0032682402803842115,
+      "lo": -0.03656712044513033,
+      "hi": 0.04085999671687116,
+      "lfsr": 0.42000000000000004,
+      "p_negligible": 0.966,
+      "class": "no_effect",
+      "rows_informing": 20716
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.040177246069432994,
+      "lo": 0.006362406444428919,
+      "hi": 0.07253256182025736,
+      "lfsr": 0.01200000000000001,
+      "p_negligible": 0.596,
+      "class": "amplifies",
+      "rows_informing": 20716
+     },
+     "unrest_remote": {
+      "mean": 0.05370894566700823,
+      "lo": 0.00011157901494541575,
+      "hi": 0.11219563231120876,
+      "lfsr": 0.02400000000000002,
+      "p_negligible": 0.372,
+      "class": "amplifies",
+      "rows_informing": 20716
+     }
+    },
+    "CMR": {
+     "conflict_u": {
+      "mean": 0.14394490545996635,
+      "lo": 0.06734879417066394,
+      "hi": 0.2198756321490163,
+      "lfsr": 0.0,
+      "p_negligible": 0.012,
+      "class": "amplifies",
+      "rows_informing": 1213
+     },
+     "conflict_drought": {
+      "mean": 0.03441639895420417,
+      "lo": -0.04074236995932257,
+      "hi": 0.1186160695189168,
+      "lfsr": 0.20199999999999996,
+      "p_negligible": 0.642,
+      "class": "inconclusive",
+      "rows_informing": 1213
+     },
+     "conflict_heat": {
+      "mean": 0.00247005134064766,
+      "lo": -0.06791253979943211,
+      "hi": 0.07550040642867285,
+      "lfsr": 0.482,
+      "p_negligible": 0.832,
+      "class": "inconclusive",
+      "rows_informing": 1213
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.025226882661838285,
+      "lo": -0.09198591623500195,
+      "hi": 0.04364892111945103,
+      "lfsr": 0.218,
+      "p_negligible": 0.756,
+      "class": "inconclusive",
+      "rows_informing": 1213
+     },
+     "conflict_remote": {
+      "mean": 0.07324508326478199,
+      "lo": -0.0005311072089189889,
+      "hi": 0.14559497441378244,
+      "lfsr": 0.026000000000000023,
+      "p_negligible": 0.282,
+      "class": "amplifies",
+      "rows_informing": 1213
+     },
+     "unrest_u": {
+      "mean": 0.12764292062482177,
+      "lo": 0.0531563840068147,
+      "hi": 0.20623213550823988,
+      "lfsr": 0.0020000000000000018,
+      "p_negligible": 0.016,
+      "class": "amplifies",
+      "rows_informing": 4044
+     },
+     "unrest_drought": {
+      "mean": -0.02109151588402814,
+      "lo": -0.08121118559159207,
+      "hi": 0.041843627472647436,
+      "lfsr": 0.23,
+      "p_negligible": 0.74,
+      "class": "inconclusive",
+      "rows_informing": 4044
+     },
+     "unrest_heat": {
+      "mean": 0.00841136849447734,
+      "lo": -0.040626744355122965,
+      "hi": 0.05703918519089897,
+      "lfsr": 0.37,
+      "p_negligible": 0.89,
+      "class": "inconclusive",
+      "rows_informing": 4044
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.027719899231639134,
+      "lo": -0.02328205193529481,
+      "hi": 0.07839025963032842,
+      "lfsr": 0.15000000000000002,
+      "p_negligible": 0.722,
+      "class": "inconclusive",
+      "rows_informing": 4044
+     },
+     "unrest_remote": {
+      "mean": 0.08063792774878344,
+      "lo": -0.0023763467327821575,
+      "hi": 0.16765596855498663,
+      "lfsr": 0.03200000000000003,
+      "p_negligible": 0.206,
+      "class": "amplifies",
+      "rows_informing": 4044
+     }
+    },
+    "LBY": {
+     "conflict_u": {
+      "mean": 0.1490440805747387,
+      "lo": 0.0741847699727994,
+      "hi": 0.22575331865594747,
+      "lfsr": 0.0020000000000000018,
+      "p_negligible": 0.006,
+      "class": "amplifies",
+      "rows_informing": 61
+     },
+     "conflict_drought": {
+      "mean": 0.021139322068140953,
+      "lo": -0.07115066894359799,
+      "hi": 0.11250813011992757,
+      "lfsr": 0.33999999999999997,
+      "p_negligible": 0.666,
+      "class": "inconclusive",
+      "rows_informing": 61
+     },
+     "conflict_heat": {
+      "mean": -2.3774325022895672e-05,
+      "lo": -0.07591540170947605,
+      "hi": 0.07945106062429738,
+      "lfsr": 0.492,
+      "p_negligible": 0.802,
+      "class": "inconclusive",
+      "rows_informing": 61
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.02171104971120586,
+      "lo": -0.08289750467522797,
+      "hi": 0.048625996966228685,
+      "lfsr": 0.254,
+      "p_negligible": 0.774,
+      "class": "inconclusive",
+      "rows_informing": 61
+     },
+     "conflict_remote": {
+      "mean": 0.07577467011965924,
+      "lo": -0.007411010161574244,
+      "hi": 0.154262530421385,
+      "lfsr": 0.04400000000000004,
+      "p_negligible": 0.276,
+      "class": "amplifies",
+      "rows_informing": 61
+     },
+     "unrest_u": {
+      "mean": 0.1287671104197748,
+      "lo": 0.03312709751630677,
+      "hi": 0.22066975915419207,
+      "lfsr": 0.008000000000000007,
+      "p_negligible": 0.038,
+      "class": "amplifies",
+      "rows_informing": 55
+     },
+     "unrest_drought": {
+      "mean": -0.018167639847666207,
+      "lo": -0.08850422493411093,
+      "hi": 0.0630935101880736,
+      "lfsr": 0.328,
+      "p_negligible": 0.67,
+      "class": "inconclusive",
+      "rows_informing": 55
+     },
+     "unrest_heat": {
+      "mean": 0.0013987133106286558,
+      "lo": -0.06800752115066293,
+      "hi": 0.0635937176112195,
+      "lfsr": 0.46599999999999997,
+      "p_negligible": 0.824,
+      "class": "inconclusive",
+      "rows_informing": 55
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.018139720872489832,
+      "lo": -0.07299791857898758,
+      "hi": 0.0990752454978778,
+      "lfsr": 0.33199999999999996,
+      "p_negligible": 0.646,
+      "class": "inconclusive",
+      "rows_informing": 55
+     },
+     "unrest_remote": {
+      "mean": 0.06071554462154454,
+      "lo": -0.032718756265319705,
+      "hi": 0.1551784552383602,
+      "lfsr": 0.11199999999999999,
+      "p_negligible": 0.354,
+      "class": "inconclusive",
+      "rows_informing": 55
+     }
+    },
+    "TCD": {
+     "conflict_u": {
+      "mean": 0.14585575758497055,
+      "lo": 0.07552635748874495,
+      "hi": 0.2242555976256393,
+      "lfsr": 0.0,
+      "p_negligible": 0.008,
+      "class": "amplifies",
+      "rows_informing": 305
+     },
+     "conflict_drought": {
+      "mean": 0.025401602227342047,
+      "lo": -0.05060545528814962,
+      "hi": 0.09851301059214408,
+      "lfsr": 0.262,
+      "p_negligible": 0.712,
+      "class": "inconclusive",
+      "rows_informing": 305
+     },
+     "conflict_heat": {
+      "mean": 0.0025534115814236148,
+      "lo": -0.06450827399610899,
+      "hi": 0.07533230834911507,
+      "lfsr": 0.478,
+      "p_negligible": 0.848,
+      "class": "inconclusive",
+      "rows_informing": 305
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.018301141647905275,
+      "lo": -0.08189428088978778,
+      "hi": 0.045206949047971234,
+      "lfsr": 0.306,
+      "p_negligible": 0.816,
+      "class": "inconclusive",
+      "rows_informing": 305
+     },
+     "conflict_remote": {
+      "mean": 0.07917125877865558,
+      "lo": -0.001436307064379722,
+      "hi": 0.1505351875824872,
+      "lfsr": 0.028000000000000025,
+      "p_negligible": 0.258,
+      "class": "amplifies",
+      "rows_informing": 305
+     },
+     "unrest_u": {
+      "mean": 0.13206629440082737,
+      "lo": 0.04494581083023904,
+      "hi": 0.210800771981062,
+      "lfsr": 0.0,
+      "p_negligible": 0.024,
+      "class": "amplifies",
+      "rows_informing": 889
+     },
+     "unrest_drought": {
+      "mean": -0.020308280471326923,
+      "lo": -0.08891351532932731,
+      "hi": 0.04955863734502049,
+      "lfsr": 0.268,
+      "p_negligible": 0.704,
+      "class": "inconclusive",
+      "rows_informing": 889
+     },
+     "unrest_heat": {
+      "mean": 0.004850953292132487,
+      "lo": -0.060252260095984125,
+      "hi": 0.06536189488911812,
+      "lfsr": 0.42200000000000004,
+      "p_negligible": 0.826,
+      "class": "inconclusive",
+      "rows_informing": 889
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.009696010313478588,
+      "lo": -0.07091182997747751,
+      "hi": 0.08723278962029453,
+      "lfsr": 0.374,
+      "p_negligible": 0.704,
+      "class": "inconclusive",
+      "rows_informing": 889
+     },
+     "unrest_remote": {
+      "mean": 0.05905072803955117,
+      "lo": -0.023331331710758987,
+      "hi": 0.14420440180027586,
+      "lfsr": 0.09999999999999998,
+      "p_negligible": 0.376,
+      "class": "inconclusive",
+      "rows_informing": 889
+     }
+    },
+    "CAF": {
+     "conflict_u": {
+      "mean": 0.14873358587723592,
+      "lo": 0.06751628993515882,
+      "hi": 0.2372819216455791,
+      "lfsr": 0.0,
+      "p_negligible": 0.01,
+      "class": "amplifies",
+      "rows_informing": 100
+     },
+     "conflict_drought": {
+      "mean": 0.033293492667715426,
+      "lo": -0.06297306321167721,
+      "hi": 0.12986804290346554,
+      "lfsr": 0.244,
+      "p_negligible": 0.592,
+      "class": "inconclusive",
+      "rows_informing": 100
+     },
+     "conflict_heat": {
+      "mean": 0.00688781137058688,
+      "lo": -0.06768912043550249,
+      "hi": 0.08086552009949104,
+      "lfsr": 0.44599999999999995,
+      "p_negligible": 0.844,
+      "class": "inconclusive",
+      "rows_informing": 100
+     },
+     "conflict_drought_ipc": {
+      "mean": -0.019840590312768018,
+      "lo": -0.08632281929077659,
+      "hi": 0.05111435159040168,
+      "lfsr": 0.28,
+      "p_negligible": 0.78,
+      "class": "inconclusive",
+      "rows_informing": 100
+     },
+     "conflict_remote": {
+      "mean": 0.08008936502223227,
+      "lo": -0.005101546822305671,
+      "hi": 0.16218652738889586,
+      "lfsr": 0.030000000000000027,
+      "p_negligible": 0.218,
+      "class": "amplifies",
+      "rows_informing": 100
+     },
+     "unrest_u": {
+      "mean": 0.1327543867624483,
+      "lo": 0.04008034827555715,
+      "hi": 0.2273634090725132,
+      "lfsr": 0.0040000000000000036,
+      "p_negligible": 0.028,
+      "class": "amplifies",
+      "rows_informing": 766
+     },
+     "unrest_drought": {
+      "mean": -0.01985591815554702,
+      "lo": -0.09611522391862562,
+      "hi": 0.05168506609724859,
+      "lfsr": 0.314,
+      "p_negligible": 0.656,
+      "class": "inconclusive",
+      "rows_informing": 766
+     },
+     "unrest_heat": {
+      "mean": -0.00012586200911363622,
+      "lo": -0.062007601168718736,
+      "hi": 0.06110837062975128,
+      "lfsr": 0.484,
+      "p_negligible": 0.816,
+      "class": "inconclusive",
+      "rows_informing": 766
+     },
+     "unrest_drought_ipc": {
+      "mean": 0.017300402197024306,
+      "lo": -0.06811807370447229,
+      "hi": 0.09231207542551353,
+      "lfsr": 0.32999999999999996,
+      "p_negligible": 0.694,
+      "class": "inconclusive",
+      "rows_informing": 766
+     },
+     "unrest_remote": {
+      "mean": 0.062296465275557183,
+      "lo": -0.023370182008332723,
+      "hi": 0.15579568980561434,
+      "lfsr": 0.07799999999999996,
+      "p_negligible": 0.356,
+      "class": "inconclusive",
+      "rows_informing": 766
+     }
+    }
+   },
+   "adjacency_edges": 41,
+   "islands": 0,
+   "fixed_ci95": {
+    "conflict:lag_other": {
+     "est": 0.1521770926306732,
+     "se": 0.026412868400454224,
+     "lo": 0.10040787056578292,
+     "hi": 0.20394631469556346,
+     "excludes_0": true
+    },
+    "conflict:lag_other_x_gov": {
+     "est": 0.09221518583596558,
+     "se": 0.025673861567514614,
+     "lo": 0.041894417163636934,
+     "hi": 0.14253595450829423,
+     "excludes_0": true
+    },
+    "conflict:lag_other_x_gov2": {
+     "est": 0.08236240686213034,
+     "se": 0.033928746709060056,
+     "lo": 0.015862063312372623,
+     "hi": 0.14886275041188807,
+     "excludes_0": true
+    },
+    "conflict:lag_other_x_drought": {
+     "est": 0.01963394047363991,
+     "se": 0.02871184192355364,
+     "lo": -0.03664126969652523,
+     "hi": 0.07590915064380505,
+     "excludes_0": false
+    },
+    "conflict:lag_other_x_heat": {
+     "est": 0.002327654718959336,
+     "se": 0.02370631144037114,
+     "lo": -0.0441367157041681,
+     "hi": 0.04879202514208677,
+     "excludes_0": false
+    },
+    "conflict:lag_other_x_drought_ipc": {
+     "est": -0.021263538803939552,
+     "se": 0.02437272253823804,
+     "lo": -0.06903407497888611,
+     "hi": 0.026506997371007007,
+     "excludes_0": false
+    },
+    "conflict:lag_other_x_remote": {
+     "est": 0.07924462605061008,
+     "se": 0.027060370993483213,
+     "lo": 0.02620629890338299,
+     "hi": 0.13228295319783717,
+     "excludes_0": true
+    },
+    "unrest:lag_other": {
+     "est": 0.13286238472895168,
+     "se": 0.030742945983011805,
+     "lo": 0.07260621060224853,
+     "hi": 0.19311855885565482,
+     "excludes_0": true
+    },
+    "unrest:lag_other_x_gov": {
+     "est": 0.00447742221681035,
+     "se": 0.02409786358351213,
+     "lo": -0.04275439040687343,
+     "hi": 0.051709234840494125,
+     "excludes_0": false
+    },
+    "unrest:lag_other_x_gov2": {
+     "est": -0.043600504965447436,
+     "se": 0.032832643241485146,
+     "lo": -0.10795248571875832,
+     "hi": 0.020751475787863453,
+     "excludes_0": false
+    },
+    "unrest:lag_other_x_drought": {
+     "est": -0.015888828119339705,
+     "se": 0.028643161776277196,
+     "lo": -0.07202942520084302,
+     "hi": 0.0402517689621636,
+     "excludes_0": false
+    },
+    "unrest:lag_other_x_heat": {
+     "est": 0.000884388124949954,
+     "se": 0.02152888220501661,
+     "lo": -0.0413122209968826,
+     "hi": 0.04308099724678251,
+     "excludes_0": false
+    },
+    "unrest:lag_other_x_drought_ipc": {
+     "est": 0.013933087669200343,
+     "se": 0.025641328678209372,
+     "lo": -0.036323916540090026,
+     "hi": 0.06419009187849072,
+     "excludes_0": false
+    },
+    "unrest:lag_other_x_remote": {
+     "est": 0.06375309235273677,
+     "se": 0.03375492127405305,
+     "lo": -0.002406553344407217,
+     "hi": 0.12991273804988074,
+     "excludes_0": false
+    }
+   },
+   "delta": {
+    "conflict_u": 0.050725697543557734,
+    "conflict_drought": 0.050725697543557734,
+    "conflict_heat": 0.050725697543557734,
+    "conflict_drought_ipc": 0.050725697543557734,
+    "conflict_remote": 0.050725697543557734,
+    "unrest_u": 0.04428746157631722,
+    "unrest_drought": 0.04428746157631722,
+    "unrest_heat": 0.04428746157631722,
+    "unrest_drought_ipc": 0.04428746157631722,
+    "unrest_remote": 0.04428746157631722
+   },
+   "class_counts": {
+    "conflict_u": {
+     "amplifies": 22
+    },
+    "conflict_drought": {
+     "inconclusive": 22
+    },
+    "conflict_heat": {
+     "inconclusive": 22
+    },
+    "conflict_drought_ipc": {
+     "inconclusive": 21,
+     "no_effect": 1
+    },
+    "conflict_remote": {
+     "amplifies": 22
+    },
+    "unrest_u": {
+     "amplifies": 22
+    },
+    "unrest_drought": {
+     "inconclusive": 22
+    },
+    "unrest_heat": {
+     "inconclusive": 21,
+     "no_effect": 1
+    },
+    "unrest_drought_ipc": {
+     "inconclusive": 21,
+     "amplifies": 1
+    },
+    "unrest_remote": {
+     "inconclusive": 20,
+     "amplifies": 2
+    }
+   },
+   "seconds": 526.2509202957153
+  }
+ },
+ "joint_prediction": {
+  "n_cell_weeks": 263025,
+  "share_both": 0.004075658207394734,
+  "share_conflict_given_unrest": 0.2457024982809993,
+  "share_conflict_given_no_unrest": 0.043234027418020425
+ }
+}

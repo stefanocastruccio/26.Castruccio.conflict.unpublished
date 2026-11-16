@@ -3105,3 +3105,113 @@ ValueError: operands could not be broadcast together with shapes (11,) (19,) (19
   and later commits there would change modules their worker processes may re-import). So Task 50 runs from a separate worktree
   at origin/main ($WORK/wt_main_new, passed with `-v REPO=...`; env.sh honours REPO). Inputs, $WORK paths and the outputs are
   unchanged; the two ce2s_v2svstterr.json files are committed from that worktree.
+
+## Task 50 done: two-stage country effects (written 2026-11-16 08:23 EST)
+- Array 1759940, both tasks rc=0, at commit 4246ad1, run from the worktree $WORK/wt_main_new. Started 07:55 EST. west_sahel log ended 08:05 EST, ame 08:21 EST.
+  Committed: results_real/bivariate/{west_sahel,ame}/ce2s_v2svstterr.json (country-level summaries).
+- **Log checks:** "two-stage: stage 1 done" in both. Each of the 11 "country effects (drop=...) L-BFGS-B" lines per region converged with nit > 0 and 0 failed evaluations. The final "country effects" line is printed.
+- Two things to read with care: (1) in most tau tests 2 x diff is **negative**: the model without the term has a slightly higher log ML (the boundary p is then 0.5). Only ame conflict u has p < 0.05 (2diff 5.89, p 0.0076). (2) The classes refer to the total sensitivity (kappa + u_c or psi_m + v_m,c), as in fit_bivariate.py:519; that is why u is "amplifies" for almost every country (kappa > 0) and conflict drought_ipc is "suppresses" for 76 of 78 ame countries (psi < 0).
+
+### west_sahel: 916,830 rows per outcome, 22 countries
+- log_ml_full -15809.69; opt_success True, nit 7; hessian_eig_min 0.442; seconds_hyper 470; seconds 526; BYM2 adjacency 41 edges, 0 islands
+- **kappa and psi** (est [95% interval], * = excludes 0):
+  - conflict:lag_other: 0.152 [0.100, 0.204] *
+  - conflict:lag_other_x_gov: 0.092 [0.042, 0.143] *
+  - conflict:lag_other_x_gov2: 0.082 [0.016, 0.149] *
+  - conflict:lag_other_x_drought: 0.020 [-0.037, 0.076]
+  - conflict:lag_other_x_heat: 0.002 [-0.044, 0.049]
+  - conflict:lag_other_x_drought_ipc: -0.021 [-0.069, 0.027]
+  - conflict:lag_other_x_remote: 0.079 [0.026, 0.132] *
+  - unrest:lag_other: 0.133 [0.073, 0.193] *
+  - unrest:lag_other_x_gov: 0.004 [-0.043, 0.052]
+  - unrest:lag_other_x_gov2: -0.044 [-0.108, 0.021]
+  - unrest:lag_other_x_drought: -0.016 [-0.072, 0.040]
+  - unrest:lag_other_x_heat: 0.001 [-0.041, 0.043]
+  - unrest:lag_other_x_drought_ipc: 0.014 [-0.036, 0.064]
+  - unrest:lag_other_x_remote: 0.064 [-0.002, 0.130]
+- **tau (country-effect SD) and phi** (est [95% interval]); tau test: 2 x (logML full - logML without), boundary p:
+  - k_conflict_u: sd 0.030 [0.006, 0.147]; phi 0.522 [0.054, 0.954]; 2diff -0.56, p 0.5
+  - k_conflict_drought: sd 0.038 [0.007, 0.205]; phi 0.484 [0.048, 0.946]; 2diff -0.57, p 0.5
+  - k_conflict_heat: sd 0.031 [0.008, 0.124]; 2diff -0.26, p 0.5
+  - k_conflict_drought_ipc: sd 0.027 [0.006, 0.121]; 2diff -0.63, p 0.5
+  - k_conflict_remote: sd 0.031 [0.006, 0.161]; 2diff -0.63, p 0.5
+  - k_unrest_u: sd 0.034 [0.006, 0.179]; phi 0.487 [0.048, 0.947]; 2diff -0.49, p 0.5
+  - k_unrest_drought: sd 0.030 [0.005, 0.173]; phi 0.500 [0.050, 0.950]; 2diff -0.88, p 0.5
+  - k_unrest_heat: sd 0.025 [0.005, 0.137]; 2diff -0.73, p 0.5
+  - k_unrest_drought_ipc: sd 0.033 [0.006, 0.181]; 2diff -0.76, p 0.5
+  - k_unrest_remote: sd 0.034 [0.007, 0.170]; 2diff -0.43, p 0.5
+- **class counts** (class of the total sensitivity kappa + u_c or psi_m + v_m,c; delta = |kappa|/3):
+  - conflict_u: amplifies 22
+  - conflict_drought: inconclusive 22
+  - conflict_heat: inconclusive 22
+  - conflict_drought_ipc: inconclusive 21, no_effect 1
+  - conflict_remote: amplifies 22
+  - unrest_u: amplifies 22
+  - unrest_drought: inconclusive 22
+  - unrest_heat: inconclusive 21, no_effect 1
+  - unrest_drought_ipc: amplifies 1, inconclusive 21
+  - unrest_remote: amplifies 2, inconclusive 20
+- **countries by class** (amplifies / suppresses / no_effect; inconclusive not listed):
+  - conflict_u: amplifies: BEN BFA CAF CIV CMR DZA ESH GHA GIN GMB GNB LBR LBY MAR MLI MRT NER NGA SEN SLE TCD TGO
+  - conflict_drought: none
+  - conflict_heat: none
+  - conflict_drought_ipc: no_effect: NGA
+  - conflict_remote: amplifies: BEN BFA CAF CIV CMR DZA ESH GHA GIN GMB GNB LBR LBY MAR MLI MRT NER NGA SEN SLE TCD TGO
+  - unrest_u: amplifies: BEN BFA CAF CIV CMR DZA ESH GHA GIN GMB GNB LBR LBY MAR MLI MRT NER NGA SEN SLE TCD TGO
+  - unrest_drought: none
+  - unrest_heat: no_effect: NGA
+  - unrest_drought_ipc: amplifies: NGA
+  - unrest_remote: amplifies: CMR NGA
+- run: started 2026-11-16T12:55:57 UTC; stage 1 444 s; all 11 L-BFGS-B runs CONVERGENCE (REL_REDUCTION_OF_F), nit 7,6,7,7,7,7,7,7,8,8,8, failed evaluations 0 in all
+
+### ame: 4,754,096 rows per outcome, 78 countries
+- log_ml_full -65389.80; opt_success True, nit 12; hessian_eig_min 0.337; seconds_hyper 987; seconds 1425; BYM2 adjacency 157 edges, 3 islands
+- **kappa and psi** (est [95% interval], * = excludes 0):
+  - conflict:lag_other: 0.092 [0.068, 0.116] *
+  - conflict:lag_other_x_gov: 0.044 [0.015, 0.073] *
+  - conflict:lag_other_x_gov2: 0.009 [-0.018, 0.037]
+  - conflict:lag_other_x_drought: 0.016 [-0.001, 0.033]
+  - conflict:lag_other_x_heat: -0.016 [-0.031, -0.000] *
+  - conflict:lag_other_x_drought_ipc: -0.025 [-0.040, -0.010] *
+  - conflict:lag_other_x_remote: -0.006 [-0.025, 0.013]
+  - unrest:lag_other: 0.051 [0.033, 0.070] *
+  - unrest:lag_other_x_gov: -0.036 [-0.050, -0.021] *
+  - unrest:lag_other_x_gov2: -0.045 [-0.059, -0.031] *
+  - unrest:lag_other_x_drought: 0.006 [-0.008, 0.020]
+  - unrest:lag_other_x_heat: -0.008 [-0.024, 0.008]
+  - unrest:lag_other_x_drought_ipc: -0.008 [-0.021, 0.005]
+  - unrest:lag_other_x_remote: 0.017 [-0.002, 0.036]
+- **tau (country-effect SD) and phi** (est [95% interval]); tau test: 2 x (logML full - logML without), boundary p:
+  - k_conflict_u: sd 0.049 [0.022, 0.109]; phi 0.469 [0.059, 0.926]; 2diff 5.89, p 0.0076
+  - k_conflict_drought: sd 0.023 [0.005, 0.116]; phi 0.618 [0.065, 0.974]; 2diff -0.56, p 0.5
+  - k_conflict_heat: sd 0.015 [0.005, 0.047]; 2diff -0.34, p 0.5
+  - k_conflict_drought_ipc: sd 0.011 [0.003, 0.040]; 2diff -0.50, p 0.5
+  - k_conflict_remote: sd 0.016 [0.004, 0.066]; 2diff -0.71, p 0.5
+  - k_unrest_u: sd 0.018 [0.003, 0.103]; phi 0.625 [0.065, 0.975]; 2diff -0.65, p 0.5
+  - k_unrest_drought: sd 0.017 [0.003, 0.091]; phi 0.636 [0.065, 0.978]; 2diff -0.71, p 0.5
+  - k_unrest_heat: sd 0.020 [0.007, 0.060]; 2diff -0.01, p 0.5
+  - k_unrest_drought_ipc: sd 0.010 [0.003, 0.037]; 2diff -0.52, p 0.5
+  - k_unrest_remote: sd 0.015 [0.004, 0.049]; 2diff -0.17, p 0.5
+- **class counts** (class of the total sensitivity kappa + u_c or psi_m + v_m,c; delta = |kappa|/3):
+  - conflict_u: amplifies 77, inconclusive 1
+  - conflict_drought: amplifies 2, inconclusive 75, no_effect 1
+  - conflict_heat: inconclusive 76, no_effect 1, suppresses 1
+  - conflict_drought_ipc: inconclusive 2, suppresses 76
+  - conflict_remote: inconclusive 76, no_effect 2
+  - unrest_u: amplifies 78
+  - unrest_drought: inconclusive 77, no_effect 1
+  - unrest_heat: inconclusive 78
+  - unrest_drought_ipc: inconclusive 76, no_effect 1, suppresses 1
+  - unrest_remote: amplifies 1, inconclusive 77
+- **countries by class** (amplifies / suppresses / no_effect; inconclusive not listed):
+  - conflict_u: amplifies: AFG AGO ARE ARM AZE BDI BEN BFA BRT BWA CAF CIV CMR COD COG COM CYN CYP DJI DZA EGY ERI ESH ETH GAB GEO GHA GIN GMB GNB GNQ IRN IRQ ISR JOR KAZ KEN KWT LBN LBR LBY LSO MAR MLI MOZ MRT MUS MWI NAM NER NGA OMN PAK PSE QAT RWA SAU SDN SEN SLE SOL SOM SSD SWZ SYR TCD TGO TKM TUN TUR TZA UGA UZB YEM ZAF ZMB ZWE
+  - conflict_drought: amplifies: IRQ ISR; no_effect: TUR
+  - conflict_heat: no_effect: TUR; suppresses: LBN
+  - conflict_drought_ipc: suppresses: AFG AGO ARE ARM AZE BDI BEN BFA BRT BWA CAF CIV CMR COD COG COM CYN CYP DZA EGY ERI ESH ETH GAB GEO GHA GIN GMB GNB GNQ IRN IRQ ISR JOR KAZ KEN KWT LBN LBR LBY LSO MAR MDG MLI MOZ MRT MUS MWI NAM NER NGA OMN PAK PSE QAT RWA SDN SEN SLE SOL SOM SSD SWZ SYR TCD TGO TKM TUN TUR TZA UGA UZB YEM ZAF ZMB ZWE
+  - conflict_remote: no_effect: NGA TUR
+  - unrest_u: amplifies: AFG AGO ARE ARM AZE BDI BEN BFA BRT BWA CAF CIV CMR COD COG COM CYN CYP DJI DZA EGY ERI ESH ETH GAB GEO GHA GIN GMB GNB GNQ IRN IRQ ISR JOR KAZ KEN KWT LBN LBR LBY LSO MAR MDG MLI MOZ MRT MUS MWI NAM NER NGA OMN PAK PSE QAT RWA SAU SDN SEN SLE SOL SOM SSD SWZ SYR TCD TGO TKM TUN TUR TZA UGA UZB YEM ZAF ZMB ZWE
+  - unrest_drought: no_effect: SYR
+  - unrest_heat: none
+  - unrest_drought_ipc: no_effect: NGA; suppresses: COD
+  - unrest_remote: amplifies: COD
+- run: started 2026-11-16T12:55:57 UTC; stage 1 851 s; all 11 L-BFGS-B runs CONVERGENCE (REL_REDUCTION_OF_F), nit 12,13,11,12,12,14,11,11,12,11,12, failed evaluations 0 in all
