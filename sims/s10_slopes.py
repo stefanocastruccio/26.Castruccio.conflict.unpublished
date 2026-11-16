@@ -2,7 +2,7 @@
 
   kappa_c(s,t) = kappa + u_c + v_c * drought_st     (unrest -> conflict; conflict -> unrest has none)
 
-16 countries on a 4 x 4 grid of 5 x 3 cells (S8's lattice and conditions). The code under test is fit_country_slopes
+16 countries on a 4 x 4 grid of 5 x 3 cells (S8's lattice and conditions); S10_SIZE=large: 48 countries of 5 x 5 cells, 4 years. The code under test is fit_country_slopes
 itself, with terms u and drought, both BYM2 on the country adjacency, and the boundary test of each tau: the base model
 (biv2 structure, standing in for biv3) is fitted first, its hyperparameters saved, then only the country effects are
 optimised, as on the CRC.
@@ -26,25 +26,38 @@ from scipy.special import expit
 from sc.gmrf import CopyBlock
 from sc.simulate import matern_gp
 
-from s8_psi import NX, NY, BURN, T_TR, STEP, ar_field, lattice
+from sc.gmrf import SphereLattice
+from s8_psi import BURN, STEP, ar_field
+
+# size (environment): default the small check (20 x 12 cells, 16 countries of 5 x 3 cells, 104 weeks);
+# S10_SIZE=large: 40 x 30 cells, 48 countries of 5 x 5 cells, 208 weeks (closer to a real region's power)
+SIZE = os.environ.get("S10_SIZE", "small")
+NX, NY, CW, CH, T_TR = (40, 30, 5, 5, 208) if SIZE == "large" else (20, 12, 5, 3, 104)
+NCX, NCY = NX // CW, NY // CH
+NC = NCX * NCY
+
+
+def lattice():
+    return SphereLattice(10.25 + 0.5 * np.arange(NX), -1.75 + 0.5 * np.arange(NY))
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "realdata"))
 from fit_bivariate import add_psi_terms, fit_country_slopes, stack  # noqa: E402
 
-CKPT = os.environ.get("S10_CKPT", "s10b_ckpt.jsonl")
+CKPT = os.environ.get("S10_CKPT", "s10b_ckpt.jsonl" if SIZE == "small" else "s10L_ckpt.jsonl")
 N_REPS = int(os.environ.get("N_REPS", 5))
 PAR = dict(b_c=-3.0, b_u=-2.8, d=0.3, k_cu=0.2, kappa=0.3, lam=0.8, e_sd=0.7, u_sd=0.5, phi=0.95, beta_dr=0.1)
-CX, CY = np.arange(16) % 4, np.arange(16) // 4                 # country column (west -> east), row (south -> north)
-TRUTH = {"null": dict(u=np.zeros(16), v=np.zeros(16)),
-         "planted": dict(u=np.where(CX < 2, 0.2, -0.2),
-                         v=np.where((CX < 2) & (CY >= 2), 0.3, np.where((CX >= 2) & (CY < 2), -0.3, 0.0)))}
+CX, CY = np.arange(NC) % NCX, np.arange(NC) // NCX            # country column (west -> east), row (south -> north)
+WEST, NORTH = CX < NCX / 2, CY >= NCY / 2
+TRUTH = {"null": dict(u=np.zeros(NC), v=np.zeros(NC)),
+         "planted": dict(u=np.where(WEST, 0.2, -0.2),
+                         v=np.where(WEST & NORTH, 0.3, np.where(~WEST & ~NORTH, -0.3, 0.0)))}
 
 
 def simulate10(scen, seed):
     rng = np.random.default_rng(seed)
     L = lattice(); n = L.n
     ix, iy = np.arange(n) % NX, np.arange(n) // NX
-    country = (ix // 5) + 4 * (iy // 3)
+    country = (ix // CW) + NCX * (iy // CH)
     tr = TRUTH[scen]
     Ttot = BURN + T_TR
     drought = ar_field(L, Ttot, rng, 400.0, 1.0, 0.9)
@@ -70,7 +83,7 @@ def simulate10(scen, seed):
 def one(arg):
     scen, seed = arg
     L, d = simulate10(scen, seed)
-    n, T, nC = L.n, int(d.tstep.max() + 1), 16
+    n, T, nC = L.n, int(d.tstep.max() + 1), NC
     dfs, covs = {}, {}
     for o, (y, own, oth) in {"conflict": ("yc", "Lc", "Lu"), "unrest": ("yu", "Lu", "Lc")}.items():
         dd = d[["cell", "country_id", "tstep", "train", "drought_z"]].copy()
@@ -107,7 +120,7 @@ def one(arg):
     iso = pd.factorize(base["ISO_A3"])[1]
     cid = np.array([int(c[1:]) for c in iso])
     tr = TRUTH[scen]
-    r = dict(scenario=scen, seed=seed, seconds=float(out["seconds"]) + float(m0.fit_seconds), adjacency_edges=out.get("adjacency_edges"))
+    r = dict(scenario=scen, seed=seed, size=SIZE, seconds=float(out["seconds"]) + float(m0.fit_seconds), adjacency_edges=out.get("adjacency_edges"))
     for o in ("conflict", "unrest"):
         for t in ("u", "drought"):
             nm = f"k_{o}_{t}"
@@ -134,5 +147,5 @@ if __name__ == "__main__":
     res = pd.DataFrame([r for rows in run_parallel(one, args, checkpoint=os.path.join(RESULTS, CKPT)) for r in rows])
     if os.environ.get("SHARD"):
         sys.exit(0)
-    res.to_csv(os.path.join(RESULTS, "s10_raw.csv"), index=False)
+    res.to_csv(os.path.join(RESULTS, "s10_raw.csv" if SIZE == "small" else "s10L_raw.csv"), index=False)
     print(res.groupby("scenario").mean(numeric_only=True).round(3).T.to_string())

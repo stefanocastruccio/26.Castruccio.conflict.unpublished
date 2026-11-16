@@ -469,3 +469,16 @@ qsub -hold_jid $J crc/jobs/48_toys_merge.sh
 - Commit `results/s9_raw.csv`, `results/s9_summary.csv`, `results/s10_raw.csv` (simulation output, small). Do not commit the
   shard checkpoints.
 - **STATUS:** paste the printed S9 summary table and the S10 per-scenario means; note any failed task with its error.
+
+## Task 48b (S10 rerun after fixes, small and large): READY, authorized by the PI on 2026-11-16. Synthetic data only.
+The S10 failure in Task 48 and two further problems found locally are fixed (starting values for BYM2 blocks; country
+adjacency; tau test on the marginal likelihood; prior scale option). One full-length replicate ran locally.
+```
+cd /users/scastruc/projects/26.Castruccio.conflict.unpublished && git pull
+rm -f results/s10b_ckpt.shard*.jsonl            # shards of the failed run, if any
+J1=$(qsub -terse crc/jobs/48_s10.sh | cut -d. -f1)     # small: 10 tasks x 4 cores, about 30-60 min each
+J2=$(qsub -terse crc/jobs/48_s10L.sh | cut -d. -f1)    # large: 10 tasks x 16 cores, several hours each
+qsub -hold_jid $J1,$J2 crc/jobs/48_s10_merge.sh
+```
+- Commit `results/s10_raw.csv` and `results/s10L_raw.csv` (not the shard checkpoints). STATUS: the per-scenario means
+  printed by the merge, for each size; any failed task with its error. If the large tasks run longer than 24 h, report it.
