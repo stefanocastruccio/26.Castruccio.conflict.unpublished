@@ -612,12 +612,13 @@ def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, t
         k_ += b.n_theta
     if adj_info := (A_adj is not None):
         out["adjacency_edges"] = int(A_adj.sum() // 2); out["islands"] = int((A_adj.sum(1) == 0).sum())
-    if tau_test:
-        lm_full = -opt.fun
+    if tau_test:   # likelihood ratio on the Laplace log marginal likelihood (no prior terms), at the posterior modes
+        lml_full = float(ms.log_marginal(th))
         for o, t in spec:
-            _, _, _, _, opt0 = optimise(drop=(o, t))
-            d2 = 2 * (lm_full - (-opt0.fun))
-            out["tau_test"][f"k_{o}_{t}"] = {"log_post_full": lm_full, "log_post_without": -opt0.fun, "two_diff": d2,
+            ms0, th0, _, _, opt0 = optimise(drop=(o, t))
+            lml0 = float(ms0.log_marginal(th0))
+            d2 = 2 * (lml_full - lml0)
+            out["tau_test"][f"k_{o}_{t}"] = {"log_ml_full": lml_full, "log_ml_without": lml0, "two_diff": d2,
                                              "p_boundary": float(0.5 * chi2.sf(max(d2, 0.0), 1))}
     # posterior on all training rows; sensitivities per country from joint draws
     m = LatentGaussianModel(np.r_[Pc["y"], Pu["y"]], make(), designs(Pc, Pu))
