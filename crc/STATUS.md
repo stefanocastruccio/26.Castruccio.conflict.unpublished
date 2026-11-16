@@ -3052,3 +3052,8 @@ ValueError: operands could not be broadcast together with shapes (11,) (19,) (19
 - **1757283 (merge):** held on both.
 - **1757051 (Task 46, south_asia tri3): running** since 20:51 EST (4 h 24 min), no errors. The data are loaded: 1,250,789 rows per
   outcome, 3,434 cells, 17 countries, v on 906 cells x 29 steps. The optimisation is in progress (expected 8-12 h in total).
+
+## Task 49: smoke test submitted (2026-11-16 01:50 EST)
+- **1758293** = 49_ce.sh task 2 only (west_sahel, 16 cores). When it ends I check the log ("country effects" with random and
+  class_counts) and ce_main.json (log_ml_full, random, countries), then submit task 1 (ame), the 49_ce_tau.sh array and the merge.
+- S10 large (1757282) and Task 46 (1757051) are still running. I push the S10 large shards as they finish.
