@@ -1,6 +1,6 @@
 \documentclass[10pt]{article}
 \usepackage[margin=0.8in]{geometry}
-\usepackage{mathtools,amssymb,bm,booktabs}
+\usepackage{mathtools,amssymb,bm,booktabs,graphicx}
 \usepackage[T1]{fontenc}
 \usepackage{mathptmx}
 \usepackage{enumitem}
@@ -56,27 +56,28 @@ with $R_1(s)$ the rook neighbours of $s$ (up to four cells sharing an edge). $h_
 of the \emph{same} cell over the four weeks before $t$.
 
 \textbf{Escalation} acts only through the other outcome's history in the same cell over the previous
-four weeks. Its strength depends on local conditions and on the country, not on hand-picked regions:
+four weeks. Its strength depends on local conditions and on the country:
 \[
 \kappa_{\U\to\C}(s,t) = \kappa_{\U\to\C} + \bm\psi_{\U\to\C}^\top \bm z_{st} + u_{\U\to\C,\,c(s)}, \qquad
 \kappa_{\C\to\U}(s,t) = \kappa_{\C\to\U} + \bm\psi_{\C\to\U}^\top \bm z_{st} + u_{\C\to\U,\,c(s)},
+\qquad u_{\cdot,c} \overset{iid}{\sim} \N(0, \tau^2_{\cdot}).
 \]
-\[
-u_{\cdot,c} \overset{iid}{\sim} \N(0, \tau^2_{\cdot}) \quad \text{over countries } c \text{ (country random slopes)}.
-\]
-$\bm z_{st}$ holds the conditions: governance $g$ and $g^2$ (country-year, V-Dem state capacity), drought
-($-$SPI-3), heat (temperature anomaly), drought $\times$ food crisis (IPC phase 3+), and remoteness
-($-\log$ population). Each is centred and scaled on the cell-weeks with recent events of the other outcome, the
-rows that identify escalation, so $\kappa_{\cdot}$ is the escalation under the conditions where it is observed and
+$\bm z_{st}$ holds the conditions: governance $g$ and $g^2$ (country-year, V-Dem territorial authority
+\texttt{v2svstterr}), drought ($-$SPI-3), heat (temperature anomaly), drought $\times$ food crisis (IPC phase 3+), and
+remoteness ($-\log$ population). Each is centred and scaled on the cell-weeks with recent events of the other outcome,
+the rows that identify escalation, so $\kappa_{\cdot}$ is the escalation under the conditions where it is observed and
 $\psi_m$ the change per SD of $z_m$ there. Each condition also enters $\bm x_{st}$ on its own, so $\bm\psi$ measures
-only how it changes escalation. $\bm\psi$ is global (fixed effects): it is estimated from every country that
-shares a condition. $u_{\cdot,c}$ is what the conditions leave unexplained: $\tau$ (with its interval) says whether
-countries still differ, and the map of $u_{\cdot,c}$ (with intervals) where. If that map shows spatial structure,
-a low-rank smooth term $\sum_{m=1}^{M} \vartheta_m b_m(s)$, $M \approx 5$--15 global basis functions, is added to
-$\kappa$; a Mat\'ern field $\gamma(s)$ was considered and dropped (not detectable at the size of $\kappa$,
-semi-synthetic check, below). Continental regions are no longer parameters of escalation; they remain as computational
-blocks if the global model has to be fitted in parts, and in the region-year effects $\alpha_{j,r,y}$, for which a
-data-driven alternative (country-year effects) is still to be decided.
+only how it changes escalation. $\bm\psi$ is global: it is estimated from every country that shares a condition.
+$u_{\cdot,c}$ is the country's escalation level beyond the conditions: $\tau$ says whether countries differ, the map of
+$\kappa + u_c$ (with intervals) where.
+
+\emph{Tested and dropped} (Task 50 and S10, below): country-specific sensitivities to the conditions,
+$\sum_m v_{m,c}\, z_{m,st}$ (all ten SDs with boundary $p = 0.5$, upper interval limits 0.04--0.2), and a spatial
+(BYM2) prior on $u_c$ or $v_{m,c}$ (the spatial share $\phi$ is not identified: intervals about $[0.05, 0.95]$ on real
+and simulated data, even when the simulated effects are spatially structured). Also dropped: a smooth field
+$\gamma(s)$ in $\kappa$ (not detectable at the size of $\kappa$, semi-synthetic check, below). Continental regions are
+not parameters of escalation; they remain computational blocks and, for now, the region-year effects
+$\alpha_{j,r,y}$ (country-year alternative to be decided).
 Terms for the neighbours' unrest, for longer lags (5--26 weeks) and for cells 50--300\,km away are
 left out. The neighbour term is about zero in both fitted regions, and a diagnostic on the
 fitted latent fields shows no unexplained lagged association between unrest and conflict at 13-
@@ -114,7 +115,7 @@ $\bm\beta_j$, $\alpha_{j,r,y}$, $\delta_j$, $\delta^{nb}_j$, $\kappa_{\cdot}$, $
 $\sigma_{u,j}$, $\sigma_{e,j}$ & SDs of iid effects & PC: $P(\sigma > 1) = 0.01$ \\
 $\rho_e$ & correlation of the cell effects & $\operatorname{atanh}\rho_e \sim \N(0, 1)$ \\
 $(\rho_w, \sigma_w)$, $(\rho_j, \sigma_j)$ & Mat\'ern fields & PC: $P(\rho < 100\,\mathrm{km}) = 0.05$, $P(\sigma > 1) = 0.01$ \\
-$\tau_{\cdot}$ & SD of the country slopes & PC: $P(\tau > 0.1) = 0.05$ \\
+$\tau_{\cdot}$ & SD of the country escalation levels & PC: $P(\tau > 0.2) = 0.05$ \\
 $\varphi_j$ & persistence & $\operatorname{atanh}\varphi_j \sim \N(0, 1.5^2)$ \\
 $\lambda$, $\lambda_r$ or $\vartheta_m$ & loadings & $\N(0, 2^2)$ \\
 \bottomrule
@@ -124,6 +125,13 @@ $\lambda$, $\lambda_r$ or $\vartheta_m$ & loadings & $\N(0, 2^2)$ \\
 $p(\bm y \mid \bm\theta)\, p(\bm\theta)$; the latent effects and fixed effects are summarised by their
 Gaussian approximation at $\hat{\bm\theta}$; 95\% intervals for $\bm\theta$ from the Hessian at
 $\hat{\bm\theta}$.
+\emph{Two-stage screening} of the escalation terms (Task 50): stage 1 solves the model without $\bm\psi$ and $u$
+once at its saved $\hat{\bm\theta}$; its latent effects and other fixed effects become a per-row offset. Stage 2 fits
+$\kappa$, $\bm\psi$ and $u$ on the cell-weeks with history of the other outcome (the only rows that inform them
+given the offset). About 60 times faster; its intervals ignore the stage-1 uncertainty and $\tau$ is shrunk (S10),
+so whatever survives is confirmed in one joint fit before it enters the paper.
+The optimiser now stops with the reason if the objective fails or the estimate does not leave its start (Task 46
+returned its starting values without a warning under the old code).
 
 \textbf{Special cases.} $\rho_e = 0$, $\lambda(s) \equiv \lambda$, $\bm\psi \equiv 0$, $\tau = 0$, plus the neighbour cross
 terms and a static unrest field: the current extended model. With $\rho_e = \lambda = 0$: two separate
@@ -148,8 +156,59 @@ H3: countries differ beyond what the conditions explain & $\tau$, map of $u_c$ &
 \bottomrule
 \end{tabular}}
 
-Planned extension (not in the short test): conflict split by actor into state repression and armed battles
-between organised groups, a model with three binary outcomes, each pair linked by the three channels.
+\textbf{Conflict split by actor.} Repression (violence against civilians by state forces) and armed violence (the
+rest), a model with three binary outcomes linked by the same channels (shared episode field with one loading per
+extra outcome). S9 shows it is needed whenever the two types respond to a condition in opposite directions. The
+South Asia fit (Task 46) failed silently and is to be relaunched.
+
+\section*{Simulations (15--16 November 2026)}
+All on small lattices with planted values, fitted with the code used on the real data.
+
+{\footnotesize\setlength{\tabcolsep}{4pt}\begin{tabular}{@{}p{0.2\textwidth}p{0.42\textwidth}p{0.32\textwidth}@{}}
+\toprule
+study & finding & consequence \\
+\midrule
+S8: global $\bm\psi$ (gov, gov$^2$, drought, drought$\times$IPC planted) & intervals calibrated; power 100/100/70/80\%; heat (planted 0) biased by about $+0.06$ & $\bm\psi$ usable; heat estimates not interpreted until the bias is understood \\
+S9: three outcomes vs conflict merged & opposite effects recovered (repression gov $+0.32$, armed $-0.28$; truth $\pm0.3$; drought 0.21 vs 0.2); the merged model cancels them ($-0.02$) and halves drought (0.105) & split by actor wherever types may respond differently \\
+S10: country effects, joint fit (16 countries; level and drought sensitivity, BYM2) & false flags 4/80 and 2/40; null $\tau$ rejected in 1 of 20 tests; no wrong signs; 9 of 40 true sensitivities flagged; ``no effect'' never established; $\phi$ not identified & classification safe but weak; per-country maps only where $\tau$ passes \\
+S10: same, two-stage & identical false flags, null rejections and power (8/40); $\tau$ of the drought sensitivity covered 5/5; the country-level $\tau_u$ shrunk (0.07--0.12 vs 0.2; test 0/5 vs 3/5) & screening tool; a non-detected $\tau_u$ is not evidence of no country differences \\
+semi-synthetic $\gamma(s)$ (West Africa, job 42) & null spread of $\hat\kappa(s)$ 0.069 exceeds the recovered planted spread 0.041; correlation with truth 0.17 & smooth $\gamma(s)$ dropped \\
+\bottomrule
+\end{tabular}}
+
+\section*{Escalation results, two-stage (Task 50; 2018--2024; per SD of the condition)}
+{\footnotesize\setlength{\tabcolsep}{4pt}\begin{tabular}{@{}lccc@{}}
+\toprule
+ & West Sahel, U$\to$C & Africa--Middle East, U$\to$C & Africa--Middle East, C$\to$U \\
+\midrule
+$\kappa$ & 0.152 [0.100, 0.204] & 0.092 [0.068, 0.116] & 0.051 [0.033, 0.070] \\
+$\psi_g$ & 0.092 [0.042, 0.143] & 0.044 [0.015, 0.073] & $-$0.036 [$-$0.050, $-$0.021] \\
+$\psi_{g^2}$ & 0.082 [0.016, 0.149] & 0.009 [$-$0.018, 0.037] & $-$0.045 [$-$0.059, $-$0.031] \\
+$\psi_{\text{drought}}$ & 0.020 [$-$0.037, 0.076] & 0.016 [$-$0.001, 0.033] & 0.006 [$-$0.008, 0.020] \\
+$\psi_{\text{heat}}$ & 0.002 [$-$0.044, 0.049] & $-$0.016 [$-$0.031, $-$0.000] & $-$0.008 [$-$0.024, 0.008] \\
+$\psi_{\text{drought}\times\text{IPC}}$ & $-$0.021 [$-$0.069, 0.027] & $-$0.025 [$-$0.040, $-$0.010] & $-$0.008 [$-$0.021, 0.005] \\
+$\psi_{\text{remote}}$ & 0.079 [0.026, 0.132] & $-$0.006 [$-$0.025, 0.013] & 0.017 [$-$0.002, 0.036] \\
+$\tau_u$ (boundary $p$) & 0.030 [0.006, 0.147] (0.5) & 0.049 [0.022, 0.109] (0.008) & 0.018 [0.003, 0.103] (0.5) \\
+\bottomrule
+\end{tabular}}
+
+West Sahel C$\to$U: $\kappa = 0.133$ [0.073, 0.193], no $\psi$ or $\tau$ excludes 0. The ten country sensitivities
+$\tau_{v}$: boundary $p = 0.5$ in both regions (dropped).
+\begin{itemize}
+\item \emph{H1, governance}: conflict $\to$ unrest is hump-shaped in Africa and the Middle East (peak near average
+territorial authority), as predicted; unrest $\to$ conflict rises with territorial authority (and is U-shaped in West
+Sahel), the opposite sign. Both agree with Task 44.
+\item \emph{H2, climate}: drought alone, nothing; heat and drought $\times$ food crisis slightly \emph{lower} unrest $\to$
+conflict escalation in Africa and the Middle East (about a fifth of $\kappa$; heat only just excludes 0, and S8 shows a heat
+bias): opposite to H2b, not interpreted before the joint fit.
+\item \emph{Reporting check}: remoteness raises escalation in West Sahel only.
+\item \emph{H3, countries}: only the unrest $\to$ conflict level in Africa and the Middle East (figure): highest in
+Palestine, Iran, Israel; lowest in Turkey and Nigeria; only Turkey's interval excludes the regional $\kappa$.
+\end{itemize}
+
+\begin{center}\includegraphics[width=\textwidth]{fig_country_kappa_ame_conflict.png}\end{center}
+
+\textbf{Next}: one joint fit with $\bm\psi$ and $u_c$ (iid) for the final intervals; relaunch the three-outcome model.
 
 \section*{Evidence so far (Africa and the Middle East; West Africa in brackets)}
 {\footnotesize\setlength{\tabcolsep}{4pt}\begin{tabular}{@{}lll@{}}
@@ -190,17 +249,9 @@ exclude $\hat\kappa$ (mean 0.07\% of cells), but the posterior-mean spread of $\
 0.24, with sign reversals in up to half the cells). With $\sigma_\gamma = 0.061 = \hat\kappa$ (true spread 0.15) the fitted
 spread averages 0.041, 0.1\% of cells are flagged, coverage is 0.94 and the correlation with the truth is 0.17. The null spread
 exceeds the recovered planted spread: a smooth $\gamma(s)$ of the size of $\kappa$ is not detectable in one region. Spatial
-differences in escalation are instead carried by the conditions $\bm\psi$ and the country slopes $u_c$, read from
+differences in escalation are instead carried by the conditions $\bm\psi$ and the country levels $u_c$, read from
 intervals, never from maps of posterior means.
-\item \emph{Conditions ($\bm\psi$), first test} (Task 44; hyperparameters fixed at the biv3 fit without $\bm\psi$, so the
-intervals are somewhat optimistic; conditions centred on all rows, so $\kappa$ there is an extrapolation and is not
-reported). Drought, heat and drought $\times$ food crisis: no interval excludes 0 in any run; in Africa and the Middle
-East they exclude changes larger than about 0.02 per SD, a third of $\kappa$. Governance (territorial authority):
-unrest $\to$ conflict $+0.11$ [0.02, 0.20] and $g^2$ $+0.17$ [0.01, 0.32] in West Africa, $+0.04$ [$-$0.005, 0.08] in Africa
-and the Middle East; conflict $\to$ unrest $-0.08$ [$-$0.12, $-$0.04] and $g^2$ $-0.08$ [$-$0.12, $-$0.04] in Africa and the
-Middle East. With fiscal capacity instead: nothing. Remoteness: $+0.25$ [0.02, 0.47] in West Africa only. With 12
-coefficients per run, about one of these is expected by chance. To be refitted with the centring above and the country
-slopes before any of it is interpreted.
+\item \emph{Conditions, first test} (Task 44): superseded by Task 50 above.
 \item \emph{Static unrest field.} With the shared cell component in the model, $\sigma_{w,\U}$ has an interval away from zero
 in both regions (range 800--1000\,km, about the size of a country group). Its earlier drop rested on an older fit; under our
 rule it should be kept, or kept as an uninterpreted control. To be decided.
