@@ -145,9 +145,11 @@ def theta0_from_init(blocks, hyper):
     th = []
     for b in blocks:
         try:
-            th.append(theta_from_hyper([b], hyper))
+            t_ = theta_from_hyper([b], hyper)
         except KeyError:
-            th.append(np.asarray(b.theta0(), float))
+            t_ = None
+        # blocks theta_from_hyper does not know (e.g. BYM2Block, MultiCopyBlock) give an empty vector: use the defaults
+        th.append(t_ if t_ is not None and len(t_) == b.n_theta else np.asarray(b.theta0(), float))
     th = np.concatenate(th)
     lo, hi = zip(*[bd for b in blocks for bd in b.bounds()])
     return np.clip(th, np.array(lo) + 1e-6, np.array(hi) - 1e-6)

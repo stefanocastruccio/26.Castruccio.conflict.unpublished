@@ -434,7 +434,7 @@ against civilians by any other actor; "excessive force against protesters" count
 - **Report in STATUS** (from actors_report.json): `check_repr_plus_armed_equals_conflict` (must be true), event counts,
   the `inter1` values among violence against civilians, the repression share of violence against civilians by region.
 
-## Task 46 (three-outcome model, South Asia box): ON HOLD until this line says READY (the coordinator flips it after the toy check)
+## Task 46 (three-outcome model, South Asia box): READY (2026-11-16: the S9 toy check passed, Task 48)
 `crc/jobs/46_tri3.sh`, after Task 45. **Region changed to `south_asia`** (60-100E, 0-40N, includes Myanmar; PI's choice
 2026-11-15, because repression is only 10% of violence against civilians in West Africa). Armed violence, repression and unrest, psi per type of conflict, full fit plus Hessian.
 Expected 8-12 h on 16 cores (24 hyperparameters).
