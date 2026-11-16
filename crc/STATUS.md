@@ -3215,3 +3215,9 @@ ValueError: operands could not be broadcast together with shapes (11,) (19,) (19
   - unrest_drought_ipc: no_effect: NGA; suppresses: COD
   - unrest_remote: amplifies: COD
 - run: started 2026-11-16T12:55:57 UTC; stage 1 851 s; all 11 L-BFGS-B runs CONVERGENCE (REL_REDUCTION_OF_F), nit 12,13,11,12,12,14,11,11,12,11,12, failed evaluations 0 in all
+
+## S10 large CANCELLED (written 2026-11-16 09:09 EST)
+- PI decision, passed on by the coordinator: **qdel 1757282** (all 10 tasks) and its held merge **1757283** at 2026-11-16 09:09 EST, after about
+  11.5 h. No S10 large replicate had finished: every results/s10L_ckpt.shard*.jsonl is empty, so there is nothing to push.
+  The S10 small results (Task 48b) were not merged into results/s10_raw.csv because the merge job is gone. The 10 shard checkpoints
+  are already committed (6113a60).
