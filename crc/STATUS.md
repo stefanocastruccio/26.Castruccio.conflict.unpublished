@@ -3079,8 +3079,8 @@ ValueError: operands could not be broadcast together with shapes (11,) (19,) (19
   results/s10L_ckpt.shard*.jsonl are still empty, so there is nothing to push. Their 24 h mark is 21:32 EST today.
 - Merge 1757283: held.
 
-## Task 46: job 1757051 deleted; diagnostics (2026-11-16 07:10 EST)
-- **qdel 1757051** at about 07:05 EST, as you asked, after about 10 h 15 min (the Hessian stage). Kept: $WORK/bivariate/tri3_south_asia/summary_tri3.json and
+## Task 46: job 1757051 deleted; diagnostics (2026-11-16 06:57 EST)
+- **qdel 1757051** at 06:56 EST, as you asked, after about 10 h 15 min (the Hessian stage). Kept: $WORK/bivariate/tri3_south_asia/summary_tri3.json and
   logs/cs_tri3.o1757051 (and .po). No relaunch.
 - **summary_tri3.json, models.tri3.subsample:** `{"rows": 746089, "rows_full": 2670657, "seconds_hyper": 13760.9,
   "log_ml_subsample": -122714.5466, "n_evals": 75, "nit": 1, "zero_frac": 0.25}`. So there was 1 iteration and 75 evaluations
