@@ -497,3 +497,16 @@ qsub -hold_jid $J1,$J2 crc/jobs/49_ce_merge.sh
 - Commit `results_real/bivariate/<region>/ce_v2svstterr.json` and `ce_tau_test.json` (country-level summaries only).
 - STATUS: kappa and psi with intervals; each tau (and phi for u and drought) with its interval; the tau-test p-values;
   class counts per term; the countries classed amplifies / suppresses / no_effect for each term.
+
+## Task 50 (country effects on escalation, TWO-STAGE, real data; replaces Task 49): READY (PI authorized 2026-11-16, in parallel with the local toy check)
+```
+cd /users/scastruc/projects/26.Castruccio.conflict.unpublished && git pull
+qsub crc/jobs/50_ce2s.sh        # array 1-2: ame, west_sahel; 16 cores each
+```
+- Stage 1 solves the saved biv3 once (no optimisation); stage 2 fits kappa, psi and the country effects on the rows with history of the
+  other outcome, with the tau tests in the same job. Expected: under an hour per region (most of it loading data and stage 1).
+- Check the log for "two-stage: stage 1 done", the "country effects (drop=...) L-BFGS-B ... nit=" lines (nit > 0, no failed
+  evaluations) and the final "country effects" line.
+- Commit `results_real/bivariate/<region>/ce2s_v2svstterr.json` (country-level summaries only).
+- STATUS: kappa and psi with intervals; each tau (and phi) with its interval; the tau-test p-values; class counts per term; the
+  countries classed amplifies / suppresses / no_effect for each term; run time.
