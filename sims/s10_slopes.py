@@ -131,5 +131,7 @@ def one(arg):
 if __name__ == "__main__":
     args = [(s, seed) for s in TRUTH for seed in range(1, N_REPS + 1)]
     res = pd.DataFrame([r for rows in run_parallel(one, args, checkpoint=os.path.join(RESULTS, CKPT)) for r in rows])
+    if os.environ.get("SHARD"):
+        sys.exit(0)
     res.to_csv(os.path.join(RESULTS, "s10_raw.csv"), index=False)
     print(res.groupby("scenario").mean(numeric_only=True).round(3).T.to_string())

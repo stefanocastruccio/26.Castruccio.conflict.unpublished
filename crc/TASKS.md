@@ -458,3 +458,14 @@ Expected 8-12 h on 16 cores (24 hyperparameters).
    country names, the where_prec and date_prec distributions, share of multi-week events, events by type of violence,
    and events per year for Africa / Middle East / Asia. If the column names differ from those in ucdp.py's docstring,
    adapt the script and say so. Do not compare with ACLED and do not fit anything.
+
+## Task 48 (toy checks S9 and S10 on the CRC): READY, authorized by the PI on 2026-11-16. Synthetic data only.
+```
+cd /users/scastruc/projects/26.Castruccio.conflict.unpublished && git pull
+J=$(qsub -terse crc/jobs/48_toys.sh | cut -d. -f1)
+qsub -hold_jid $J crc/jobs/48_toys_merge.sh
+```
+- 30 array tasks, 4 cores each, expected under 1 h each (S9 tasks may take up to 2 h).
+- Commit `results/s9_raw.csv`, `results/s9_summary.csv`, `results/s10_raw.csv` (simulation output, small). Do not commit the
+  shard checkpoints.
+- **STATUS:** paste the printed S9 summary table and the S10 per-scenario means; note any failed task with its error.
