@@ -3025,3 +3025,13 @@ ValueError: operands could not be broadcast together with shapes (11,) (19,) (19
   not fall back to theta0(). I have not changed the code. After you fix it, the S10 part can be rerun alone (tasks 21-30 and
   the merge) at about 40 core-hours.
 - Task 46 stays on hold.
+
+## Task 46 smoke test passed; full job submitted (2026-11-15 20:55 EST)
+- **Smoke** (job 1757017; Myanmar box 92-100E 15-25N, 2018-2019, no --hessian, output in $WORK only): "tri3: actor split merged;
+  cell-weeks where repr + armed != conflict events: 0"; 27,022 rows per outcome, 258 cells, 5 countries; hyperparameters fitted
+  in 232 s; summary_tri3.json written; rc=0.
+- Note: the log prints "regions ['africa', 'south_asia']". Countries outside the MIDDLE_EAST and SOUTH_ASIA lists (Myanmar,
+  Thailand, China, ...) fall into the "africa" group. That grouping is used only by the biv2_rl* models, not by tri3, so it does not
+  affect this fit. It is only a label in the printout.
+- **Full job 1757051** (crc/jobs/46_tri3.sh, south_asia 2018-2024, with --hessian, 16 cores). Expected 8-12 h.
+- S10 rerun (Task 48 tasks 21-30 + merge): waiting for your go, as asked.
