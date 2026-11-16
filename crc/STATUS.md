@@ -3057,3 +3057,24 @@ ValueError: operands could not be broadcast together with shapes (11,) (19,) (19
 - **1758293** = 49_ce.sh task 2 only (west_sahel, 16 cores). When it ends I check the log ("country effects" with random and
   class_counts) and ce_main.json (log_ml_full, random, countries), then submit task 1 (ame), the 49_ce_tau.sh array and the merge.
 - S10 large (1757282) and Task 46 (1757051) are still running. I push the S10 large shards as they finish.
+
+## Status for the coordinator (2026-11-16 06:55 EST / 11:55 UTC)
+**Warning about Task 46:** its hyperparameters did not move from their starting values (details below).
+- **1758293 (Task 49 smoke, west_sahel): running** since 01:18 EST (5 h 35 min), no errors. Last log lines, unchanged since 01:20:
+  `regions ['africa']: rows [916830], st cells [641]` / psi terms for conflict and unrest (v2svstterr) /
+  `west_sahel: 916,830 rows per outcome, 2,505 cells, 22 countries, v on 641 cells x 29 steps`.
+  The optimiser prints nothing per iteration, so I cannot give the stage beyond "optimising". $WORK/bivariate/ce_west_sahel/ is
+  still empty.
+- **1757051 (Task 46, south_asia tri3): running** since 20:51 EST (10 h), no errors. The hyperparameter stage finished at 01:20 EST:
+  `tri3: subsample 746,089/2,670,657 rows, hyperparameters in 13761 s, total 16104 s`, and summary_tri3.json (pre-Hessian) is in
+  $WORK/bivariate/tri3_south_asia/. The job is now in the Hessian stage, which prints nothing.
+  - **Every one of the 24 hyperparameters is exactly at its starting value:** all SDs 0.5 (st_unrest.sd 0.3), every range
+    300 km, rho 0.8, every loading 0.5. log_ml = -206,817.89.
+  - So the optimiser seems to have stopped at iteration 0, or failed without saying so (the log has no warning). The smoke fit on
+    the Myanmar box did move (for example cell_armed.sd 0.372, cell_unrest.sd 0.583).
+  - I have not cancelled it, because your request is status only. If those values are wrong, the running Hessian is being
+    computed at the starting point and is not useful. Tell me whether to qdel it.
+- **1757282 (S10 large): all 10 tasks running** since 21:32 EST (9 h 20 min), no errors. Each log has only the setup lines
+  (host/start, `conflict: psi terms ['drought']`, `unrest: psi terms ['drought']`), unchanged since 21:32. All
+  results/s10L_ckpt.shard*.jsonl are still empty, so there is nothing to push. Their 24 h mark is 21:32 EST today.
+- Merge 1757283: held.
