@@ -482,3 +482,18 @@ qsub -hold_jid $J1,$J2 crc/jobs/48_s10_merge.sh
 ```
 - Commit `results/s10_raw.csv` and `results/s10L_raw.csv` (not the shard checkpoints). STATUS: the per-scenario means
   printed by the merge, for each size; any failed task with its error. If the large tasks run longer than 24 h, report it.
+
+## Task 49 (country effects on escalation, real data): ON HOLD until this line says READY (the coordinator releases it if the S10 toys pass; the PI authorized the run on that condition on 2026-11-16)
+```
+cd /users/scastruc/projects/26.Castruccio.conflict.unpublished && git pull
+J1=$(qsub -terse crc/jobs/49_ce.sh | cut -d. -f1)        # main fits, ame + west_sahel, 16 cores each
+J2=$(qsub -terse crc/jobs/49_ce_tau.sh | cut -d. -f1)    # 20 reduced fits for the tau tests, 16 cores each
+qsub -hold_jid $J1,$J2 crc/jobs/49_ce_merge.sh
+```
+- Expected: west_sahel tasks a few hours; ame tasks 10-30 h (optimising about 14 variance parameters on the subsample, then a
+  Hessian in them and 500 posterior draws). Start the 20 tau-test tasks as cluster capacity allows; the main fits first.
+- **Smoke test first:** task 2 of 49_ce.sh (west_sahel) alone; check that the log prints "country effects" with `random`,
+  `class_counts`, and that ce_main.json has `log_ml_full`, `random`, `countries`; then submit the rest.
+- Commit `results_real/bivariate/<region>/ce_v2svstterr.json` and `ce_tau_test.json` (country-level summaries only).
+- STATUS: kappa and psi with intervals; each tau (and phi for u and drought) with its interval; the tau-test p-values;
+  class counts per term; the countries classed amplifies / suppresses / no_effect for each term.

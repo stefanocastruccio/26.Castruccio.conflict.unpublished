@@ -501,7 +501,7 @@ def country_adjacency(base, nC):
 
 
 def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, terms=("u",), bym2=(), delta=None,
-                       tau_test=False, n_draws=500, pc_u=0.2):
+                       tau_test=False, n_draws=500, pc_u=0.2, tau_drop=None):
     """Country effects on escalation, in both directions (o = conflict: unrest -> conflict; o = unrest: conflict -> unrest):
 
         kappa_o(c, s, t) = kappa_o + psi_o' z_st + u_o,c + sum_m v_o,m,c z_m,st,
@@ -585,6 +585,11 @@ def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, t
         th[free] = opt.x
         return ms, th, free, nlp, opt
 
+    if tau_drop:   # one reduced fit only (array task of the tau test): its log ML; p-values in the merge
+        o_, t_ = tau_drop.split(":")
+        ms0, th0, _, _, opt0 = optimise(drop=(o_, t_))
+        return {"tau_drop": tau_drop, "log_ml_without": float(ms0.log_marginal(th0)), "opt_success": bool(opt0.success),
+                "seconds": time.time() - t0}
     ms, th, free, nlp, opt = optimise()
     p_ = len(free); h = 0.05; H = np.zeros((p_, p_)); x0 = opt.x; f0 = opt.fun
     for i in range(p_):
@@ -601,6 +606,7 @@ def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, t
         se = np.full(p_, np.nan)
     t_hyper = time.time() - t0
     out = {"hyper_source": "biv3 fixed from " + str(a.fixed_theta) + "; country effects optimised",
+           "log_ml_full": float(ms.log_marginal(th)),
            "terms": list(terms), "bym2": list(bym2), "opt_success": bool(opt.success), "opt_nit": int(opt.nit),
            "seconds_hyper": t_hyper, "hessian_eig_min": float(np.linalg.eigvalsh(H).min()), "random": {}, "tau_test": {},
            "countries": {}}
@@ -781,6 +787,7 @@ def main():
     ap.add_argument("--ce-bym2", default="", help="country effects with a BYM2 (spatial) prior instead of iid, e.g. u,drought")
     ap.add_argument("--delta", type=float, default=None, help="relevance threshold for 'no effect' (default |kappa| / 3)")
     ap.add_argument("--ce-pc-u", type=float, default=0.2, help="PC prior of the country-effect SDs: P(tau > u) = 0.05")
+    ap.add_argument("--tau-drop", default=None, help="one reduced fit for the tau test, e.g. conflict:drought (array task)")
     ap.add_argument("--tau-test", action="store_true", help="boundary likelihood-ratio test of each country effect (refits)")
     ap.add_argument("--actors", default=None,
                     help="directory of the actor split (realdata/table/actors.py, year=<y>.parquet); needed by tri3")
@@ -1000,7 +1007,7 @@ def main():
             res["models"][model] = fit_country_slopes(a, saved, biv3_blocks, biv3_designs, parts_tr, nC, base, keys,
                                                       terms=tuple(a.ce_terms.split(",")),
                                                       bym2=tuple(t for t in a.ce_bym2.split(",") if t), delta=a.delta,
-                                                      tau_test=a.tau_test, pc_u=a.ce_pc_u)
+                                                      tau_test=a.tau_test, pc_u=a.ce_pc_u, tau_drop=a.tau_drop)
             json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
             continue
         if model in ("uni_static", "uni_st", "uni_static_u", "uni_st_u"):
