@@ -483,7 +483,7 @@ qsub -hold_jid $J1,$J2 crc/jobs/48_s10_merge.sh
 - Commit `results/s10_raw.csv` and `results/s10L_raw.csv` (not the shard checkpoints). STATUS: the per-scenario means
   printed by the merge, for each size; any failed task with its error. If the large tasks run longer than 24 h, report it.
 
-## Task 49 (country effects on escalation, real data): ON HOLD until this line says READY (the coordinator releases it if the S10 toys pass; the PI authorized the run on that condition on 2026-11-16)
+## Task 49 (country effects on escalation, real data): READY (released 2026-11-16 06:40 UTC by the coordinator: S10 small passed -- false flags 4/80 null and 2/40 planted, null tau rejections 1/20, no wrong signs; the PI authorized the run on that condition)
 ```
 cd /users/scastruc/projects/26.Castruccio.conflict.unpublished && git pull
 J1=$(qsub -terse crc/jobs/49_ce.sh | cut -d. -f1)        # main fits, ame + west_sahel, 16 cores each
