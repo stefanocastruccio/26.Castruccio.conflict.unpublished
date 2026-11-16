@@ -3099,7 +3099,7 @@ ValueError: operands could not be broadcast together with shapes (11,) (19,) (19
   task 1 (ame), the 49_ce_tau.sh array and the merge were never submitted.
 - S10 large (1757282) keeps running; its merge 1757283 is held.
 
-## Task 50 submitted (2026-11-16 07:45 EST)
+## Task 50 submitted (2026-11-16 07:55 EST)
 - **Array 1759940** (cs_ce2s: task 1 ame, task 2 west_sahel; 16 cores each), at commit 4246ad1.
 - S10 large (1757282) still runs from the main checkout, which stays at the older code while those jobs are alive (pulling 8002003
   and later commits there would change modules their worker processes may re-import). So Task 50 runs from a separate worktree
