@@ -482,86 +482,169 @@ def semisynth(a, saved, dfs, covs, base, tr, wk, L, cell, barrier, Lv, T, parts,
         json.dump(out, open(a.sim_out, "w"), indent=1, default=float)
 
 
-def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys):
-    """Escalation with country random slopes: kappa_c = kappa + psi' z + u_c, u_c ~ N(0, tau^2), one tau per direction
-    (IID blocks kslope_conflict / kslope_unrest on lag_other, by country). The biv3 hyperparameters stay at the saved
-    estimate; only the two tau are optimised (on the case-control subsample with --zero-frac), then the posterior on all
-    training rows. tau's 95% interval is from the 2 x 2 Hessian of the Laplace log posterior in the two free parameters,
-    conditional on the saved ones. Reports kappa and psi (fixed_ci95), tau, and every country's u_c."""
+def country_adjacency(base, nC):
+    """Countries sharing an edge between two 0.5-degree cells of the region (rook neighbours on the grid). Countries
+    separated by sea are not neighbours; a country with no neighbour is an island (iid in BYM2)."""
+    cid = base["country_id"].to_numpy()
+    g = pd.DataFrame({"i": np.round(base["lon"].to_numpy() * 2).astype(int), "j": np.round(base["lat"].to_numpy() * 2).astype(int),
+                      "c": cid}).drop_duplicates(["i", "j"])
+    key = dict(zip(zip(g.i, g.j), g.c))
+    A = np.zeros((nC, nC))
+    for (i, j), c in key.items():
+        for nb in ((i + 1, j), (i, j + 1)):
+            c2 = key.get(nb)
+            if c2 is not None and c2 != c:
+                A[c, c2] = A[c2, c] = 1
+    return A
+
+
+def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, terms=("u",), bym2=(), delta=None,
+                       tau_test=False, n_draws=500):
+    """Country effects on escalation, in both directions (o = conflict: unrest -> conflict; o = unrest: conflict -> unrest):
+
+        kappa_o(c, s, t) = kappa_o + psi_o' z_st + u_o,c + sum_m v_o,m,c z_m,st,
+
+    u_o,c on lag_other (term "u"), v_o,m,c on lag_other x z_m (term m, needs --psi with m). Each term is iid N(0, tau^2)
+    over countries, or BYM2 on the country adjacency (terms listed in `bym2`; tau = marginal SD, phi = spatial share).
+    The biv3 hyperparameters stay at the saved estimate; only the new ones are optimised (on the case-control subsample
+    with --zero-frac), then the posterior on all training rows. Reported:
+      - kappa and psi (fixed_ci95);
+      - tau (and phi) with 95% intervals from the Hessian in the free parameters (conditional on the saved ones);
+      - with tau_test: log-ML with each term removed (free parameters re-optimised), 2 x difference, and the boundary
+        p-value 0.5 P(chi2_1 > 2 diff) (tau = 0 lies on the boundary);
+      - per country and term, the sensitivity (kappa + u_c, or psi_m + v_m,c) from n_draws joint posterior draws: mean,
+        95% interval, local false sign rate lfsr, P(|.| < delta), and the class amplifies / suppresses (lfsr < 0.05),
+        no_effect (P(|.| < delta) > 0.95) or inconclusive. delta defaults to |kappa_o| / 3."""
     import time
     from scipy.optimize import minimize
+    from scipy.stats import chi2
+    from sc.gmrf import BYM2Block
     if saved is None or "biv3" not in saved.get("models", {}):
-        raise SystemExit("biv3_cs needs --fixed-theta with a saved biv3")
+        raise SystemExit("country effects need --fixed-theta with a saved biv3")
     t0 = time.time()
     Pc, Pu = P["conflict"], P["unrest"]
+    A_adj = country_adjacency(base, nC) if bym2 else None
 
-    def make():
-        return biv3_blocks() + [IIDBlock(nC, name="kslope_conflict", sd_init=0.05, pc_u=0.1, pc_alpha=0.05),
-                                IIDBlock(nC, name="kslope_unrest", sd_init=0.05, pc_u=0.1, pc_alpha=0.05)]
+    def column(Q, o, t):
+        nm = f"{o}:lag_other" if t == "u" else f"{o}:lag_other_x_{t}"
+        if nm not in Q["names"]:
+            raise SystemExit(f"country effect '{t}' needs the column {nm} (add {t} to --psi)")
+        X = Q["X"]; k = Q["names"].index(nm)
+        return np.asarray(X[:, k].toarray()).ravel() if sp.issparse(X) else np.asarray(X[:, k], float)
 
-    def designs(Qc, Qu):
-        return biv3_designs(Qc, Qu) + [stack(Qc["S"], None, nu=len(Qu["y"])), stack(None, Qu["S"], nc=len(Qc["y"]))]
+    spec = [(o, t) for o in ("conflict", "unrest") for t in terms]
+
+    def make(drop=None):
+        b = biv3_blocks()
+        for o, t in spec:
+            if (o, t) == drop:
+                continue
+            nm = f"k_{o}_{t}"
+            b.append(BYM2Block(A_adj, name=nm, sd_init=0.05, pc_u=0.1, pc_alpha=0.05) if t in bym2
+                     else IIDBlock(nC, name=nm, sd_init=0.05, pc_u=0.1, pc_alpha=0.05))
+        return b
+
+    def designs(Qc, Qu, drop=None):
+        D = biv3_designs(Qc, Qu)
+        Qs = {"conflict": Qc, "unrest": Qu}
+        for o, t in spec:
+            if (o, t) == drop:
+                continue
+            Q = Qs[o]
+            Dt = sp.diags(column(Q, o, t)) @ sp.csr_matrix(Q["C"])
+            if t in bym2:
+                Dt = sp.hstack([Dt, sp.csr_matrix((Dt.shape[0], nC))], format="csr")
+            D.append(stack(Dt, None, nu=len(Qu["y"])) if o == "conflict" else stack(None, Dt, nc=len(Qc["y"])))
+        return D
 
     if a.zero_frac:
         rng_s = np.random.default_rng(a.zero_seed)
         Sc, Su = subsample(Pc, a.zero_frac, rng_s), subsample(Pu, a.zero_frac, rng_s)
-        ms = LatentGaussianModel(np.r_[Sc["y"], Su["y"]], make(), designs(Sc, Su), offset=np.r_[Sc["off"], Su["off"]])
+        ysub, off = np.r_[Sc["y"], Su["y"]], np.r_[Sc["off"], Su["off"]]
     else:
-        ms = LatentGaussianModel(np.r_[Pc["y"], Pu["y"]], make(), designs(Pc, Pu))
-    th = theta0_from_init(ms.blocks, saved["models"]["biv3"]["hyper"])
-    free = np.arange(ms.n_theta - 2, ms.n_theta)
-    bds = [bd for b in ms.blocks for bd in b.bounds()]
+        Sc, Su, ysub, off = Pc, Pu, np.r_[Pc["y"], Pu["y"]], None
 
-    def nlp(z):
-        t = th.copy(); t[free] = z
-        try:
-            v = -(ms.log_marginal(t, require_converged=True) + ms.log_prior(t))
-        except Exception:
-            return 1e100
-        return v if np.isfinite(v) else 1e100
-    opt = minimize(nlp, th[free], method="L-BFGS-B", bounds=[bds[i] for i in free], options=dict(eps=1e-4, maxiter=60))
-    th[free] = opt.x
-    h = 0.05; H = np.zeros((2, 2)); f0 = nlp(opt.x)
-    for i in range(2):
-        for j in range(i, 2):
+    def optimise(drop=None):
+        ms = LatentGaussianModel(ysub, make(drop), designs(Sc, Su, drop), offset=off)
+        th = theta0_from_init(ms.blocks, saved["models"]["biv3"]["hyper"])
+        nb = sum(b.n_theta for b in biv3_blocks())
+        free = np.arange(nb, ms.n_theta)
+        bds = [bd for b in ms.blocks for bd in b.bounds()]
+
+        def nlp(z):
+            t = th.copy(); t[free] = z
+            try:
+                v = -(ms.log_marginal(t, require_converged=True) + ms.log_prior(t))
+            except Exception:
+                return 1e100
+            return v if np.isfinite(v) else 1e100
+        opt = minimize(nlp, th[free], method="L-BFGS-B", bounds=[bds[i] for i in free], options=dict(eps=1e-4, maxiter=80))
+        th[free] = opt.x
+        return ms, th, free, nlp, opt
+
+    ms, th, free, nlp, opt = optimise()
+    p_ = len(free); h = 0.05; H = np.zeros((p_, p_)); x0 = opt.x; f0 = opt.fun
+    for i in range(p_):
+        for j in range(i, p_):
             if i == j:
-                e = np.zeros(2); e[i] = h
-                H[i, i] = (nlp(opt.x + e) - 2 * f0 + nlp(opt.x - e)) / h ** 2
+                e = np.zeros(p_); e[i] = h
+                H[i, i] = (nlp(x0 + e) - 2 * f0 + nlp(x0 - e)) / h ** 2
             else:
-                ei, ej = np.zeros(2), np.zeros(2); ei[i] = h; ej[j] = h
-                H[i, j] = H[j, i] = (nlp(opt.x + ei + ej) - nlp(opt.x + ei - ej) - nlp(opt.x - ei + ej)
-                                     + nlp(opt.x - ei - ej)) / (4 * h ** 2)
+                ei, ej = np.zeros(p_), np.zeros(p_); ei[i] = h; ej[j] = h
+                H[i, j] = H[j, i] = (nlp(x0 + ei + ej) - nlp(x0 + ei - ej) - nlp(x0 - ei + ej) + nlp(x0 - ei - ej)) / (4 * h ** 2)
     try:
         se = np.sqrt(np.diag(np.linalg.inv(H)))
     except np.linalg.LinAlgError:
-        se = np.full(2, np.nan)
+        se = np.full(p_, np.nan)
     t_hyper = time.time() - t0
+    out = {"hyper_source": "biv3 fixed from " + str(a.fixed_theta) + "; country effects optimised",
+           "terms": list(terms), "bym2": list(bym2), "opt_success": bool(opt.success), "opt_nit": int(opt.nit),
+           "seconds_hyper": t_hyper, "hessian_eig_min": float(np.linalg.eigvalsh(H).min()), "random": {}, "tau_test": {},
+           "countries": {}}
+    k_ = 0
+    for b in ms.blocks[len(biv3_blocks()):]:
+        tt = th[free[k_:k_ + b.n_theta]]; ss = se[k_:k_ + b.n_theta]
+        lo, hi = b.describe(tt - 1.96 * ss), b.describe(tt + 1.96 * ss)
+        out["random"][b.name] = {nm: {"est": v, "lo": lo[nm], "hi": hi[nm]} for nm, v in b.describe(tt).items()}
+        k_ += b.n_theta
+    if adj_info := (A_adj is not None):
+        out["adjacency_edges"] = int(A_adj.sum() // 2); out["islands"] = int((A_adj.sum(1) == 0).sum())
+    if tau_test:
+        lm_full = -opt.fun
+        for o, t in spec:
+            _, _, _, _, opt0 = optimise(drop=(o, t))
+            d2 = 2 * (lm_full - (-opt0.fun))
+            out["tau_test"][f"k_{o}_{t}"] = {"log_post_full": lm_full, "log_post_without": -opt0.fun, "two_diff": d2,
+                                             "p_boundary": float(0.5 * chi2.sf(max(d2, 0.0), 1))}
+    # posterior on all training rows; sensitivities per country from joint draws
     m = LatentGaussianModel(np.r_[Pc["y"], Pu["y"]], make(), designs(Pc, Pu))
     m.theta = th
     m.x_hat, m.f_hat, m.lu = m.mode(th)
     fs = m.fixed_summary()
+    out["fixed_ci95"] = {k: {"est": float(v[0]), "se": float(v[1]), "lo": float(v[0] - 1.96 * v[1]), "hi": float(v[0] + 1.96 * v[1]),
+                             "excludes_0": bool(abs(v[0]) > 1.96 * v[1])} for k, v in fs.items() if k in keys or "lag_other_x_" in k}
+    D = m.sample(n_draws, np.random.default_rng(a.zero_seed + 11))
+    names0 = m.blocks[0].names; bnames = [b.name for b in m.blocks]
     iso = pd.factorize(base["ISO_A3"])[1].astype(str)
-    tr = base["train"].to_numpy()
-    out = {"hyper_source": "biv3 fixed from " + str(a.fixed_theta) + "; kslope_* optimised",
-           "opt_success": bool(opt.success), "opt_nit": int(opt.nit), "seconds_hyper": t_hyper, "seconds": time.time() - t0,
-           "tau": {}, "fixed_ci95": {k: {"est": float(v[0]), "se": float(v[1]), "lo": float(v[0] - 1.96 * v[1]),
-                                         "hi": float(v[0] + 1.96 * v[1]), "excludes_0": bool(abs(v[0]) > 1.96 * v[1])}
-                                     for k, v in fs.items() if k in keys or "lag_other_x_" in k},
-           "countries": {}}
-    for k_, (o, nm) in enumerate((("conflict", "kslope_conflict"), ("unrest", "kslope_unrest"))):
-        lt = th[free[k_]]
-        out["tau"][nm] = {"est": float(np.exp(lt)), "lo": float(np.exp(lt - 1.96 * se[k_])), "hi": float(np.exp(lt + 1.96 * se[k_])),
-                          "log_sd_se": float(se[k_])}
-        ib = [b.name for b in m.blocks].index(nm)
-        um = m.block_mean(ib); usd = np.sqrt(np.diag(m.block_cov_dense(ib)))
-        P_o = P[o]
-        n_hist = np.asarray(P_o["S"].astype(bool).sum(axis=0)).ravel()   # training rows with lag_other > 0, per country
+    for o, t in spec:
+        fx = f"{o}:lag_other" if t == "u" else f"{o}:lag_other_x_{t}"
+        kap = fs[f"{o}:lag_other"][0]
+        dlt = delta if delta is not None else abs(kap) / 3
+        ib = bnames.index(f"k_{o}_{t}")
+        dr = D[m.slices[0]][names0.index(fx)][None, :] + D[m.slices[ib]][:nC]           # countries x draws
+        pos = (dr > 0).mean(1); lfsr = np.minimum(pos, 1 - pos); pin = (np.abs(dr) < dlt).mean(1)
+        lo, hi = np.quantile(dr, [0.025, 0.975], axis=1)
+        nrow = np.asarray((sp.diags(column(P[o], o, t) != 0) @ sp.csr_matrix(P[o]["C"])).sum(0)).ravel()
+        cls = np.where(lfsr < 0.05, np.where(dr.mean(1) > 0, "amplifies", "suppresses"), np.where(pin > 0.95, "no_effect", "inconclusive"))
+        out.setdefault("delta", {})[f"{o}_{t}"] = float(dlt)
         for c in range(nC):
-            out["countries"].setdefault(iso[c], {})[o] = {"u": float(um[c]), "sd": float(usd[c]),
-                                                         "rows_with_other_history": int(n_hist[c])}
-    out["train_rows"] = int(tr.sum())
-    print("biv3_cs", json.dumps({"tau": out["tau"], "kappa": {k: v for k, v in out["fixed_ci95"].items() if k in keys}},
-                                default=float), flush=True)
+            out["countries"].setdefault(iso[c], {})[f"{o}_{t}"] = {
+                "mean": float(dr[c].mean()), "lo": float(lo[c]), "hi": float(hi[c]), "lfsr": float(lfsr[c]),
+                "p_negligible": float(pin[c]), "class": str(cls[c]), "rows_informing": int(nrow[c])}
+        out.setdefault("class_counts", {})[f"{o}_{t}"] = pd.Series(cls).value_counts().to_dict()
+    out["seconds"] = time.time() - t0
+    print("country effects", json.dumps({"random": out["random"], "tau_test": out["tau_test"],
+                                         "class_counts": out["class_counts"]}, default=float), flush=True)
     return out
 
 
@@ -689,6 +772,11 @@ def main():
     ap.add_argument("--psi-only", action="store_true",
                     help="with --fixed-theta: condition on all training rows, report the fixed effects and stop "
                          "(no test predictions, no exports)")
+    ap.add_argument("--ce-terms", default="u",
+                    help="country effects on escalation (model biv3_cs): u (level) and/or psi terms, e.g. u,drought,heat")
+    ap.add_argument("--ce-bym2", default="", help="country effects with a BYM2 (spatial) prior instead of iid, e.g. u,drought")
+    ap.add_argument("--delta", type=float, default=None, help="relevance threshold for 'no effect' (default |kappa| / 3)")
+    ap.add_argument("--tau-test", action="store_true", help="boundary likelihood-ratio test of each country effect (refits)")
     ap.add_argument("--actors", default=None,
                     help="directory of the actor split (realdata/table/actors.py, year=<y>.parquet); needed by tri3")
     ap.add_argument("--hessian", action="store_true",
@@ -904,7 +992,10 @@ def main():
             "unrest:lag_own", "unrest:lag_other", "unrest:lag_own_nb", "unrest:lag_other_nb"]
     for model in a.models.split(","):
         if model == "biv3_cs":   # biv3 + country random slopes on the cross histories (needs --fixed-theta with biv3)
-            res["models"][model] = fit_country_slopes(a, saved, biv3_blocks, biv3_designs, parts_tr, nC, base, keys)
+            res["models"][model] = fit_country_slopes(a, saved, biv3_blocks, biv3_designs, parts_tr, nC, base, keys,
+                                                      terms=tuple(a.ce_terms.split(",")),
+                                                      bym2=tuple(t for t in a.ce_bym2.split(",") if t), delta=a.delta,
+                                                      tau_test=a.tau_test)
             json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
             continue
         if model in ("uni_static", "uni_st", "uni_static_u", "uni_st_u"):

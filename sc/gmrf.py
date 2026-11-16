@@ -356,6 +356,81 @@ class CopyBlock(Block):
         return d
 
 
+def scaled_icar_precision(adj, constraint=1e4):
+    """Precision of a scaled intrinsic CAR on a graph (adj: symmetric 0/1 sparse or dense n x n), made proper so that it
+    can be factorised: per connected component of size > 1, Q = c (D - W) with c the geometric mean of the diagonal of the
+    generalised inverse of (D - W) (Sorbye & Rue 2014, so a unit SD means unit typical marginal variance), plus a soft
+    sum-to-zero constraint `constraint` * (1/n_k) 1 1' (1/n_k); singletons (islands) are iid N(0, 1), as in INLA's BYM2.
+    Returns (Q dense, list of components)."""
+    from scipy.sparse.csgraph import connected_components
+    A = sp.csr_matrix(adj, dtype=float)
+    A = ((A + A.T) > 0).astype(float)
+    A.setdiag(0); A.eliminate_zeros()
+    n = A.shape[0]
+    ncomp, lab = connected_components(A, directed=False)
+    Q = np.zeros((n, n)); comps = []
+    for k in range(ncomp):
+        idx = np.where(lab == k)[0]; comps.append(idx)
+        if len(idx) == 1:
+            Q[idx[0], idx[0]] = 1.0
+            continue
+        Ak = A[idx][:, idx].toarray()
+        Qk = np.diag(Ak.sum(1)) - Ak
+        gm = float(np.exp(np.mean(np.log(np.diag(np.linalg.pinv(Qk))))))
+        Qk = gm * Qk + constraint * np.ones((len(idx), len(idx))) / len(idx) ** 2
+        Q[np.ix_(idx, idx)] = Qk
+    return Q, comps
+
+
+class BYM2Block(Block):
+    """BYM2 random effect on n areas (Riebler et al. 2016): x = sigma (sqrt(phi) s + sqrt(1 - phi) e), s a scaled
+    intrinsic CAR on the area graph (scaled_icar_precision), e iid N(0, 1). Latent vector [x; s] (size 2n; designs act
+    on x and give s zero columns): x | s ~ N(sigma sqrt(phi) s, sigma^2 (1 - phi) I), so
+
+        R = [[a I, -b I], [0, R_s]],  a = 1 / (sigma sqrt(1 - phi)),  b = sqrt(phi) / sqrt(1 - phi),
+        log|Q| = -n log(sigma^2 (1 - phi)) + log|Q_s|   (the last term does not depend on theta).
+
+    sigma is the marginal SD (for a connected graph, typical variance sigma^2); phi in (0, 1) is the share of the variance
+    that is spatially structured: phi near 0 is iid, phi near 1 a smooth CAR. theta = [log sigma, logit phi]; PC prior
+    on sigma (P(sigma > pc_u) = pc_alpha), logit phi ~ N(0, 1.5^2)."""
+
+    n_theta = 2
+
+    def __init__(self, adj, name="bym2", sd_init=0.1, phi_init=0.5, pc_u=0.1, pc_alpha=0.05):
+        self.name = name
+        Qs, self.components = scaled_icar_precision(adj)
+        self.n = Qs.shape[0]; self.size = 2 * self.n
+        self.Rs = sp.csc_matrix(np.linalg.cholesky(Qs).T)
+        self.logdet_s = float(np.linalg.slogdet(Qs)[1])
+        self._t0 = np.array([np.log(sd_init), np.log(phi_init / (1 - phi_init))])
+        self.pc = (pc_u, pc_alpha)
+
+    def theta0(self):
+        return self._t0.copy()
+
+    def _ab(self, th):
+        sig, phi = np.exp(th[0]), 1.0 / (1.0 + np.exp(-th[1]))
+        return 1.0 / (sig * np.sqrt(1 - phi)), np.sqrt(phi) / np.sqrt(1 - phi)
+
+    def R(self, th):
+        a, b = self._ab(th)
+        I = sp.identity(self.n, format="csc")
+        return sp.bmat([[a * I, -b * I], [None, self.Rs]], format="csc")
+
+    def logdet(self, th):
+        phi = 1.0 / (1.0 + np.exp(-th[1]))
+        return -self.n * (2 * th[0] + np.log(1 - phi)) + self.logdet_s
+
+    def log_prior(self, th):
+        return log_pc_sd(th[0], *self.pc) - 0.5 * (th[1] / 1.5) ** 2
+
+    def bounds(self):
+        return [LOG_SD, (-5.0, 5.0)]
+
+    def describe(self, th):
+        return {f"{self.name}.sd": float(np.exp(th[0])), f"{self.name}.phi": float(1.0 / (1.0 + np.exp(-th[1])))}
+
+
 class MultiCopyBlock(Block):
     """Shared latent component entering k + 1 linear predictors: [a; b_1; ...; b_k] with a ~ base
     GMRF and b_i = lam_i * a + e_i, e_i ~ N(0, I / tau). Outcome 0 receives a, outcome i receives
