@@ -488,7 +488,7 @@ def country_adjacency(base, nC):
     """Countries sharing an edge between two 0.5-degree cells of the region (rook neighbours on the grid). Countries
     separated by sea are not neighbours; a country with no neighbour is an island (iid in BYM2)."""
     cid = base["country_id"].to_numpy()
-    g = pd.DataFrame({"i": np.round(base["lon"].to_numpy() * 2).astype(int), "j": np.round(base["lat"].to_numpy() * 2).astype(int),
+    g = pd.DataFrame({"i": np.floor(base["lon"].to_numpy() * 2).astype(int), "j": np.floor(base["lat"].to_numpy() * 2).astype(int),
                       "c": cid}).drop_duplicates(["i", "j"])
     key = dict(zip(zip(g.i, g.j), g.c))
     A = np.zeros((nC, nC))
