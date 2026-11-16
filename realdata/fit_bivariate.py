@@ -574,14 +574,23 @@ def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys, t
         free = np.arange(nb, ms.n_theta)
         bds = [bd for b in ms.blocks for bd in b.bounds()]
 
+        fails = {}
+
         def nlp(z):
             t = th.copy(); t[free] = z
             try:
                 v = -(ms.log_marginal(t, require_converged=True) + ms.log_prior(t))
-            except Exception:
+            except Exception as e:
+                r = f"{type(e).__name__}: {str(e)[:150]}"; fails[r] = fails.get(r, 0) + 1
                 return 1e100
             return v if np.isfinite(v) else 1e100
+        if nlp(th[free]) >= 1e99:
+            raise RuntimeError(f"country effects: objective fails at the starting values: {fails}")
         opt = minimize(nlp, th[free], method="L-BFGS-B", bounds=[bds[i] for i in free], options=dict(eps=1e-4, maxiter=80))
+        print(f"country effects (drop={drop}): L-BFGS-B {opt.message}; nit={opt.nit}, nfev={opt.nfev}, "
+              f"failed evaluations={fails or 0}", flush=True)
+        if opt.nit == 0:
+            raise RuntimeError(f"country effects: the optimiser did not move from the start ({opt.message}); failed: {fails}")
         th[free] = opt.x
         return ms, th, free, nlp, opt
 

@@ -103,11 +103,11 @@ def _par_nlp(args):
     try:
         x, f, lu = m.mode(th, x0=x0)
         if not m._converged:
-            return 1e100
+            return 1e100, "inner Newton not converged"
         v = -(f + 0.5 * m.logdet_Q(th) - 0.5 * lu.logdet() + m.log_prior(th))
-        return v if np.isfinite(v) else 1e100
-    except Exception:
-        return 1e100
+        return (v, "") if np.isfinite(v) else (1e100, "non-finite value")
+    except Exception as e:                      # e.g. MemoryError in a forked worker
+        return 1e100, f"{type(e).__name__}: {str(e)[:150]}"
 
 
 class LatentGaussianModel:
@@ -278,11 +278,18 @@ class LatentGaussianModel:
         if self.n_theta == 0:
             self.theta = theta0
         else:
+            self.fail_log = {}
+
+            def note(reason):
+                if reason:
+                    self.fail_log[reason] = self.fail_log.get(reason, 0) + 1
+
             def nlp(th):
                 self.n_evals += 1
                 try:
                     v = -(self.log_marginal(th, require_converged=True) + self.log_prior(th))
-                except Exception:
+                except Exception as e:
+                    note(f"{type(e).__name__}: {str(e)[:150]}")
                     return 1e100
                 if verbose:
                     print(np.round(th, 3), round(v, 3), flush=True)
@@ -297,16 +304,26 @@ class LatentGaussianModel:
                 pool = mp.get_context("fork").Pool(min(n_jobs, self.n_theta))
                 lo = np.array([b[0] for b in bounds]); hi = np.array([b[1] for b in bounds])
 
+                first = [True]
+
                 def fg(th):
                     f0 = nlp(th)
+                    if first[0] and f0 >= 1e99:
+                        raise RuntimeError(f"objective fails at the starting hyperparameters: {self.fail_log}")
                     x0 = self._x.copy()
                     # step inward at the upper bound
                     steps = [eps if th[i] + eps <= hi[i] else -eps for i in range(self.n_theta)]
                     pts = []
                     for i in range(self.n_theta):
                         t = th.copy(); t[i] += steps[i]; pts.append((t, x0))
-                    fs = np.array(pool.map(_par_nlp, pts))
+                    out = pool.map(_par_nlp, pts)
+                    fs = np.array([v for v, _ in out])
+                    for _, r in out:
+                        note(r)
                     self.n_evals += self.n_theta
+                    if first[0] and np.all(fs >= 1e99):
+                        raise RuntimeError(f"every gradient evaluation fails at the start: {self.fail_log}")
+                    first[0] = False
                     g = (fs - f0) / np.array(steps)
                     g[~np.isfinite(g) | (np.abs(fs) >= 1e99)] = 0.0
                     return f0, g
@@ -317,9 +334,16 @@ class LatentGaussianModel:
                 finally:
                     pool.close(); pool.join(); _PAR_MODEL = None
             else:
+                if nlp(theta0) >= 1e99:
+                    raise RuntimeError(f"objective fails at the starting hyperparameters: {self.fail_log}")
                 res = minimize(nlp, theta0, method="L-BFGS-B", bounds=bounds,
                                options=dict(lopts, eps=eps))
             self.theta, self.opt = res.x, res
+            print(f"L-BFGS-B: {res.message}; nit={res.nit}, evaluations={self.n_evals}, "
+                  f"failed evaluations={self.fail_log or 0}", flush=True)
+            if res.nit == 0:
+                raise RuntimeError(f"the optimiser did not move from the start ({res.message}); "
+                                   f"failed evaluations: {self.fail_log}")
         self.x_hat, self.f_hat, self.lu = self.mode(self.theta)
         self.log_ml = self.log_marginal(self.theta)
         self.fit_seconds = time.time() - t0
