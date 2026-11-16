@@ -183,13 +183,15 @@ def psi_conditions(d, terms, gov_col):
 
 def add_psi_terms(dfs, covs, terms, gov_col):
     """kappa(s,t) = kappa + sum_m psi_m z_m,st: for each outcome, add lag_other x z_m (the other
-    outcome's history times the condition, z standardised on the training rows, missing -> 0), so
-    psi_m is the change in escalation per SD of z_m and kappa stays the escalation at average
-    conditions. Conditions without a linear main effect among the covariates (gov2, drought_ipc, and
+    outcome's history times the condition, missing -> 0). z is centred and scaled on the training rows
+    WITH a non-zero history of the other outcome (lag_other > 0), the rows that identify escalation,
+    so psi_m is the change in escalation per SD of z_m among those rows and kappa is the escalation
+    at their average conditions (before 2026-11-16, Task 44: centred on all rows, which made kappa an
+    extrapolation to remote, event-free conditions). Conditions without a linear main effect among the covariates (gov2, drought_ipc, and
     gov unless it is v2x_libdem, which enters as between/within parts) get one, psi_main_<term>,
     so that psi measures only the change in escalation."""
     for o in dfs:
-        d = dfs[o]; tr_o = d["train"].to_numpy()
+        d = dfs[o]; tr_o = d["train"].to_numpy() & (d["lag_other"].to_numpy(float) > 0)
         z = psi_conditions(d, terms, gov_col)
         if "gov2" in terms:
             gz = d[gov_col].astype(float).to_numpy()
@@ -480,6 +482,89 @@ def semisynth(a, saved, dfs, covs, base, tr, wk, L, cell, barrier, Lv, T, parts,
         json.dump(out, open(a.sim_out, "w"), indent=1, default=float)
 
 
+def fit_country_slopes(a, saved, biv3_blocks, biv3_designs, P, nC, base, keys):
+    """Escalation with country random slopes: kappa_c = kappa + psi' z + u_c, u_c ~ N(0, tau^2), one tau per direction
+    (IID blocks kslope_conflict / kslope_unrest on lag_other, by country). The biv3 hyperparameters stay at the saved
+    estimate; only the two tau are optimised (on the case-control subsample with --zero-frac), then the posterior on all
+    training rows. tau's 95% interval is from the 2 x 2 Hessian of the Laplace log posterior in the two free parameters,
+    conditional on the saved ones. Reports kappa and psi (fixed_ci95), tau, and every country's u_c."""
+    import time
+    from scipy.optimize import minimize
+    if saved is None or "biv3" not in saved.get("models", {}):
+        raise SystemExit("biv3_cs needs --fixed-theta with a saved biv3")
+    t0 = time.time()
+    Pc, Pu = P["conflict"], P["unrest"]
+
+    def make():
+        return biv3_blocks() + [IIDBlock(nC, name="kslope_conflict", sd_init=0.05, pc_u=0.1, pc_alpha=0.05),
+                                IIDBlock(nC, name="kslope_unrest", sd_init=0.05, pc_u=0.1, pc_alpha=0.05)]
+
+    def designs(Qc, Qu):
+        return biv3_designs(Qc, Qu) + [stack(Qc["S"], None, nu=len(Qu["y"])), stack(None, Qu["S"], nc=len(Qc["y"]))]
+
+    if a.zero_frac:
+        rng_s = np.random.default_rng(a.zero_seed)
+        Sc, Su = subsample(Pc, a.zero_frac, rng_s), subsample(Pu, a.zero_frac, rng_s)
+        ms = LatentGaussianModel(np.r_[Sc["y"], Su["y"]], make(), designs(Sc, Su), offset=np.r_[Sc["off"], Su["off"]])
+    else:
+        ms = LatentGaussianModel(np.r_[Pc["y"], Pu["y"]], make(), designs(Pc, Pu))
+    th = theta0_from_init(ms.blocks, saved["models"]["biv3"]["hyper"])
+    free = np.arange(ms.n_theta - 2, ms.n_theta)
+    bds = [bd for b in ms.blocks for bd in b.bounds()]
+
+    def nlp(z):
+        t = th.copy(); t[free] = z
+        try:
+            v = -(ms.log_marginal(t, require_converged=True) + ms.log_prior(t))
+        except Exception:
+            return 1e100
+        return v if np.isfinite(v) else 1e100
+    opt = minimize(nlp, th[free], method="L-BFGS-B", bounds=[bds[i] for i in free], options=dict(eps=1e-4, maxiter=60))
+    th[free] = opt.x
+    h = 0.05; H = np.zeros((2, 2)); f0 = nlp(opt.x)
+    for i in range(2):
+        for j in range(i, 2):
+            if i == j:
+                e = np.zeros(2); e[i] = h
+                H[i, i] = (nlp(opt.x + e) - 2 * f0 + nlp(opt.x - e)) / h ** 2
+            else:
+                ei, ej = np.zeros(2), np.zeros(2); ei[i] = h; ej[j] = h
+                H[i, j] = H[j, i] = (nlp(opt.x + ei + ej) - nlp(opt.x + ei - ej) - nlp(opt.x - ei + ej)
+                                     + nlp(opt.x - ei - ej)) / (4 * h ** 2)
+    try:
+        se = np.sqrt(np.diag(np.linalg.inv(H)))
+    except np.linalg.LinAlgError:
+        se = np.full(2, np.nan)
+    t_hyper = time.time() - t0
+    m = LatentGaussianModel(np.r_[Pc["y"], Pu["y"]], make(), designs(Pc, Pu))
+    m.theta = th
+    m.x_hat, m.f_hat, m.lu = m.mode(th)
+    fs = m.fixed_summary()
+    iso = pd.factorize(base["ISO_A3"])[1].astype(str)
+    tr = base["train"].to_numpy()
+    out = {"hyper_source": "biv3 fixed from " + str(a.fixed_theta) + "; kslope_* optimised",
+           "opt_success": bool(opt.success), "opt_nit": int(opt.nit), "seconds_hyper": t_hyper, "seconds": time.time() - t0,
+           "tau": {}, "fixed_ci95": {k: {"est": float(v[0]), "se": float(v[1]), "lo": float(v[0] - 1.96 * v[1]),
+                                         "hi": float(v[0] + 1.96 * v[1]), "excludes_0": bool(abs(v[0]) > 1.96 * v[1])}
+                                     for k, v in fs.items() if k in keys or "lag_other_x_" in k},
+           "countries": {}}
+    for k_, (o, nm) in enumerate((("conflict", "kslope_conflict"), ("unrest", "kslope_unrest"))):
+        lt = th[free[k_]]
+        out["tau"][nm] = {"est": float(np.exp(lt)), "lo": float(np.exp(lt - 1.96 * se[k_])), "hi": float(np.exp(lt + 1.96 * se[k_])),
+                          "log_sd_se": float(se[k_])}
+        ib = [b.name for b in m.blocks].index(nm)
+        um = m.block_mean(ib); usd = np.sqrt(np.diag(m.block_cov_dense(ib)))
+        P_o = P[o]
+        n_hist = np.asarray(P_o["S"].astype(bool).sum(axis=0)).ravel()   # training rows with lag_other > 0, per country
+        for c in range(nC):
+            out["countries"].setdefault(iso[c], {})[o] = {"u": float(um[c]), "sd": float(usd[c]),
+                                                         "rows_with_other_history": int(n_hist[c])}
+    out["train_rows"] = int(tr.sum())
+    print("biv3_cs", json.dumps({"tau": out["tau"], "kappa": {k: v for k, v in out["fixed_ci95"].items() if k in keys}},
+                                default=float), flush=True)
+    return out
+
+
 def run_tri(a, P, nC, L, barrier, Lv, T, x0, x1, y0, y1, base, observed):
     """Three outcomes, rows stacked [armed; repr; unrest]. Per outcome: fixed effects (histories of all three, psi
     terms for the two conflict types), country and cell effects, a static Matern field. Shared: a static field and a
@@ -721,7 +806,8 @@ def main():
         return dict(X=X, names=[f"{o}:{n}" for n in names], C=de.index_design(dd["country_id"], nC),
                     E=de.index_design(dd["cell"], L.n), W=de.index_design(dd["cell"], L.n),
                     V=de.spacetime_design(cell_v[rows], tstep[rows], Lv.n, T), y=dd["y"].to_numpy(),
-                    K=de.index_design(dd["cell"], L.n, values=dd["lag_other"].to_numpy(float)))
+                    K=de.index_design(dd["cell"], L.n, values=dd["lag_other"].to_numpy(float)),
+                    S=de.index_design(dd["country_id"], nC, values=dd["lag_other"].to_numpy(float)))
 
     def uni_blocks(o, st):
         b = [FixedBlock(len(parts_tr[o]["names"]), parts_tr[o]["names"]), IIDBlock(nC, name=f"country_{o}"),
@@ -817,6 +903,10 @@ def main():
     keys = ["conflict:lag_own", "conflict:lag_other", "conflict:lag_own_nb", "conflict:lag_other_nb",
             "unrest:lag_own", "unrest:lag_other", "unrest:lag_own_nb", "unrest:lag_other_nb"]
     for model in a.models.split(","):
+        if model == "biv3_cs":   # biv3 + country random slopes on the cross histories (needs --fixed-theta with biv3)
+            res["models"][model] = fit_country_slopes(a, saved, biv3_blocks, biv3_designs, parts_tr, nC, base, keys)
+            json.dump(res, open(os.path.join(a.out, a.summary_name), "w"), indent=1, default=float)
+            continue
         if model in ("uni_static", "uni_st", "uni_static_u", "uni_st_u"):
             st = model in ("uni_st", "uni_st_u")
             o = "unrest" if model.endswith("_u") else "conflict"
