@@ -11,3 +11,5 @@ paper/*.out
 paper/*.fls
 paper/*.fdb_latexmk
 results/*_ckpt*.jsonl
+paper/notes/*.aux
+paper/notes/*.log
