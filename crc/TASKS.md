@@ -510,3 +510,22 @@ qsub crc/jobs/50_ce2s.sh        # array 1-2: ame, west_sahel; 16 cores each
 - Commit `results_real/bivariate/<region>/ce2s_v2svstterr.json` (country-level summaries only).
 - STATUS: kappa and psi with intervals; each tau (and phi) with its interval; the tau-test p-values; class counts per term; the
   countries classed amplifies / suppresses / no_effect for each term; run time.
+
+## Task 51 (IPC history through the IPC API, 2017-2025): READY (PI authorized 2026-11-25; data only, no analysis)
+The no-key HDX file covers current periods from Oct 2020 only, so log_ipc3p (and the drought x IPC escalation term) is missing
+for 2018 - Sep 2020 in every fit. The PI has put an IPC API key in `~/.ipc_key` (chmod 600). Read it from that file only;
+never print it, echo it, log it, put it in a URL that gets logged, or commit it (strip it from any saved request/response).
+1. Find the API endpoint for national (and, if offered, area-level) population by phase per analysis with its current
+   period (docs: https://docs.api.ipcinfo.org). Download every analysis with a current period from 2017-01-01 on, for all
+   countries, into `$WORK/covariates/raw/ipc_api/` (raw JSON/CSV, no key inside).
+2. Extend `realdata/covariates/ipc.py` with an API source (`--source api`) that produces the same columns as now (phase1..5
+   people, shares, phase3p_share, ipc_carried, ipc_analysis), same method (step 1: national current-period numbers spread by
+   GHSL population; carry forward up to 26 weeks). Where an analysis is in both sources, they should agree: report the
+   number of overlapping analyses and the largest relative difference in phase 3+ people.
+3. Write `grid/ipc/ipc_<year>.parquet` for 2017-2025 (keep the old files as `ipc_<year>.hdx.parquet`), then rebuild the IPC
+   columns of the global table (`realdata/table/join_cov.py`, as in Task 35) so that `$WORK/table_global/clean_global` has
+   them for 2017-2025.
+4. Do not change any model code and do not run any fit.
+- Commit only code (no data, no key). STATUS: endpoint used; analyses and countries per year 2017-2025 (before / after);
+  share of cell-weeks with IPC in 2018-2024 for the ame and west_sahel boxes (before / after); the overlap check; whether the
+  API offers area-level phases with boundaries (for a later step 2; do not implement it).
