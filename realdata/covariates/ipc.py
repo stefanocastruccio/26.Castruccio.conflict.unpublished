@@ -1,6 +1,8 @@
 """IPC acute food insecurity (Luca's phase_1..phase_5) per 0.5-degree cell-week, from IPC's open data on HDX (task 35).
 
-  python realdata/covariates/ipc.py      # network (login node) for the download; writes grid/ipc/ipc_<year>.parquet
+  python realdata/covariates/ipc.py                 # HDX source (task 35); writes grid/ipc/ipc_<year>.parquet
+  python realdata/covariates/ipc.py --source api    # IPC API (task 51): analyses from 2017 on; the HDX files are kept as
+                                                    # grid/ipc/ipc_<year>.hdx.parquet; prints the HDX/API overlap check
 
 Source: HDX dataset "Global: Acute Food Insecurity Country Data" (publisher IPC, CC0, no key):
   ipc_global_national_wide.csv (all analyses; 50 countries; current periods Oct 2020 - 2026).
@@ -9,6 +11,13 @@ spread over the country's cells in proportion to the cell's GHSL population of t
 phase shares (phase<k>_share, phase3p_share) are the national shares. A week gets the analysis whose current period
 contains its week_start (latest analysis if several); weeks after a current period carry the latest analysis forward
 for up to 26 weeks (ipc_carried = True); otherwise missing. Countries are the cells' ISO_A3 (as in $CLEAN).
+Task 51 (`--source api`): https://api.ipcinfo.org/population (key from ~/.ipc_key only; never printed, logged or saved: the
+raw responses in raw/ipc_api/population_<year>.json are scrubbed of it). One call per year start=end=<year>, 2016-2026, all
+countries; acute analyses (condition "A"), deduplicated by analysis id; national current-period numbers; "Mon YYYY - Mon YYYY"
+current periods become first-of-month .. end-of-month dates (as in the HDX file); ISO2 -> ISO3 from Natural Earth ($COUNTRIES).
+The key has no access to Cadre Harmonise countries (HTTP 403), so the API source is the UNION: every HDX analysis plus the
+API analyses that HDX does not have (matched on country and current period); HDX values are kept where both exist.
+The rest of the method is unchanged.
 Step 2 (area-level matching to IPC boundaries) is not implemented yet.
 Columns: grid_id, week_start, phase1..phase5 (people), phase1_share..phase5_share, phase3p_share, ipc_carried, ipc_analysis.
 """
@@ -40,8 +49,106 @@ def download():
     return f
 
 
+API = "https://api.ipcinfo.org"
+RAWA = os.path.join(C.RAW, "ipc_api")
+API_YEARS = range(2016, 2027)
+
+
+def _api_get(path, **q):
+    """GET from the IPC API with the key from ~/.ipc_key; returns text with the key removed. The URL is never printed."""
+    import urllib.parse
+    key = open(os.path.expanduser("~/.ipc_key")).read().strip()
+    url = API + path + "?" + urllib.parse.urlencode({**q, "key": key})
+    try:
+        txt = urllib.request.urlopen(url, timeout=600).read().decode()
+    except Exception as e:  # report without the URL
+        raise RuntimeError(f"IPC API {path} {q}: {type(e).__name__} {getattr(e, 'code', '')}") from None
+    return txt.replace(key, "<KEY>")
+
+
+def download_api():
+    os.makedirs(RAWA, exist_ok=True)
+    recs = []
+    for y in API_YEARS:
+        f = os.path.join(RAWA, f"population_{y}.json")
+        if not os.path.exists(f):
+            open(f + ".part", "w").write(_api_get("/population", start=y, end=y)); os.replace(f + ".part", f)
+        recs += json.load(open(f))
+    return recs
+
+
+def _iso2to3():
+    import geopandas as gpd
+    ne = gpd.read_file(os.environ.get("COUNTRIES", os.path.join(C.WORK, "inputs", "ne_10m_admin_0_countries",
+                                      "ne_10m_admin_0_countries.shp")), ignore_geometry=True)
+    m = {}
+    for a2c, a3c in (("ISO_A2", "ISO_A3"), ("ISO_A2_EH", "ISO_A3_EH")):
+        if a2c in ne and a3c in ne:
+            for a2, a3 in zip(ne[a2c], ne[a3c]):
+                if isinstance(a2, str) and len(a2) == 2 and isinstance(a3, str) and len(a3) == 3 and a2 not in m:
+                    m[a2] = a3
+    return m
+
+
+def national_api():
+    """API analyses as a table with the HDX column names used below."""
+    recs = {r["id"]: r for r in download_api() if r.get("condition") == "A"}
+    m = _iso2to3(); rows = []; miss = set()
+    for r in recs.values():
+        cur = (r.get("current_period_dates") or "").split(" - ")
+        if len(cur) != 2 or r.get("country") not in m:
+            miss.add(r.get("country")) if r.get("country") not in m else None
+            continue
+        cf = pd.to_datetime(cur[0], format="%b %Y", errors="coerce"); ct = pd.to_datetime(cur[1], format="%b %Y", errors="coerce")
+        row = {"Country": m[r["country"]], "Date of analysis": r.get("analysis_date"), "Current from": cf,
+               "Current to": ct + pd.offsets.MonthEnd(0), "Population analyzed current": r.get("estimated_population"),
+               "Phase 3+ number current": r.get("p3plus"), "Phase 3+ percentage current": r.get("p3plus_percentage"),
+               "ipc_api_id": r["id"]}
+        for k in range(1, 6):
+            row[f"Phase {k} number current"] = r.get(f"phase{k}_population")
+            row[f"Phase {k} percentage current"] = r.get(f"phase{k}_percentage")
+        rows.append(row)
+    if miss:
+        print("API countries without an ISO3 match (dropped):", sorted(x for x in miss if x), flush=True)
+    nat = pd.DataFrame(rows)
+    return nat[nat["Current to"] >= "2017-01-01"]
+
+
+def overlap(api, hdx):
+    """Analyses in both sources (same country and current period): count and largest relative difference in phase 3+ people."""
+    k = ["Country", "cf", "ct"]
+    a = api.assign(cf=pd.to_datetime(api["Current from"]), ct=pd.to_datetime(api["Current to"]))
+    h = hdx.assign(cf=pd.to_datetime(hdx["Current from"], errors="coerce"), ct=pd.to_datetime(hdx["Current to"], errors="coerce"))
+    j = a.merge(h, on=k, suffixes=("_api", "_hdx"))
+    x, y = j["Phase 3+ number current_api"].astype(float), j["Phase 3+ number current_hdx"].astype(float)
+    rel = (x - y).abs() / y.where(y > 0)
+    i = rel.idxmax() if rel.notna().any() else None
+    print(f"overlap: {len(j)} analyses in both sources (of {len(h)} HDX, {len(a)} API); largest relative difference in phase 3+ "
+          f"people {rel.max():.4f}" + (f" ({j.loc[i, 'Country']} {j.loc[i, 'cf'].date()}: API {x[i]:.0f}, HDX {y[i]:.0f})" if i is not None else "")
+          + f"; median {rel.median():.4f}; share with difference > 1%: {(rel > 0.01).mean():.3f}", flush=True)
+
+
 def main():
-    nat = pd.read_csv(download(), low_memory=False)
+    import argparse
+    ap = argparse.ArgumentParser(); ap.add_argument("--source", choices=["hdx", "api"], default="hdx")
+    src = ap.parse_args().source
+    if src == "api":
+        api, hdx = national_api(), pd.read_csv(download(), low_memory=False)
+        overlap(api, hdx)
+        # The key has no access to Cadre Harmonise countries (403), which HDX covers from 2021: keep every HDX analysis and add
+        # the API analyses HDX does not have (same country and current period), so the existing 2021-2025 values do not change.
+        hk = set(zip(hdx.Country, pd.to_datetime(hdx["Current from"], errors="coerce"), pd.to_datetime(hdx["Current to"], errors="coerce")))
+        add = api[[k not in hk for k in zip(api.Country, api["Current from"], api["Current to"])]]
+        nat = pd.concat([hdx, add.assign(**{"Current from": add["Current from"].dt.strftime("%Y-%m-%d"),
+                                            "Current to": add["Current to"].dt.strftime("%Y-%m-%d")})], ignore_index=True)
+        print(f"combined: {len(hdx)} HDX analyses + {len(add)} API-only analyses", flush=True)
+        cf = pd.to_datetime(nat["Current from"], errors="coerce")
+        for y in range(2017, 2027):
+            for lab, t in (("HDX", hdx), ("combined", nat)):
+                c = pd.to_datetime(t["Current from"], errors="coerce").dt.year == y
+                print(f"{y} {lab}: {c.sum()} analyses in {t[c].Country.nunique()} countries", flush=True)
+    else:
+        nat = pd.read_csv(download(), low_memory=False)
     nat["cf"] = pd.to_datetime(nat["Current from"], errors="coerce"); nat["ct"] = pd.to_datetime(nat["Current to"], errors="coerce")
     nat = nat.dropna(subset=["cf", "ct"]).sort_values(["Country", "cf"])
     cl = C.cells()[["grid_id", "ISO_A3"]]
@@ -80,6 +187,12 @@ def main():
             out.append(pd.DataFrame(rec))
     df = pd.concat(out, ignore_index=True)
     od = os.path.join(C.GRID, "ipc"); os.makedirs(od, exist_ok=True)
+    if src == "api":  # keep the HDX outputs once, as ipc_<year>.hdx.parquet
+        for f in sorted(os.listdir(od)):
+            if f.endswith(".parquet") and not f.endswith(".hdx.parquet"):
+                h = os.path.join(od, f.replace(".parquet", ".hdx.parquet"))
+                if not os.path.exists(h):
+                    os.replace(os.path.join(od, f), h)
     for y, g in df.groupby(df.week_start.dt.year):
         g.to_parquet(os.path.join(od, f"ipc_{y}.parquet"), index=False)
     print(f"IPC (national, population-weighted): {df.grid_id.nunique()} cells in {nat.Country.nunique()} countries, "

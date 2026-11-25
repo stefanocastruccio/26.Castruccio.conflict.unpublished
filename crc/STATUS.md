@@ -3221,3 +3221,31 @@ ValueError: operands could not be broadcast together with shapes (11,) (19,) (19
   11.5 h. No S10 large replicate had finished: every results/s10L_ckpt.shard*.jsonl is empty, so there is nothing to push.
   The S10 small results (Task 48b) were not merged into results/s10_raw.csv because the merge job is gone. The 10 shard checkpoints
   are already committed (6113a60).
+
+## 2026-11-25 14:40 EST: Task 51 done (IPC 2017-2025 through the IPC API; data only, no model change, no fit)
+Job 1819771 (crc/jobs/51_ipc_api.sh: ipc.py --source api, join_cov.py --var ipc, assemble.py, ipc_coverage.py), rc=0.
+- **Endpoint:** `https://api.ipcinfo.org/population?start=<y>&end=<y>` (all countries), one call per year 2016-2026 (OpenAPI spec at
+  docs.api.ipcinfo.org/openapi.json). Key read from `~/.ipc_key` only, passed as the `key` query parameter, never printed or
+  logged; raw responses in `$WORK/covariates/raw/ipc_api/population_<y>.json` are scrubbed of it (checked: no key inside).
+  393 records, 382 acute (condition A, used) and 11 chronic; national current-period numbers; "Mon YYYY - Mon YYYY" periods ->
+  first-of-month .. end-of-month (as HDX). ISO2 -> ISO3 from Natural Earth; one regional record ("LAC") dropped.
+- **Cadre Harmonise is not accessible with this key:** `/population` for ML, NE returns HTTP 403; the API has 36 countries, none of
+  the 18 CH countries (BEN BFA CIV CMR CPV GHA GIN GMB GNB LBR MLI MRT NER NGA SEN SLE TCD TGO). HDX has them from 2021 only.
+  So `--source api` is the UNION: every HDX analysis plus the 117 API analyses HDX does not have (same country and current
+  period); HDX values kept where both exist. West Sahel therefore stays without IPC before 2021 (CH would need a CH data source).
+- **Analyses (countries) by start of current period, before (HDX) / after:** 2017 0 (0) / 27 (17); 2018 0 (0) / 26 (19);
+  2019 0 (0) / 29 (23); 2020 2 (2) / 36 (25); 2021 66 (40) / 66 (40); 2022 68 (44) / 68 (44); 2023 69 (45) / 69 (45);
+  2024 67 (44) / 67 (44); 2025 67 (44) / 67 (44).
+- **Overlap check:** 214 analyses in both sources; median relative difference in phase 3+ people 0.0000; 0.9% differ by more
+  than 1%; largest ETH, current period from 2021-05-01: API 16,756,345 vs HDX 5,522,943 (x3.0; HDX kept).
+- **Grid files:** `grid/ipc/ipc_<y>.parquet` 2017-2025 (8,510 cells, 52 countries, 2,353,329 rows, carried share 0.508); the old
+  HDX files kept as `ipc_<y>.hdx.parquet` (2020-2025). 2022-2025: identical to HDX (0 cell-weeks changed). 2021: 60,031 cell-weeks
+  added (early 2021, carried from late-2020 API analyses) and 6,838 changed (weeks inside an Apr 2021 HDX analysis's current
+  period that a later-starting overlapping API analysis now covers: the existing "latest analysis" rule).
+- **Global table:** `join_cov.py --var ipc` and `assemble.py` rerun; `table_global/clean_global` has the IPC columns for 2017-2025.
+- **Share of cell-weeks with IPC, 2018-2024, before / after:** ame (12,995 cells) 0.252 / 0.369 (by year after: 2018 0.165,
+  2019 0.263, 2020 0.312, 2021 0.473, 2022 0.468, 2023 0.459, 2024 0.442); west_sahel (2,505 cells) 0.462 / 0.466 (2018-2020
+  stay at 0.006-0.007: CH only).
+- **Area level:** the API offers area-level phases with boundaries (`/areas?format=geojson`, e.g. Somalia 2023: 1,038 features
+  with geometry); usable for step 2, not implemented.
+- Code committed: realdata/covariates/ipc.py (`--source api`), realdata/covariates/ipc_coverage.py, crc/jobs/51_ipc_api.sh. No data, no key.
